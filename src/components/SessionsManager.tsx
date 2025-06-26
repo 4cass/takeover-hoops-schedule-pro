@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -13,6 +12,9 @@ import { Plus, Edit, Trash2, Users } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { format } from "date-fns";
+import type { Database } from "@/integrations/supabase/types";
+
+type SessionStatus = Database['public']['Enums']['session_status'];
 
 type TrainingSession = {
   id: string;
@@ -22,7 +24,7 @@ type TrainingSession = {
   branch_id: string;
   coach_id: string;
   notes: string | null;
-  status: 'scheduled' | 'completed' | 'cancelled';
+  status: SessionStatus;
   branches: { name: string };
   coaches: { name: string };
   session_participants: Array<{ students: { name: string } }>;
@@ -41,7 +43,7 @@ export function SessionsManager() {
     branch_id: "",
     coach_id: "",
     notes: "",
-    status: "scheduled" as const
+    status: "scheduled" as SessionStatus
   });
 
   const queryClient = useQueryClient();
@@ -312,7 +314,7 @@ export function SessionsManager() {
                   </div>
                   <div>
                     <Label htmlFor="status">Status</Label>
-                    <Select value={formData.status} onValueChange={(value) => setFormData(prev => ({ ...prev, status: value as any }))}>
+                    <Select value={formData.status} onValueChange={(value: SessionStatus) => setFormData(prev => ({ ...prev, status: value }))}>
                       <SelectTrigger>
                         <SelectValue />
                       </SelectTrigger>

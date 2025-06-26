@@ -11,6 +11,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Plus, Edit, Trash2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import type { Database } from "@/integrations/supabase/types";
 
 type Coach = {
   id: string;
@@ -23,10 +24,12 @@ type Coach = {
 type CoachAvailability = {
   id: string;
   coach_id: string;
-  day_of_week: string;
+  day_of_week: Database['public']['Enums']['day_of_week'];
 };
 
-const DAYS_OF_WEEK = [
+type DayOfWeek = Database['public']['Enums']['day_of_week'];
+
+const DAYS_OF_WEEK: DayOfWeek[] = [
   'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'
 ];
 
@@ -37,7 +40,7 @@ export function CoachesManager() {
     name: "",
     email: "",
     phone: "",
-    availability: [] as string[]
+    availability: [] as DayOfWeek[]
   });
 
   const queryClient = useQueryClient();
@@ -87,7 +90,7 @@ export function CoachesManager() {
           .insert(
             coach.availability.map(day => ({
               coach_id: coachData.id,
-              day_of_week: day
+              day_of_week: day as DayOfWeek
             }))
           );
         
@@ -134,7 +137,7 @@ export function CoachesManager() {
           .insert(
             coach.availability.map(day => ({
               coach_id: id,
-              day_of_week: day
+              day_of_week: day as DayOfWeek
             }))
           );
         
@@ -198,7 +201,7 @@ export function CoachesManager() {
     setIsDialogOpen(true);
   };
 
-  const handleAvailabilityChange = (day: string, checked: boolean) => {
+  const handleAvailabilityChange = (day: DayOfWeek, checked: boolean) => {
     setFormData(prev => ({
       ...prev,
       availability: checked 
@@ -312,7 +315,7 @@ export function CoachesManager() {
                 <TableCell>{coach.phone || 'N/A'}</TableCell>
                 <TableCell>
                   <div className="flex flex-wrap gap-1">
-                    {coach.availability?.map((day: string) => (
+                    {coach.availability?.map((day: DayOfWeek) => (
                       <span key={day} className="px-2 py-1 bg-blue-100 text-blue-800 rounded text-xs capitalize">
                         {day.slice(0, 3)}
                       </span>
