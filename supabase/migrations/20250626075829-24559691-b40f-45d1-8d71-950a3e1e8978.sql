@@ -1,4 +1,3 @@
-
 -- Create enum types
 CREATE TYPE public.session_status AS ENUM ('scheduled', 'completed', 'cancelled');
 CREATE TYPE public.attendance_status AS ENUM ('present', 'absent', 'pending');
@@ -39,6 +38,7 @@ CREATE TABLE public.students (
   name TEXT NOT NULL,
   email TEXT UNIQUE NOT NULL,
   phone TEXT,
+  sessions INTEGER DEFAULT 0, -- Total sessions purchased (NULL allowed, default 0)
   remaining_sessions INTEGER NOT NULL DEFAULT 0,
   created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(),
   updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now()
@@ -86,7 +86,7 @@ ALTER TABLE public.training_sessions ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.session_participants ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.attendance_records ENABLE ROW LEVEL SECURITY;
 
--- Create RLS policies (allowing all operations for now - you can restrict later)
+-- Create RLS policies (allowing all operations for now)
 CREATE POLICY "Allow all operations on branches" ON public.branches FOR ALL USING (true);
 CREATE POLICY "Allow all operations on coaches" ON public.coaches FOR ALL USING (true);
 CREATE POLICY "Allow all operations on coach_availability" ON public.coach_availability FOR ALL USING (true);

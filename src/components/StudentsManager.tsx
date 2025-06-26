@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -6,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Progress } from "@/components/ui/progress";
 import { Plus, Edit, Trash2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -16,8 +15,14 @@ type Student = {
   name: string;
   email: string;
   phone: string | null;
+  sessions: number;
   remaining_sessions: number;
   created_at: string;
+};
+
+type StudentProgress = {
+  student_id: string;
+  attended_sessions: number;
 };
 
 export function StudentsManager() {
@@ -27,6 +32,7 @@ export function StudentsManager() {
     name: "",
     email: "",
     phone: "",
+    sessions: 0,
     remaining_sessions: 0
   });
 
@@ -42,6 +48,29 @@ export function StudentsManager() {
       
       if (error) throw error;
       return data as Student[];
+    }
+  });
+
+  const { data: studentProgress } = useQuery({
+    queryKey: ['student-progress'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('attendance_records')
+        .select('student_id, status')
+        .eq('status', 'present');
+
+      if (error) throw error;
+
+      const progressMap = new Map<string, number>();
+
+      data.forEach((record: { student_id: string }) => {
+        progressMap.set(record.student_id, (progressMap.get(record.student_id) || 0) + 1);
+      });
+
+      return Array.from(progressMap.entries()).map(([student_id, attended_sessions]) => ({
+        student_id,
+        attended_sessions
+      })) as StudentProgress[];
     }
   });
 
@@ -109,7 +138,7 @@ export function StudentsManager() {
   });
 
   const resetForm = () => {
-    setFormData({ name: "", email: "", phone: "", remaining_sessions: 0 });
+    setFormData({ name: "", email: "", phone: "", sessions: 0, remaining_sessions: 0 });
     setEditingStudent(null);
     setIsDialogOpen(false);
   };
@@ -129,78 +158,97 @@ export function StudentsManager() {
       name: student.name,
       email: student.email,
       phone: student.phone || "",
+      sessions: student.sessions,
       remaining_sessions: student.remaining_sessions
     });
     setIsDialogOpen(true);
   };
 
   if (isLoading) {
-    return <div>Loading students...</div>;
+    return <div className="text-center py-8 text-gray-500 dark:text-gray-400">Loading students...</div>;
   }
 
   return (
-    <Card>
-      <CardHeader>
+    <Card className="shadow-lg border-none" style={{ backgroundColor: '#e8e8e8' }}>
+      <CardHeader className="pb-4">
         <div className="flex justify-between items-center">
           <div>
-            <CardTitle>Students Management</CardTitle>
-            <CardDescription>Manage student information and session quotas</CardDescription>
+            <CardTitle className="text-2xl font-bold text-gray-900 dark:text-white">Students Management</CardTitle>
+            <CardDescription className="text-gray-500 dark:text-gray-400">Manage student information and session quotas</CardDescription>
           </div>
           <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
             <DialogTrigger asChild>
-              <Button onClick={() => resetForm()}>
+              <Button 
+                onClick={() => resetForm()}
+                className="bg-primary hover:bg-primary/90 transition-all duration-200 hover:shadow-md"
+              >
                 <Plus className="w-4 h-4 mr-2" />
                 Add Student
               </Button>
             </DialogTrigger>
-            <DialogContent>
+            <DialogContent className="bg-gradient-to-br from-gray-50 to-white dark:from-gray-900 dark:to-gray-800">
               <DialogHeader>
-                <DialogTitle>
+                <DialogTitle className="text-xl font-bold text-gray-900 dark:text-white">
                   {editingStudent ? 'Edit Student' : 'Add New Student'}
                 </DialogTitle>
-                <DialogDescription>
+                <DialogDescription className="text-gray-500 dark:text-gray-400">
                   {editingStudent ? 'Update student information' : 'Add a new student to the system'}
                 </DialogDescription>
               </DialogHeader>
-              <form onSubmit={handleSubmit} className="space-y-4">
+              <form onSubmit={handleSubmit} className="space-y-6">
                 <div>
-                  <Label htmlFor="name">Name</Label>
+                  <Label htmlFor="name" className="text-gray-700 dark:text-gray-300">Name</Label>
                   <Input
                     id="name"
                     value={formData.name}
                     onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
                     required
+                    className="mt-1"
                   />
                 </div>
                 <div>
-                  <Label htmlFor="email">Email</Label>
+                  <Label htmlFor="email" className="text-gray-700 dark:text-gray-300">Email</Label>
                   <Input
                     id="email"
                     type="email"
                     value={formData.email}
                     onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))}
                     required
+                    className="mt-1"
                   />
                 </div>
                 <div>
-                  <Label htmlFor="phone">Phone</Label>
+                  <Label htmlFor="phone" className="text-gray-700 dark:text-gray-300">Phone</Label>
                   <Input
                     id="phone"
                     value={formData.phone}
                     onChange={(e) => setFormData(prev => ({ ...prev, phone: e.target.value }))}
+                    className="mt-1"
                   />
                 </div>
                 <div>
-                  <Label htmlFor="sessions">Remaining Sessions</Label>
+                  <Label htmlFor="totalSessions" className="text-gray-700 dark:text-gray-300">Total Sessions</Label>
+                  <Input
+                    id="totalSessions"
+                    type="number"
+                    min="0"
+                    value={formData.sessions}
+                    onChange={(e) => setFormData(prev => ({ ...prev, sessions: parseInt(e.target.value) || 0 }))}
+                    className="mt-1"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="sessions" className="text-gray-700 dark:text-gray-300">Remaining Sessions</Label>
                   <Input
                     id="sessions"
                     type="number"
                     min="0"
                     value={formData.remaining_sessions}
-                    onChange={(e) => setFormData(prev => ({ ...prev, remaining_sessions: parseInt(e.target.value) || 0 }))}
+                    onChange={(e) => setFormData(prev => ({ ...prev, remaining_sessions: parseInt(e.target.value) || 0 }))} 
+                    className="mt-1"
                   />
                 </div>
-                <div className="flex justify-end space-x-2">
+                <div className="flex justify-end space-x-3">
                   <Button type="button" variant="outline" onClick={resetForm}>
                     Cancel
                   </Button>
@@ -214,52 +262,50 @@ export function StudentsManager() {
         </div>
       </CardHeader>
       <CardContent>
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Name</TableHead>
-              <TableHead>Email</TableHead>
-              <TableHead>Phone</TableHead>
-              <TableHead>Remaining Sessions</TableHead>
-              <TableHead>Actions</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {students?.map((student) => (
-              <TableRow key={student.id}>
-                <TableCell>{student.name}</TableCell>
-                <TableCell>{student.email}</TableCell>
-                <TableCell>{student.phone || 'N/A'}</TableCell>
-                <TableCell>
-                  <span className={`px-2 py-1 rounded text-sm ${
-                    student.remaining_sessions > 0 ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
-                  }`}>
-                    {student.remaining_sessions}
-                  </span>
-                </TableCell>
-                <TableCell>
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+          {students?.map((student) => {
+            const progress = studentProgress?.find(p => p.student_id === student.id);
+            const attended = progress?.attended_sessions || 0;
+            const total = student.sessions;
+            const progressPercentage = total > 0 ? (attended / total) * 100 : 0;
+            return (
+              <Card key={student.id} className="shadow-md border-none bg-gradient-to-br from-gray-50 to-white dark:from-gray-900 dark:to-gray-800 hover:shadow-lg hover:-translate-y-1">
+                <CardContent className="p-5 space-y-3">
                   <div className="flex space-x-2">
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => handleEdit(student)}
-                    >
-                      <Edit className="w-4 h-4" />
+                    <span className="text-gray-700 dark:text-gray-300 font-medium">Name:</span>
+                    <p className="text-gray-900 dark:text-gray-100 font-semibold">{student.name}</p>
+                  </div>
+                  <div className="flex space-x-2">
+                    <span className="text-gray-700 dark:text-gray-300 font-medium">Email:</span>
+                    <p className="text-gray-900 dark:text-gray-100">{student.email}</p>
+                  </div>
+                  <div className="flex space-x-2">
+                    <span className="text-gray-700 dark:text-gray-300 font-medium">Phone:</span>
+                    <p className="text-gray-900 dark:text-gray-100">{student.phone || 'N/A'}</p>
+                  </div>
+                  <div>
+                    <span className="text-gray-700 dark:text-gray-300 font-medium">Session Progress:</span>
+                    <p className="text-gray-900 dark:text-gray-100">{attended} of {total} sessions attended</p>
+                    <Progress value={progressPercentage} className="h-2 mt-1" />
+                  </div>
+                  <div className="flex space-x-2 pt-2">
+                    <Button size="sm" variant="outline" onClick={() => handleEdit(student)} className="flex-1 hover:scale-105">
+                      <Edit className="w-4 h-4 mr-1" />
+                      Edit
                     </Button>
-                    <Button
-                      size="sm"
-                      variant="destructive"
-                      onClick={() => deleteMutation.mutate(student.id)}
-                      disabled={deleteMutation.isPending}
-                    >
-                      <Trash2 className="w-4 h-4" />
+                    <Button size="sm" variant="destructive" onClick={() => deleteMutation.mutate(student.id)} className="flex-1 hover:scale-105">
+                      <Trash2 className="w-4 h-4 mr-1" />
+                      Delete
                     </Button>
                   </div>
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
+                </CardContent>
+              </Card>
+            );
+          })}
+        </div>
+        {(!students || students.length === 0) && (
+          <p className="text-center py-4 text-gray-500 dark:text-gray-400">No students found.</p>
+        )}
       </CardContent>
     </Card>
   );

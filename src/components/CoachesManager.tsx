@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -6,7 +5,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Plus, Edit, Trash2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -47,11 +45,7 @@ export function CoachesManager() {
     mutationFn: async (coach: typeof formData) => {
       const { data, error } = await supabase
         .from('coaches')
-        .insert([{
-          name: coach.name,
-          email: coach.email,
-          phone: coach.phone || null
-        }])
+        .insert([{ name: coach.name, email: coach.email, phone: coach.phone || null }])
         .select()
         .single();
       
@@ -60,7 +54,6 @@ export function CoachesManager() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['coaches'] });
-      queryClient.invalidateQueries({ queryKey: ['dashboard-stats'] });
       toast.success('Coach created successfully');
       resetForm();
     },
@@ -73,11 +66,7 @@ export function CoachesManager() {
     mutationFn: async ({ id, ...coach }: typeof formData & { id: string }) => {
       const { data, error } = await supabase
         .from('coaches')
-        .update({
-          name: coach.name,
-          email: coach.email,
-          phone: coach.phone || null
-        })
+        .update({ name: coach.name, email: coach.email, phone: coach.phone || null })
         .eq('id', id)
         .select()
         .single();
@@ -106,7 +95,6 @@ export function CoachesManager() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['coaches'] });
-      queryClient.invalidateQueries({ queryKey: ['dashboard-stats'] });
       toast.success('Coach deleted successfully');
     },
     onError: (error) => {
@@ -140,29 +128,27 @@ export function CoachesManager() {
   };
 
   if (isLoading) {
-    return <div>Loading coaches...</div>;
+    return <div className="text-center py-8 text-gray-500 dark:text-gray-400">Loading coaches...</div>;
   }
 
   return (
-    <Card>
-      <CardHeader>
+    <Card className="shadow-lg border-none" style={{ backgroundColor: '#e8e8e8' }}>
+      <CardHeader className="pb-4">
         <div className="flex justify-between items-center">
           <div>
-            <CardTitle>Coaches Management</CardTitle>
-            <CardDescription>Manage coach information</CardDescription>
+            <CardTitle className="text-2xl font-bold text-gray-900 dark:text-white">Coaches Management</CardTitle>
+            <CardDescription className="text-gray-500 dark:text-gray-400">Manage coach information</CardDescription>
           </div>
           <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
             <DialogTrigger asChild>
-              <Button onClick={() => resetForm()}>
+              <Button onClick={() => resetForm()} className="bg-primary hover:bg-primary/90 transition-all">
                 <Plus className="w-4 h-4 mr-2" />
                 Add Coach
               </Button>
             </DialogTrigger>
             <DialogContent>
               <DialogHeader>
-                <DialogTitle>
-                  {editingCoach ? 'Edit Coach' : 'Add New Coach'}
-                </DialogTitle>
+                <DialogTitle>{editingCoach ? 'Edit Coach' : 'Add New Coach'}</DialogTitle>
                 <DialogDescription>
                   {editingCoach ? 'Update coach information' : 'Add a new coach to the system'}
                 </DialogDescription>
@@ -196,9 +182,7 @@ export function CoachesManager() {
                   />
                 </div>
                 <div className="flex justify-end space-x-2">
-                  <Button type="button" variant="outline" onClick={resetForm}>
-                    Cancel
-                  </Button>
+                  <Button type="button" variant="outline" onClick={resetForm}>Cancel</Button>
                   <Button type="submit" disabled={createMutation.isPending || updateMutation.isPending}>
                     {editingCoach ? 'Update' : 'Create'}
                   </Button>
@@ -209,44 +193,37 @@ export function CoachesManager() {
         </div>
       </CardHeader>
       <CardContent>
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Name</TableHead>
-              <TableHead>Email</TableHead>
-              <TableHead>Phone</TableHead>
-              <TableHead>Actions</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {coaches?.map((coach) => (
-              <TableRow key={coach.id}>
-                <TableCell>{coach.name}</TableCell>
-                <TableCell>{coach.email}</TableCell>
-                <TableCell>{coach.phone || 'N/A'}</TableCell>
-                <TableCell>
-                  <div className="flex space-x-2">
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => handleEdit(coach)}
-                    >
-                      <Edit className="w-4 h-4" />
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="destructive"
-                      onClick={() => deleteMutation.mutate(coach.id)}
-                      disabled={deleteMutation.isPending}
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </Button>
-                  </div>
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+          {coaches?.map((coach) => (
+            <Card key={coach.id} className="shadow-md border-none bg-gradient-to-br from-gray-50 to-white dark:from-gray-900 dark:to-gray-800 hover:shadow-lg hover:-translate-y-1 transition-all">
+              <CardContent className="p-5 space-y-3">
+                <div className="flex justify-left gap-x-2">
+                  <span className="text-gray-700 dark:text-gray-300 font-medium">Name: </span>
+                  <span className="text-gray-900 dark:text-gray-100 font-semibold"> {coach.name}</span>
+                </div>
+                <div className="flex justify-left gap-x-2">
+                  <span className="text-gray-700 dark:text-gray-300 font-medium">Email: </span>
+                  <span className="text-gray-900 dark:text-gray-100"> {coach.email}</span>
+                </div>
+                <div className="flex justify-left gap-x-2">
+                  <span className="text-gray-700 dark:text-gray-300 font-medium">Phone: </span>
+                  <span className="text-gray-900 dark:text-gray-100"> {coach.phone || 'N/A'}</span>
+                </div>
+                <div className="flex space-x-2 pt-2">
+                  <Button size="sm" variant="outline" onClick={() => handleEdit(coach)} className="flex-1 hover:scale-105">
+                    <Edit className="w-4 h-4 mr-1" /> Edit
+                  </Button>
+                  <Button size="sm" variant="destructive" onClick={() => deleteMutation.mutate(coach.id)} className="flex-1 hover:scale-105">
+                    <Trash2 className="w-4 h-4 mr-1" /> Delete
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+        {(!coaches || coaches.length === 0) && (
+          <p className="text-center py-4 text-gray-500 dark:text-gray-400">No coaches found.</p>
+        )}
       </CardContent>
     </Card>
   );

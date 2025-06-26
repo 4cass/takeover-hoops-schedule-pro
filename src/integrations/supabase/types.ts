@@ -174,6 +174,7 @@ export type Database = {
           id: string
           name: string
           phone: string | null
+          sessions: number
           remaining_sessions: number
           updated_at: string
         }
@@ -183,6 +184,7 @@ export type Database = {
           id?: string
           name: string
           phone?: string | null
+          sessions?: number
           remaining_sessions?: number
           updated_at?: string
         }
@@ -192,6 +194,7 @@ export type Database = {
           id?: string
           name?: string
           phone?: string | null
+          sessions?: number
           remaining_sessions?: number
           updated_at?: string
         }

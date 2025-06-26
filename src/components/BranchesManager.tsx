@@ -146,7 +146,7 @@ export function BranchesManager() {
   }
 
   return (
-    <Card>
+    <Card style={{ backgroundColor: '#e8e8e8' }}>
       <CardHeader>
         <div className="flex justify-between items-center">
           <div>
@@ -220,47 +220,45 @@ export function BranchesManager() {
         </div>
       </CardHeader>
       <CardContent>
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Name</TableHead>
-              <TableHead>Address</TableHead>
-              <TableHead>City</TableHead>
-              <TableHead>Contact Info</TableHead>
-              <TableHead>Actions</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {branches?.map((branch) => (
-              <TableRow key={branch.id}>
-                <TableCell className="font-medium">{branch.name}</TableCell>
-                <TableCell>{branch.address}</TableCell>
-                <TableCell>{branch.city}</TableCell>
-                <TableCell>{branch.contact_info || 'N/A'}</TableCell>
-                <TableCell>
-                  <div className="flex space-x-2">
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => handleEdit(branch)}
-                    >
-                      <Edit className="w-4 h-4" />
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="destructive"
-                      onClick={() => deleteMutation.mutate(branch.id)}
-                      disabled={deleteMutation.isPending}
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </Button>
-                  </div>
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </CardContent>
+  <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+    {branches?.map((branch) => (
+      <Card key={branch.id} className="shadow-md border-none bg-gradient-to-br from-gray-50 to-white dark:from-gray-900 dark:to-gray-800 hover:shadow-lg hover:-translate-y-1">
+        <CardContent className="p-5 space-y-3">
+          <div className="flex justify-left gap-x-2">
+            <span className="text-gray-700 dark:text-gray-300 font-medium">Name:</span>
+            <span className="text-gray-900 dark:text-gray-100 font-semibold">{branch.name}</span>
+          </div>
+          <div className="flex justify-left gap-x-2">
+            <span className="text-gray-700 dark:text-gray-300 font-medium">Address:</span>
+            <span className="text-gray-900 dark:text-gray-100">{branch.address}</span>
+          </div>
+          <div className="flex justify-left gap-x-2">
+            <span className="text-gray-700 dark:text-gray-300 font-medium">City:</span>
+            <span className="text-gray-900 dark:text-gray-100">{branch.city}</span>
+          </div>
+          <div className="flex justify-left gap-x-2">
+            <span className="text-gray-700 dark:text-gray-300 font-medium">Contact Info:</span>
+            <span className="text-gray-900 dark:text-gray-100">{branch.contact_info || 'N/A'}</span>
+          </div>
+          <div className="flex space-x-2 pt-2">
+            <Button size="sm" variant="outline" onClick={() => handleEdit(branch)} className="flex-1 hover:scale-105">
+              <Edit className="w-4 h-4 mr-1" />
+              Edit
+            </Button>
+            <Button size="sm" variant="destructive" onClick={() => deleteMutation.mutate(branch.id)} className="flex-1 hover:scale-105">
+              <Trash2 className="w-4 h-4 mr-1" />
+              Delete
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+    ))}
+  </div>
+  {(!branches || branches.length === 0) && (
+    <p className="text-center py-4 text-gray-500 dark:text-gray-400">No branches found.</p>
+  )}
+</CardContent>
+
     </Card>
   );
 }

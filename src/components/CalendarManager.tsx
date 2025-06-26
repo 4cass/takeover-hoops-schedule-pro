@@ -6,7 +6,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Calendar as CalendarIcon, Users, Clock, MapPin, User } from "lucide-react";
+import { Calendar as CalendarIcon, Users, Clock, MapPin, User, ChevronLeft, ChevronRight, Filter, Eye } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameDay, isBefore, addMonths, subMonths, isAfter } from "date-fns";
 import type { Database } from "@/integrations/supabase/types";
@@ -100,10 +100,10 @@ export function CalendarManager() {
 
   const getStatusBadgeColor = (status: string) => {
     switch (status) {
-      case 'scheduled': return 'bg-blue-100 text-blue-800 hover:bg-blue-200';
-      case 'completed': return 'bg-green-100 text-green-800 hover:bg-green-200';
-      case 'cancelled': return 'bg-red-100 text-red-800 hover:bg-red-200';
-      default: return 'bg-gray-100 text-gray-800 hover:bg-gray-200';
+      case 'scheduled': return 'bg-[#fc7416]/10 text-[#fc7416] border-[#fc7416]/20';
+      case 'completed': return 'bg-green-100 text-green-700 border-green-200';
+      case 'cancelled': return 'bg-red-100 text-red-700 border-red-200';
+      default: return 'bg-gray-100 text-gray-700 border-gray-200';
     }
   };
 
@@ -132,250 +132,395 @@ export function CalendarManager() {
   };
 
   return (
-    <div className="space-y-6 p-4">
-      <Card className="shadow-lg border-none bg-white dark:bg-gray-800">
-        <CardHeader className="pb-4">
-          <CardTitle className="text-2xl font-bold text-gray-900 dark:text-white">Training Calendar</CardTitle>
-          <CardDescription className="text-gray-500 dark:text-gray-400">View and filter training sessions</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-6">
+    <div className="min-h-screen bg-gradient-to-br from-[#faf0e8] to-[#fffefe] p-6">
+      <div className="max-w-7xl mx-auto space-y-8">
+        
+        {/* Header */}
+        <div className="mb-8">
+          <h1 className="text-4xl font-bold text-black mb-2 tracking-tight">
+            Training Calendar
+          </h1>
+          <p className="text-lg text-gray-700">
+            Manage and view all basketball training sessions
+          </p>
+        </div>
+
+        {/* Main Calendar Card */}
+        <Card className="border-2 border-[#fc7416]/20 bg-white/90 backdrop-blur-sm shadow-xl">
+          <CardHeader className="border-b border-[#fc7416]/10 bg-gradient-to-r from-[#fc7416]/5 to-[#fe822d]/5">
+            <CardTitle className="text-2xl font-bold text-black flex items-center">
+              <CalendarIcon className="h-6 w-6 mr-3 text-[#fc7416]" />
+              Monthly Overview
+            </CardTitle>
+            <CardDescription className="text-gray-600 text-base">
+              View and manage training sessions for {format(currentMonth, 'MMMM yyyy')}
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="p-8">
+            
             {/* Filters */}
-            <div className="flex flex-col sm:flex-row gap-4">
-              <div className="flex-1">
-                <Select value={selectedCoach} onValueChange={setSelectedCoach}>
-                  <SelectTrigger className="w-full">
-                    <SelectValue placeholder="Select coach" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All Coaches</SelectItem>
-                    {coaches?.map(coach => (
-                      <SelectItem key={coach.id} value={coach.id}>{coach.name}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+            <div className="mb-8">
+              <div className="flex items-center mb-4">
+                <Filter className="h-5 w-5 text-[#fc7416] mr-2" />
+                <h3 className="text-lg font-semibold text-black">Filter Sessions</h3>
               </div>
-              <div className="flex-1">
-                <Select value={selectedBranch} onValueChange={setSelectedBranch}>
-                  <SelectTrigger className="w-full">
-                    <SelectValue placeholder="Select branch" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All Branches</SelectItem>
-                    {branches?.map(branch => (
-                      <SelectItem key={branch.id} value={branch.id}>{branch.name}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-gray-700">Coach</label>
+                  <Select value={selectedCoach} onValueChange={setSelectedCoach}>
+                    <SelectTrigger className="border-[#fc7416]/20 focus:border-[#fc7416] focus:ring-[#fc7416]/20">
+                      <SelectValue placeholder="Select coach" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All Coaches</SelectItem>
+                      {coaches?.map(coach => (
+                        <SelectItem key={coach.id} value={coach.id}>{coach.name}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-gray-700">Branch</label>
+                  <Select value={selectedBranch} onValueChange={setSelectedBranch}>
+                    <SelectTrigger className="border-[#fc7416]/20 focus:border-[#fc7416] focus:ring-[#fc7416]/20">
+                      <SelectValue placeholder="Select branch" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All Branches</SelectItem>
+                      {branches?.map(branch => (
+                        <SelectItem key={branch.id} value={branch.id}>{branch.name}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
             </div>
 
-            {/* Calendar */}
-            <div className="border rounded-xl p-4 bg-gradient-to-br from-gray-50 to-white dark:from-gray-900 dark:to-gray-800">
-              <div className="flex justify-between items-center mb-4">
-                <button 
+            {/* Calendar Grid */}
+            <div className="border-2 border-[#fc7416]/20 rounded-2xl p-6 bg-gradient-to-br from-[#faf0e8]/30 to-white shadow-lg">
+              
+              {/* Calendar Navigation */}
+              <div className="flex justify-between items-center mb-6">
+                <Button
                   onClick={handlePrevMonth}
-                  className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full transition-all"
+                  variant="outline"
+                  size="sm"
+                  className="border-[#fc7416]/30 text-[#fc7416] hover:bg-[#fc7416] hover:text-white transition-all duration-300"
                 >
-                  ←
-                </button>
-                <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+                  <ChevronLeft className="h-4 w-4" />
+                </Button>
+                <h3 className="text-2xl font-bold text-black">
                   {format(currentMonth, 'MMMM yyyy')}
                 </h3>
-                <button 
+                <Button
                   onClick={handleNextMonth}
-                  className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full transition-all"
+                  variant="outline"
+                  size="sm"
+                  className="border-[#fc7416]/30 text-[#fc7416] hover:bg-[#fc7416] hover:text-white transition-all duration-300"
                 >
-                  →
-                </button>
+                  <ChevronRight className="h-4 w-4" />
+                </Button>
               </div>
-              <div className="grid grid-cols-7 gap-1 text-center">
-                {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(day => (
-                  <div key={day} className="text-sm font-medium text-gray-500 dark:text-gray-400">
-                    {day}
+              
+              {/* Days of Week Header */}
+              <div className="grid grid-cols-7 gap-2 mb-4">
+                {['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'].map(day => (
+                  <div key={day} className="text-center py-3 bg-gradient-to-r from-[#fc7416] to-[#fe822d] text-white font-semibold rounded-lg text-sm">
+                    {day.slice(0, 3)}
                   </div>
                 ))}
+              </div>
+              
+              {/* Calendar Days */}
+              <div className="grid grid-cols-7 gap-2">
                 {daysInMonth.map(day => {
-                  const hasSessions = sessions?.some(session => isSameDay(new Date(session.date), day));
+                  const daySessions = sessions?.filter(session => isSameDay(new Date(session.date), day)) || [];
+                  const hasScheduled = daySessions.some(s => s.status === 'scheduled');
+                  const hasCompleted = daySessions.some(s => s.status === 'completed');
+                  const hasCancelled = daySessions.some(s => s.status === 'cancelled');
+                  const isSelected = selectedDate && isSameDay(day, selectedDate);
+                  const isToday = isSameDay(day, new Date());
+                  
                   return (
                     <button
                       key={day.toString()}
                       onClick={() => setSelectedDate(day)}
-                      className={`p-2 rounded-lg transition-all duration-200 text-sm
-                        ${selectedDate && isSameDay(day, selectedDate)
-                          ? 'bg-primary text-white'
-                          : hasSessions
-                            ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-200 hover:bg-blue-200 dark:hover:bg-blue-900/50'
-                            : 'hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300'}`}
+                      className={`
+                        relative p-3 h-20 rounded-xl text-left transition-all duration-300 hover:scale-105 hover:shadow-lg
+                        ${isSelected 
+                          ? 'bg-gradient-to-br from-[#fc7416] to-[#fe822d] text-white shadow-lg scale-105' 
+                          : isToday
+                            ? 'bg-gradient-to-br from-[#fc7416]/20 to-[#fe822d]/20 border-2 border-[#fc7416] text-black'
+                            : daySessions.length > 0
+                              ? 'bg-gradient-to-br from-[#faf0e8] to-white border border-[#fc7416]/30 text-black hover:border-[#fc7416]'
+                              : 'bg-white border border-gray-200 text-gray-700 hover:bg-[#faf0e8]/50'
+                        }
+                      `}
                     >
-                      {format(day, 'd')}
+                      <div className="font-semibold text-lg mb-1">
+                        {format(day, 'd')}
+                      </div>
+                      {daySessions.length > 0 && (
+                        <div className="space-y-1">
+                          <div className="text-xs opacity-90">
+                            {daySessions.length} session{daySessions.length !== 1 ? 's' : ''}
+                          </div>
+                          <div className="flex space-x-1">
+                            {hasScheduled && <div className="w-2 h-2 bg-blue-500 rounded-full"></div>}
+                            {hasCompleted && <div className="w-2 h-2 bg-green-500 rounded-full"></div>}
+                            {hasCancelled && <div className="w-2 h-2 bg-red-500 rounded-full"></div>}
+                          </div>
+                        </div>
+                      )}
                     </button>
                   );
                 })}
               </div>
+              
+              {/* Legend */}
+              <div className="mt-6 flex flex-wrap gap-4 justify-center text-sm">
+                <div className="flex items-center gap-2">
+                  <div className="w-3 h-3 bg-blue-500 rounded-full"></div>
+                  <span className="text-gray-600">Scheduled</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="w-3 h-3 bg-green-500 rounded-full"></div>
+                  <span className="text-gray-600">Completed</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="w-3 h-3 bg-red-500 rounded-full"></div>
+                  <span className="text-gray-600">Cancelled</span>
+                </div>
+              </div>
             </div>
+          </CardContent>
+        </Card>
 
-            {/* Selected Date Sessions */}
-            {selectedDate && (
-              <div className="mt-6">
-                <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">
-                  Sessions on {format(selectedDate, 'MMM dd, yyyy')}
-                </h3>
-                {selectedDateSessions.length > 0 ? (
-                  <div className="space-y-4">
-                    {selectedDateSessions.map(session => (
-                      <Card key={session.id} className="shadow-md border-none bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20">
-                        <CardContent className="p-5">
-                          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 text-sm">
+        {/* Selected Date Sessions */}
+        {selectedDate && (
+          <Card className="border-2 border-[#fc7416]/20 bg-white/90 backdrop-blur-sm shadow-xl">
+            <CardHeader className="border-b border-[#fc7416]/10 bg-gradient-to-r from-[#fc7416]/5 to-[#fe822d]/5">
+              <CardTitle className="text-xl font-bold text-black flex items-center">
+                <Eye className="h-5 w-5 mr-3 text-[#fc7416]" />
+                Sessions on {format(selectedDate, 'EEEE, MMMM dd, yyyy')}
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="p-6">
+              {selectedDateSessions.length > 0 ? (
+                <div className="space-y-4">
+                  {selectedDateSessions.map(session => (
+                    <Card key={session.id} className="border border-[#fc7416]/20 bg-gradient-to-r from-[#faf0e8]/50 to-white hover:shadow-lg transition-all duration-300">
+                      <CardContent className="p-6">
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-4 items-center">
+                          <div className="flex items-center space-x-2">
+                            <Clock className="h-4 w-4 text-[#fc7416]" />
                             <div>
-                              <span className="text-blue-700 dark:text-blue-300 font-medium">Time:</span>
-                              <p className="text-gray-900 dark:text-gray-100">
+                              <p className="text-sm font-medium text-gray-600">Time</p>
+                              <p className="font-semibold text-black">
                                 {formatTime12Hour(session.start_time)} - {formatTime12Hour(session.end_time)}
                               </p>
                             </div>
+                          </div>
+                          <div className="flex items-center space-x-2">
+                            <MapPin className="h-4 w-4 text-[#fc7416]" />
                             <div>
-                              <span className="text-blue-700 dark:text-blue-300 font-medium">Branch:</span>
-                              <p className="text-gray-900 dark:text-gray-100">{session.branches.name}</p>
-                            </div>
-                            <div>
-                              <span className="text-blue-700 dark:text-blue-300 font-medium">Coach:</span>
-                              <p className="text-gray-900 dark:text-gray-100">{session.coaches.name}</p>
-                            </div>
-                            <div>
-                              <span className="text-blue-700 dark:text-blue-300 font-medium">Participants:</span>
-                              <p className="text-gray-900 dark:text-gray-100">{session.session_participants?.length || 0}</p>
+                              <p className="text-sm font-medium text-gray-600">Branch</p>
+                              <p className="font-semibold text-black">{session.branches.name}</p>
                             </div>
                           </div>
-                          <div className="mt-4 flex justify-end">
+                          <div className="flex items-center space-x-2">
+                            <User className="h-4 w-4 text-[#fc7416]" />
+                            <div>
+                              <p className="text-sm font-medium text-gray-600">Coach</p>
+                              <p className="font-semibold text-black">{session.coaches.name}</p>
+                            </div>
+                          </div>
+                          <div className="flex items-center space-x-2">
+                            <Users className="h-4 w-4 text-[#fc7416]" />
+                            <div>
+                              <p className="text-sm font-medium text-gray-600">Players</p>
+                              <p className="font-semibold text-black">{session.session_participants?.length || 0}</p>
+                            </div>
+                          </div>
+                          <div>
+                            <Badge className={`${getStatusBadgeColor(session.status)} font-medium px-3 py-1`}>
+                              {session.status.charAt(0).toUpperCase() + session.status.slice(1)}
+                            </Badge>
+                          </div>
+                          <div className="flex justify-end">
                             <Button
                               onClick={() => navigate(`/dashboard/attendance/${session.id}`)}
-                              className="bg-primary hover:bg-primary/90 transition-all duration-200 hover:scale-105"
+                              className="bg-gradient-to-r from-[#fc7416] to-[#fe822d] hover:from-[#fe822d] hover:to-[#fc7416] text-white font-medium transition-all duration-300 hover:scale-105 hover:shadow-lg"
                             >
                               Manage Attendance
                             </Button>
                           </div>
-                        </CardContent>
-                      </Card>
-                    ))}
-                  </div>
-                ) : (
-                  <p className="text-gray-500 dark:text-gray-400 text-center py-4">
-                    No sessions scheduled for this date.
-                  </p>
-                )}
-              </div>
-            )}
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-12">
+                  <CalendarIcon className="h-16 w-16 text-gray-300 mx-auto mb-4" />
+                  <p className="text-xl text-gray-500 mb-2">No sessions scheduled</p>
+                  <p className="text-gray-400">Select a different date or schedule a new session</p>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        )}
 
-            {/* Sessions Lists */}
-            <div className="space-y-6 mt-6">
-              <div>
-                <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">Upcoming Sessions</h3>
-                {upcomingSessions.length > 0 ? (
+        <div className="grid gap-8 lg:grid-cols-2">
+          
+          {/* Upcoming Sessions */}
+          <Card className="border-2 border-green-200 bg-gradient-to-br from-green-50 to-white shadow-lg">
+            <CardHeader className="border-b border-green-200 bg-gradient-to-r from-green-100/50 to-green-50">
+              <CardTitle className="text-xl font-bold text-green-800 flex items-center">
+                <Clock className="h-5 w-5 mr-3 text-green-600" />
+                Upcoming Sessions
+              </CardTitle>
+              <CardDescription className="text-green-600">
+                Sessions scheduled for the future ({upcomingSessions.length} total)
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="p-0">
+              {upcomingSessions.length > 0 ? (
+                <div className="overflow-hidden">
                   <Table>
                     <TableHeader>
-                      <TableRow className="bg-gray-50 dark:bg-gray-700">
-                        <TableHead className="text-gray-900 dark:text-white">Date & Time</TableHead>
-                        <TableHead className="text-gray-900 dark:text-white">Branch</TableHead>
-                        <TableHead className="text-gray-900 dark:text-white">Coach</TableHead>
-                        <TableHead className="text-gray-900 dark:text-white">Participants</TableHead>
-                        <TableHead className="text-gray-900 dark:text-white">Status</TableHead>
+                      <TableRow className="bg-gradient-to-r from-green-100 to-green-50 border-b border-green-200">
+                        <TableHead className="font-semibold text-green-800">Date & Time</TableHead>
+                        <TableHead className="font-semibold text-green-800">Branch</TableHead>
+                        <TableHead className="font-semibold text-green-800">Coach</TableHead>
+                        <TableHead className="font-semibold text-green-800">Players</TableHead>
+                        <TableHead className="font-semibold text-green-800">Status</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {upcomingSessions.map((session) => (
-                        <TableRow key={session.id} className="hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
-                          <TableCell>
-                            <div className="font-medium text-gray-900 dark:text-white">
-                              {format(new Date(session.date), 'MMM dd, yyyy')}
+                      {upcomingSessions.map((session, index) => (
+                        <TableRow 
+                          key={session.id} 
+                          className={`
+                            hover:bg-green-50 transition-colors border-b border-green-100
+                            ${index % 2 === 0 ? 'bg-white' : 'bg-green-25'}
+                          `}
+                        >
+                          <TableCell className="py-4">
+                            <div className="font-semibold text-black">
+                              {session.date ? format(new Date(session.date), 'MMM dd, yyyy') : 'Invalid Date'}
                             </div>
-                            <div className="text-sm text-gray-600 dark:text-gray-400">
-                              {formatTime12Hour(session.start_time)} - {formatTime12Hour(session.end_time)}
+                            <div className="text-sm text-green-600 font-medium">
+                              {session.start_time && session.end_time ? (
+                                `${formatTime12Hour(session.start_time)} - ${formatTime12Hour(session.end_time)}`
+                              ) : (
+                                'Invalid Time'
+                              )}
                             </div>
                           </TableCell>
-                          <TableCell className="text-gray-700 dark:text-gray-300">{session.branches.name}</TableCell>
-                          <TableCell className="text-gray-700 dark:text-gray-300">{session.coaches.name}</TableCell>
-                          <TableCell className="text-gray-700 dark:text-gray-300">
+                          <TableCell className="text-gray-700 font-medium">{session.branches.name}</TableCell>
+                          <TableCell className="text-gray-700 font-medium">{session.coaches.name}</TableCell>
+                          <TableCell>
                             <div className="flex items-center space-x-2">
-                              <Users className="w-4 h-4" />
-                              <span>{session.session_participants?.length || 0}</span>
+                              <Users className="w-4 h-4 text-green-600" />
+                              <span className="font-medium">{session.session_participants?.length || 0}</span>
                             </div>
                           </TableCell>
                           <TableCell>
-                            <Badge className={`${getStatusBadgeColor(session.status)} transition-colors`}>
-                              {session.status}
+                            <Badge className={getStatusBadgeColor(session.status)}>
+                              {session.status.charAt(0).toUpperCase() + session.status.slice(1)}
                             </Badge>
                           </TableCell>
                         </TableRow>
                       ))}
                     </TableBody>
                   </Table>
-                ) : (
-                  <p className="text-gray-500 dark:text-gray-400 text-center py-4">
-                    No upcoming sessions.
-                  </p>
-                )}
-              </div>
+                </div>
+              ) : (
+                <div className="p-12 text-center">
+                  <Clock className="h-16 w-16 text-green-300 mx-auto mb-4" />
+                  <p className="text-xl text-green-600 mb-2">No upcoming sessions</p>
+                  <p className="text-green-500">Schedule new training sessions to get started</p>
+                </div>
+              )}
+            </CardContent>
+          </Card>
 
-              <div>
-                <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">Past Sessions</h3>
-                {pastSessions.length > 0 ? (
+          {/* Past Sessions */}
+          <Card className="border-2 border-gray-200 bg-gradient-to-br from-gray-50 to-white shadow-lg">
+            <CardHeader className="border-b border-gray-200 bg-gradient-to-r from-gray-100/50 to-gray-50">
+              <CardTitle className="text-xl font-bold text-gray-800 flex items-center">
+                <CalendarIcon className="h-5 w-5 mr-3 text-gray-600" />
+                Past Sessions
+              </CardTitle>
+              <CardDescription className="text-gray-600">
+                Previously completed sessions ({pastSessions.length} total)
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="p-0">
+              {pastSessions.length > 0 ? (
+                <div className="overflow-hidden">
                   <Table>
                     <TableHeader>
-                      <TableRow className="bg-gray-50 dark:bg-gray-700">
-                        <TableHead className="text-gray-900 dark:text-white">Date & Time</TableHead>
-                        <TableHead className="text-gray-900 dark:text-white">Branch</TableHead>
-                        <TableHead className="text-gray-900 dark:text-white">Coach</TableHead>
-                        <TableHead className="text-gray-900 dark:text-white">Participants</TableHead>
-                        <TableHead className="text-gray-900 dark:text-white">Status</TableHead>
+                      <TableRow className="bg-gradient-to-r from-gray-100 to-gray-50 border-b border-gray-200">
+                        <TableHead className="font-semibold text-gray-800">Date & Time</TableHead>
+                        <TableHead className="font-semibold text-gray-800">Branch</TableHead>
+                        <TableHead className="font-semibold text-gray-800">Coach</TableHead>
+                        <TableHead className="font-semibold text-gray-800">Players</TableHead>
+                        <TableHead className="font-semibold text-gray-800">Status</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {pastSessions.map((session) => (
-                        <TableRow key={session.id} className="hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
-                          <TableCell>
-                            <div className="font-medium text-gray-900 dark:text-white">
-                              {format(new Date(session.date), 'MMM dd, yyyy')}
+                      {pastSessions.map((session, index) => (
+                        <TableRow 
+                          key={session.id} 
+                          className={`
+                            hover:bg-gray-50 transition-colors border-b border-gray-100
+                            ${index % 2 === 0 ? 'bg-white' : 'bg-gray-25'}
+                          `}
+                        >
+                          <TableCell className="py-4">
+                            <div className="font-semibold text-black">
+                              {session.date ? format(new Date(session.date), 'MMM dd, yyyy') : 'Invalid Date'}
                             </div>
-                            <div className="text-sm text-gray-600 dark:text-gray-400">
-                              {formatTime12Hour(session.start_time)} - {formatTime12Hour(session.end_time)}
+                            <div className="text-sm text-gray-500 font-medium">
+                              {session.start_time && session.end_time ? (
+                                `${formatTime12Hour(session.start_time)} - ${formatTime12Hour(session.end_time)}`
+                              ) : (
+                                'Invalid Time'
+                              )}
                             </div>
                           </TableCell>
-                          <TableCell className="text-gray-700 dark:text-gray-300">{session.branches.name}</TableCell>
-                          <TableCell className="text-gray-700 dark:text-gray-300">{session.coaches.name}</TableCell>
-                          <TableCell className="text-gray-700 dark:text-gray-300">
+                          <TableCell className="text-gray-700 font-medium">{session.branches.name}</TableCell>
+                          <TableCell className="text-gray-700 font-medium">{session.coaches.name}</TableCell>
+                          <TableCell>
                             <div className="flex items-center space-x-2">
-                              <Users className="w-4 h-4" />
-                              <span>{session.session_participants?.length || 0}</span>
+                              <Users className="w-4 h-4 text-gray-500" />
+                              <span className="font-medium">{session.session_participants?.length || 0}</span>
                             </div>
                           </TableCell>
                           <TableCell>
-                            <Badge className={`${getStatusBadgeColor(session.status)} transition-colors`}>
-                              {session.status}
+                            <Badge className={getStatusBadgeColor(session.status)}>
+                              {session.status.charAt(0).toUpperCase() + session.status.slice(1)}
                             </Badge>
                           </TableCell>
                         </TableRow>
                       ))}
                     </TableBody>
                   </Table>
-                ) : (
-                  <p className="text-gray-500 dark:text-gray-400 text-center py-4">
-                    No past sessions.
-                  </p>
-                )}
-              </div>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+                </div>
+              ) : (
+                <div className="p-12 text-center">
+                  <CalendarIcon className="h-16 w-16 text-gray-300 mx-auto mb-4" />
+                  <p className="text-xl text-gray-500 mb-2">No past sessions</p>
+                  <p className="text-gray-400">Session history will appear here</p>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </div>
+
+      </div>
     </div>
   );
 }
-
-const getStatusBadgeColor = (status: string) => {
-  switch (status) {
-    case 'scheduled': return 'bg-blue-100 text-blue-800 hover:bg-blue-200';
-    case 'completed': return 'bg-green-100 text-green-800 hover:bg-green-200';
-    case 'cancelled': return 'bg-red-100 text-red-800 hover:bg-red-200';
-    default: return 'bg-gray-100 text-gray-800 hover:bg-gray-200';
-  }
-};
