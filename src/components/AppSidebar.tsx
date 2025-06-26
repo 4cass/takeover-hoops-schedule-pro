@@ -10,6 +10,7 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
+  useSidebar,
 } from "@/components/ui/sidebar";
 
 const menuItems = [
@@ -56,6 +57,16 @@ interface AppSidebarProps {
 }
 
 export function AppSidebar({ activeTab, onTabChange }: AppSidebarProps) {
+  const { setOpen, isMobile } = useSidebar();
+
+  const handleTabChange = (value: string) => {
+    onTabChange(value);
+    // Auto-collapse sidebar on mobile when a tab is selected
+    if (isMobile) {
+      setOpen(false);
+    }
+  };
+
   return (
     <Sidebar>
       <SidebarHeader className="p-6">
@@ -72,7 +83,7 @@ export function AppSidebar({ activeTab, onTabChange }: AppSidebarProps) {
               {menuItems.map((item) => (
                 <SidebarMenuItem key={item.value}>
                   <SidebarMenuButton 
-                    onClick={() => onTabChange(item.value)}
+                    onClick={() => handleTabChange(item.value)}
                     isActive={activeTab === item.value}
                     className="w-full justify-start"
                   >

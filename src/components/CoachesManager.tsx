@@ -7,11 +7,9 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Checkbox } from "@/components/ui/checkbox";
 import { Plus, Edit, Trash2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import type { Database } from "@/integrations/supabase/types";
 
 type Coach = {
   id: string;
@@ -21,58 +19,33 @@ type Coach = {
   created_at: string;
 };
 
-type CoachAvailability = {
-  id: string;
-  coach_id: string;
-  day_of_week: Database['public']['Enums']['day_of_week'];
-};
-
-type DayOfWeek = Database['public']['Enums']['day_of_week'];
-
-const DAYS_OF_WEEK: DayOfWeek[] = [
-  'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'
-];
-
 export function CoachesManager() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingCoach, setEditingCoach] = useState<Coach | null>(null);
   const [formData, setFormData] = useState({
     name: "",
     email: "",
-    phone: "",
-    availability: [] as DayOfWeek[]
+    phone: ""
   });
 
   const queryClient = useQueryClient();
 
   const { data: coaches, isLoading } = useQuery({
-    queryKey: ['coaches-with-availability'],
+    queryKey: ['coaches'],
     queryFn: async () => {
-      const { data: coachesData, error: coachesError } = await supabase
+      const { data, error } = await supabase
         .from('coaches')
         .select('*')
         .order('created_at', { ascending: false });
       
-      if (coachesError) throw coachesError;
-
-      const { data: availabilityData, error: availabilityError } = await supabase
-        .from('coach_availability')
-        .select('*');
-      
-      if (availabilityError) throw availabilityError;
-
-      return coachesData.map(coach => ({
-        ...coach,
-        availability: availabilityData
-          .filter(a => a.coach_id === coach.id)
-          .map(a => a.day_of_week)
-      }));
+      if (error) throw error;
+      return data as Coach[];
     }
   });
 
   const createMutation = useMutation({
     mutationFn: async (coach: typeof formData) => {
-      const { data: coachData, error: coachError } = await supabase
+      const { data, error } = await supabase
         .from('coaches')
         .insert([{
           name: coach.name,
@@ -82,25 +55,11 @@ export function CoachesManager() {
         .select()
         .single();
       
-      if (coachError) throw coachError;
-
-      if (coach.availability.length > 0) {
-        const { error: availabilityError } = await supabase
-          .from('coach_availability')
-          .insert(
-            coach.availability.map(day => ({
-              coach_id: coachData.id,
-              day_of_week: day as DayOfWeek
-            }))
-          );
-        
-        if (availabilityError) throw availabilityError;
-      }
-
-      return coachData;
+      if (error) throw error;
+      return data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['coaches-with-availability'] });
+      queryClient.invalidateQueries({ queryKey: ['coaches'] });
       queryClient.invalidateQueries({ queryKey: ['dashboard-stats'] });
       toast.success('Coach created successfully');
       resetForm();
@@ -112,7 +71,7 @@ export function CoachesManager() {
 
   const updateMutation = useMutation({
     mutationFn: async ({ id, ...coach }: typeof formData & { id: string }) => {
-      const { data: coachData, error: coachError } = await supabase
+      const { data, error } = await supabase
         .from('coaches')
         .update({
           name: coach.name,
@@ -123,31 +82,11 @@ export function CoachesManager() {
         .select()
         .single();
       
-      if (coachError) throw coachError;
-
-      // Delete existing availability and insert new ones
-      await supabase
-        .from('coach_availability')
-        .delete()
-        .eq('coach_id', id);
-
-      if (coach.availability.length > 0) {
-        const { error: availabilityError } = await supabase
-          .from('coach_availability')
-          .insert(
-            coach.availability.map(day => ({
-              coach_id: id,
-              day_of_week: day as DayOfWeek
-            }))
-          );
-        
-        if (availabilityError) throw availabilityError;
-      }
-
-      return coachData;
+      if (error) throw error;
+      return data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['coaches-with-availability'] });
+      queryClient.invalidateQueries({ queryKey: ['coaches'] });
       toast.success('Coach updated successfully');
       resetForm();
     },
@@ -166,7 +105,7 @@ export function CoachesManager() {
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['coaches-with-availability'] });
+      queryClient.invalidateQueries({ queryKey: ['coaches'] });
       queryClient.invalidateQueries({ queryKey: ['dashboard-stats'] });
       toast.success('Coach deleted successfully');
     },
@@ -176,7 +115,7 @@ export function CoachesManager() {
   });
 
   const resetForm = () => {
-    setFormData({ name: "", email: "", phone: "", availability: [] });
+    setFormData({ name: "", email: "", phone: "" });
     setEditingCoach(null);
     setIsDialogOpen(false);
   };
@@ -190,24 +129,14 @@ export function CoachesManager() {
     }
   };
 
-  const handleEdit = (coach: any) => {
+  const handleEdit = (coach: Coach) => {
     setEditingCoach(coach);
     setFormData({
       name: coach.name,
       email: coach.email,
-      phone: coach.phone || "",
-      availability: coach.availability || []
+      phone: coach.phone || ""
     });
     setIsDialogOpen(true);
-  };
-
-  const handleAvailabilityChange = (day: DayOfWeek, checked: boolean) => {
-    setFormData(prev => ({
-      ...prev,
-      availability: checked 
-        ? [...prev.availability, day]
-        : prev.availability.filter(d => d !== day)
-    }));
   };
 
   if (isLoading) {
@@ -220,7 +149,7 @@ export function CoachesManager() {
         <div className="flex justify-between items-center">
           <div>
             <CardTitle>Coaches Management</CardTitle>
-            <CardDescription>Manage coach information and availability</CardDescription>
+            <CardDescription>Manage coach information</CardDescription>
           </div>
           <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
             <DialogTrigger asChild>
@@ -266,23 +195,6 @@ export function CoachesManager() {
                     onChange={(e) => setFormData(prev => ({ ...prev, phone: e.target.value }))}
                   />
                 </div>
-                <div>
-                  <Label>Availability</Label>
-                  <div className="grid grid-cols-2 gap-2 mt-2">
-                    {DAYS_OF_WEEK.map(day => (
-                      <div key={day} className="flex items-center space-x-2">
-                        <Checkbox
-                          id={day}
-                          checked={formData.availability.includes(day)}
-                          onCheckedChange={(checked) => handleAvailabilityChange(day, checked as boolean)}
-                        />
-                        <Label htmlFor={day} className="capitalize">
-                          {day}
-                        </Label>
-                      </div>
-                    ))}
-                  </div>
-                </div>
                 <div className="flex justify-end space-x-2">
                   <Button type="button" variant="outline" onClick={resetForm}>
                     Cancel
@@ -303,7 +215,6 @@ export function CoachesManager() {
               <TableHead>Name</TableHead>
               <TableHead>Email</TableHead>
               <TableHead>Phone</TableHead>
-              <TableHead>Availability</TableHead>
               <TableHead>Actions</TableHead>
             </TableRow>
           </TableHeader>
@@ -313,15 +224,6 @@ export function CoachesManager() {
                 <TableCell>{coach.name}</TableCell>
                 <TableCell>{coach.email}</TableCell>
                 <TableCell>{coach.phone || 'N/A'}</TableCell>
-                <TableCell>
-                  <div className="flex flex-wrap gap-1">
-                    {coach.availability?.map((day: DayOfWeek) => (
-                      <span key={day} className="px-2 py-1 bg-blue-100 text-blue-800 rounded text-xs capitalize">
-                        {day.slice(0, 3)}
-                      </span>
-                    ))}
-                  </div>
-                </TableCell>
                 <TableCell>
                   <div className="flex space-x-2">
                     <Button
