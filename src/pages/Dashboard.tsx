@@ -13,7 +13,7 @@ import { useEffect } from "react";
 export default function Dashboard() {
   const location = useLocation();
   const navigate = useNavigate();
-  
+
   useEffect(() => {
     window.scrollTo(0, 0);
   }, [location.pathname]);
@@ -31,13 +31,13 @@ export default function Dashboard() {
 
   return (
     <SidebarProvider>
-      <div className="min-h-screen flex w-full">
+      <div className="min-h-screen bg-gradient-to-br from-[#faf0e8] to-[#fffefe]; flex w-full">
         <AppSidebar activeTab={activeTab} onTabChange={(tab) => navigate(`/dashboard/${tab === "overview" ? "" : tab}`)} />
         <SidebarInset>
-          <header className="sticky top-0 z-50 flex h-16 shrink-0 items-center gap-2 px-4">
+          <header className="sticky top-0 z-50 bg-gradient-to-br from-[#faf0e8] to-[#fffefe] flex h-16 shrink-0 items-center gap-2 px-4">
             <SidebarTrigger className="text-black hover:text-black bg-orange/30" />
           </header>
-          <main className="flex-1 p-6 bg-white">
+          <main className="flex-1 p-6 bg-gradient-to-br from-[#faf0e8] to-[#fffefe];">
             <Routes>
               <Route path="/" element={<DashboardStats />} />
               <Route path="calendar" element={<CalendarManager />} />

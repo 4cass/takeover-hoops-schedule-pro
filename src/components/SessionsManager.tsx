@@ -253,6 +253,7 @@ export function SessionsManager() {
       notes: session.notes || "",
       status: session.status
     });
+    setSelectedStudents(session.session_participants.map(p => p.student_id));
     setIsDialogOpen(true);
   };
 
