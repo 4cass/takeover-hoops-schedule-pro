@@ -283,13 +283,13 @@ export function SessionsManager() {
   }
 
   return (
-    <div className="min-h-screen p-6" style={{ backgroundColor: '#faf0e8' }}>
-      <div className="max-w-7xl mx-auto">
+    <div className="min-h-screen bg-gradient-to-br from-[#faf0e8] to-[#fffefe] pt-4 p-6" >
+      <div className="max-w-7xl mx-auto -mt-5">
         {/* Header Section */}
         <div className="mb-8">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div>
-              <h1 className="text-3xl font-bold text-gray-900 mb-2">Training Sessions</h1>
+              <h1 className="text-4xl font-bold text-black mb-2 tracking-tight">Training Sessions</h1>
               <p className="text-gray-600">Schedule and manage basketball training sessions</p>
             </div>
             <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
@@ -524,11 +524,10 @@ export function SessionsManager() {
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                 {sessions.map((session) => (
-                  <Card 
+                 <Card 
                     key={session.id} 
                     onClick={() => handleEdit(session)} 
-                    className="group cursor-pointer transition-all duration-300 hover:shadow-lg hover:-translate-y-1 border-2 border-transparent hover:border-orange-300"
-                    style={{ backgroundColor: '#faf0e8' }}
+                    className="cursor-pointer border-2 transition-all duration-300 hover:scale-105 hover:shadow-lg rounded-xl border-[#fc7416]/20 hover:border-[#fc7416]/50"
                   >
                     <CardHeader className="pb-3">
                       <div className="flex justify-between items-start mb-2">
@@ -575,14 +574,14 @@ export function SessionsManager() {
                             e.stopPropagation();
                             handleManageParticipants(session);
                           }}
-                          className="text-xs hover:bg-orange-50"
+                          className="text-xs border-[#fc7416] text-[#fc7416] hover:bg-orange-500 text-[#fc7416]"
                         >
                           Manage
                         </Button>
                       </div>
                       
                       {session.notes && (
-                        <div className="mt-3 p-2 bg-white rounded-md border">
+                        <div className="mt-3 p-2 bg-white rounded-md border border-[#ffd3b4]">
                           <p className="text-xs text-gray-600 italic">"{session.notes}"</p>
                         </div>
                       )}

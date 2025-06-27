@@ -8,10 +8,15 @@ import { AttendanceManager } from "@/components/AttendanceManager";
 import { StudentsManager } from "@/components/StudentsManager";
 import { CoachesManager } from "@/components/CoachesManager";
 import { BranchesManager } from "@/components/BranchesManager";
+import { useEffect } from "react";
 
 export default function Dashboard() {
   const location = useLocation();
   const navigate = useNavigate();
+  
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [location.pathname]);
 
   // Derive active tab from current URL
   const path = location.pathname;
@@ -29,13 +34,8 @@ export default function Dashboard() {
       <div className="min-h-screen flex w-full">
         <AppSidebar activeTab={activeTab} onTabChange={(tab) => navigate(`/dashboard/${tab === "overview" ? "" : tab}`)} />
         <SidebarInset>
-          <header className="flex h-16 shrink-0 items-center gap-2 bg-[#272828] px-4">
-            <SidebarTrigger className="text-white hover:bg-white/10" />
-            <div className="flex flex-1 items-center gap-2 px-3">
-              <h1 className="text-xl font-bold text-white">
-                {activeTab === "overview" ? "Dashboard Overview" : activeTab.charAt(0).toUpperCase() + activeTab.slice(1)}
-              </h1>
-            </div>
+          <header className="sticky top-0 z-50 flex h-16 shrink-0 items-center gap-2 px-4">
+            <SidebarTrigger className="text-black hover:text-black bg-orange/30" />
           </header>
           <main className="flex-1 p-6 bg-white">
             <Routes>
