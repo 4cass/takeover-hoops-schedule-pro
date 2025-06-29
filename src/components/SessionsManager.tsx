@@ -6,14 +6,20 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-"@/integrations/supabase/client";
+import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import type { Database } from "@/integrations/supabase/types";
-import { supabase } from "@/integrations/supabase/client";
 import { Badge, Calendar, Clock, FileText, MapPin, Plus, Trash2, User, Users } from "lucide-react";
 
 type SessionStatus = Database['public']['Enums']['session_status'];
+
+type Student = {
+  id: string;
+  name: string;
+  remaining_sessions: number;
+  package_type: 'camp' | 'personal' | null;
+};
 
 type TrainingSession = {
   id: string;
@@ -24,12 +30,13 @@ type TrainingSession = {
   coach_id: string;
   notes: string | null;
   status: SessionStatus;
+  package_type: 'camp' | 'personal' | null;
   branches: { name: string };
   coaches: { name: string };
   session_participants: Array<{
     id: string;
     student_id: string;
-    students: { name: string };
+    students: { name: string; package_type: 'camp' | 'personal' | null };
   }>;
 };
 
@@ -46,12 +53,13 @@ export function SessionsManager() {
     branch_id: "",
     coach_id: "",
     notes: "",
-    status: "scheduled" as SessionStatus
+    status: "scheduled" as SessionStatus,
+    package_type: "" as 'camp' | 'personal' | '',
   });
 
   const queryClient = useQueryClient();
-
-  const { data: sessions, isLoading } = useQuery({
+  
+const { data: sessions, isLoading, error } = useQuery({
     queryKey: ['training-sessions'],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -60,15 +68,19 @@ export function SessionsManager() {
           *,
           branches (name),
           coaches (name),
+          package_type,
           session_participants (
             id,
             student_id,
-            students (name)
+            students (name, package_type)
           )
         `)
         .order('date', { ascending: false });
       
-      if (error) throw error;
+      if (error) {
+        console.error('Error fetching training sessions:', error);
+        throw new Error(`Failed to fetch training sessions: ${error.message}`);
+      }
       return data as TrainingSession[];
     }
   });
@@ -104,17 +116,29 @@ export function SessionsManager() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('students')
-        .select('id, name, remaining_sessions')
+        .select('id, name, remaining_sessions, package_type') // Add package_type
         .order('name');
       
       if (error) throw error;
-      return data;
+      return data as Student[];
     }
   });
 
   const createMutation = useMutation({
     mutationFn: async (session: typeof formData) => {
-      // Check for conflicts first
+      // Skip validation if no package_type is selected
+      if (session.package_type) {
+        const invalidStudents = selectedStudents.filter(studentId => {
+          const student = students?.find(s => s.id === studentId);
+          return student && student.package_type !== session.package_type;
+        });
+
+        if (invalidStudents.length > 0) {
+          throw new Error('Selected students must match the session package type');
+        }
+      }
+
+      // Check for conflicts
       const { data: conflicts } = await supabase
         .rpc('check_scheduling_conflicts', {
           p_date: session.date,
@@ -128,9 +152,11 @@ export function SessionsManager() {
         throw new Error(conflicts[0].conflict_details);
       }
 
-      const { data, error } = await supabase
+      const { data, error } =
+
+ await supabase
         .from('training_sessions')
-        .insert([session])
+        .insert([{ ...session, package_type: session.package_type || null }]) // Handle empty package_type
         .select()
         .single();
       
@@ -178,14 +204,60 @@ export function SessionsManager() {
 
   const updateMutation = useMutation({
     mutationFn: async ({ id, ...session }: typeof formData & { id: string }) => {
+      // Skip validation if no package_type is selected
+      if (session.package_type) {
+        const invalidStudents = selectedStudents.filter(studentId => {
+          const student = students?.find(s => s.id === studentId);
+          return student && student.package_type !== session.package_type;
+        });
+
+        if (invalidStudents.length > 0) {
+          throw new Error('Selected students must match the session package type');
+        }
+      }
+
       const { data, error } = await supabase
         .from('training_sessions')
-        .update(session)
+        .update({ ...session, package_type: session.package_type || null }) // Handle empty package_type
         .eq('id', id)
         .select()
         .single();
       
       if (error) throw error;
+
+      // Update participants
+      await supabase
+        .from('session_participants')
+        .delete()
+        .eq('session_id', id);
+
+      if (selectedStudents.length > 0) {
+        await supabase
+          .from('session_participants')
+          .insert(
+            selectedStudents.map(studentId => ({
+              session_id: id,
+              student_id: studentId
+            }))
+          );
+
+        // Update attendance records
+        await supabase
+          .from('attendance_records')
+          .delete()
+          .eq('session_id', id);
+
+        await supabase
+          .from('attendance_records')
+          .insert(
+            selectedStudents.map(studentId => ({
+              session_id: id,
+              student_id: studentId,
+              status: 'pending' as const
+            }))
+          );
+      }
+
       return data;
     },
     onSuccess: () => {
@@ -225,7 +297,8 @@ export function SessionsManager() {
       branch_id: "",
       coach_id: "",
       notes: "",
-      status: "scheduled"
+      status: "scheduled" as SessionStatus,
+      package_type: "", // Add package_type
     });
     setSelectedStudents([]);
     setEditingSession(null);
@@ -235,6 +308,23 @@ export function SessionsManager() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Conflict Check
+    const hasConflict = sessions?.some(session =>
+      session.coach_id === formData.coach_id &&
+      session.date === formData.date &&
+      (
+        (formData.start_time < session.end_time) &&
+        (formData.end_time > session.start_time)
+      ) &&
+      (!editingSession || editingSession.id !== session.id)
+    );
+
+    if (hasConflict) {
+      toast.error('This coach is already scheduled for a session on this date/time.');
+      return;
+    }
+
     if (editingSession) {
       updateMutation.mutate({ ...formData, id: editingSession.id });
     } else {
@@ -251,7 +341,8 @@ export function SessionsManager() {
       branch_id: session.branch_id,
       coach_id: session.coach_id,
       notes: session.notes || "",
-      status: session.status
+      status: session.status,
+      package_type: session.package_type || '',
     });
     setSelectedStudents(session.session_participants.map(p => p.student_id));
     setIsDialogOpen(true);
@@ -284,7 +375,7 @@ export function SessionsManager() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#faf0e8] to-[#fffefe] pt-4 p-6" >
+    <div className="min-h-screen bg-gradient-to-br from-[#faf0e8] to-[#fffefe] pt-4 p-6">
       <div className="max-w-7xl mx-auto -mt-5">
         {/* Header Section */}
         <div className="mb-8">
@@ -418,6 +509,26 @@ export function SessionsManager() {
                     </div>
                   </div>
 
+                  {/* Package Type Selection */}
+                  <div className="space-y-2">
+                    <Label htmlFor="package_type" className="flex items-center text-sm font-medium text-gray-700">
+                      <Users className="w-4 h-4 mr-2" style={{ color: '#fc7416' }} />
+                      Package Type
+                    </Label>
+                    <Select
+                      value={formData.package_type}
+                      onValueChange={(value: 'camp' | 'personal') => setFormData(prev => ({ ...prev, package_type: value }))}
+                    >
+                      <SelectTrigger className="border-2 focus:border-orange-500 rounded-lg">
+                        <SelectValue placeholder="Select package type" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="camp">Camp Training</SelectItem>
+                        <SelectItem value="personal">Personal Training</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
                   {/* Players Selection */}
                   <div className="space-y-3">
                     <Label className="flex items-center text-sm font-medium text-gray-700">
@@ -426,28 +537,33 @@ export function SessionsManager() {
                     </Label>
                     <div className="border-2 rounded-lg p-4 max-h-48 overflow-y-auto" style={{ backgroundColor: '#faf0e8', borderColor: '#fc7416' }}>
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                        {students?.map(student => (
-                          <div key={student.id} className="flex items-center space-x-3 p-2 rounded-md hover:bg-white transition-colors">
-                            <input
-                              type="checkbox"
-                              id={student.id}
-                              checked={selectedStudents.includes(student.id)}
-                              onChange={(e) => {
-                                if (e.target.checked) {
-                                  setSelectedStudents(prev => [...prev, student.id]);
-                                } else {
-                                  setSelectedStudents(prev => prev.filter(id => id !== student.id));
-                                }
-                              }}
-                              className="w-4 h-4 rounded border-2 border-orange-400 text-orange-500 focus:ring-orange-500"
-                            />
-                            <Label htmlFor={student.id} className="flex-1 text-sm cursor-pointer">
-                              <span className="font-medium">{student.name}</span>
-                              <span className="text-gray-500 ml-2">({student.remaining_sessions} sessions left)</span>
-                            </Label>
-                          </div>
-                        ))}
+                        {students
+                          ?.filter(student => formData.package_type === '' || student.package_type === formData.package_type)
+                          .map(student => (
+                            <div key={student.id} className="flex items-center space-x-3 p-2 rounded-md hover:bg-white transition-colors">
+                              <input
+                                type="checkbox"
+                                id={student.id}
+                                checked={selectedStudents.includes(student.id)}
+                                onChange={(e) => {
+                                  if (e.target.checked) {
+                                    setSelectedStudents(prev => [...prev, student.id]);
+                                  } else {
+                                    setSelectedStudents(prev => prev.filter(id => id !== student.id));
+                                  }
+                                }}
+                                className="w-4 h-4 rounded border-2 border-orange-400 text-orange-500 focus:ring-orange-500"
+                              />
+                              <Label htmlFor={student.id} className="flex-1 text-sm cursor-pointer">
+                                <span className="font-medium">{student.name}</span>
+                                <span className="text-gray-500 ml-2">({student.remaining_sessions} sessions left)</span>
+                              </Label>
+                            </div>
+                          ))}
                       </div>
+                      {students?.filter(student => formData.package_type === '' || student.package_type === formData.package_type).length === 0 && formData.package_type !== '' && (
+                        <p className="text-sm text-red-600">No students available for {formData.package_type} training.</p>
+                      )}
                     </div>
                   </div>
 
@@ -525,7 +641,7 @@ export function SessionsManager() {
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                 {sessions.map((session) => (
-                 <Card 
+                  <Card 
                     key={session.id} 
                     onClick={() => handleEdit(session)} 
                     className="cursor-pointer border-2 transition-all duration-300 hover:scale-105 hover:shadow-lg rounded-xl border-[#fc7416]/20 hover:border-[#fc7416]/50"
@@ -618,27 +734,32 @@ export function SessionsManager() {
               <div className="space-y-2">
                 <Label className="text-sm font-medium text-gray-700">Available Players</Label>
                 <div className="border-2 rounded-lg p-3 max-h-60 overflow-y-auto space-y-2" style={{ borderColor: '#fc7416', backgroundColor: '#faf0e8' }}>
-                  {students?.map(student => (
-                    <div key={student.id} className="flex items-center space-x-3 p-2 rounded-md hover:bg-white transition-colors">
-                      <input
-                        type="checkbox"
-                        id={`participant-${student.id}`}
-                        checked={selectedStudents.includes(student.id)}
-                        onChange={(e) => {
-                          if (e.target.checked) {
-                            setSelectedStudents(prev => [...prev, student.id]);
-                          } else {
-                            setSelectedStudents(prev => prev.filter(id => id !== student.id));
-                          }
-                        }}
-                        className="w-4 h-4 rounded border-2 border-orange-400 text-orange-500 focus:ring-orange-500"
-                      />
-                      <Label htmlFor={`participant-${student.id}`} className="flex-1 text-sm cursor-pointer">
-                        <span className="font-medium">{student.name}</span>
-                        <span className="text-gray-500 ml-2">({student.remaining_sessions} sessions left)</span>
-                      </Label>
-                    </div>
-                  ))}
+                  {students
+                    ?.filter(student => !selectedSession?.package_type || student.package_type === selectedSession.package_type)
+                    .map(student => (
+                      <div key={student.id} className="flex items-center space-x-3 p-2 rounded-md hover:bg-white transition-colors">
+                        <input
+                          type="checkbox"
+                          id={`participant-${student.id}`}
+                          checked={selectedStudents.includes(student.id)}
+                          onChange={(e) => {
+                            if (e.target.checked) {
+                              setSelectedStudents(prev => [...prev, student.id]);
+                            } else {
+                              setSelectedStudents(prev => prev.filter(id => id !== student.id));
+                            }
+                          }}
+                          className="w-4 h-4 rounded border-2 border-orange-400 text-orange-500 focus:ring-orange-500"
+                        />
+                        <Label htmlFor={`participant-${student.id}`} className="flex-1 text-sm cursor-pointer">
+                          <span className="font-medium">{student.name}</span>
+                          <span className="text-gray-500 ml-2">({student.remaining_sessions} sessions left)</span>
+                        </Label>
+                      </div>
+                    ))}
+                  {students?.filter(student => !selectedSession?.package_type || student.package_type === selectedSession.package_type).length === 0 && selectedSession?.package_type && (
+                    <p className="text-sm text-red-600">No students available for {selectedSession.package_type} training.</p>
+                  )}
                 </div>
               </div>
 
@@ -667,7 +788,7 @@ export function SessionsManager() {
                           }))
                         );
 
-                      // Optionally re-create attendance records
+                      // Re-create attendance records
                       await supabase
                         .from('attendance_records')
                         .delete()

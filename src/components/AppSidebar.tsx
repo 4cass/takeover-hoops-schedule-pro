@@ -17,7 +17,7 @@ const menuItems = [
   { title: "Calendar", icon: Calendar, value: "calendar" },
   { title: "Sessions", icon: ClipboardList, value: "sessions" },
   { title: "Attendance", icon: UserCheck, value: "attendance" },
-  { title: "Students", icon: Users, value: "students" },
+  { title: "Players", icon: Users, value: "students" },
   { title: "Coaches", icon: BookOpen, value: "coaches" },
   { title: "Branches", icon: MapPin, value: "branches" },
 ];

@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -6,9 +7,10 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Progress } from "@/components/ui/progress";
-import { Plus, Edit, Trash2, Filter, Search, Users } from "lucide-react";
+import { Plus, Edit, Trash2, Filter, Search, Users, Calendar, Clock, MapPin, User } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { format } from "date-fns";
 
 type Student = {
   id: string;
@@ -17,12 +19,30 @@ type Student = {
   phone: string | null;
   sessions: number;
   remaining_sessions: number;
+  package_type?: string;
   created_at: string;
+};
+
+type AttendanceRecord = {
+  session_id: string;
+  student_id: string;
+  status: 'pending' | 'present' | 'absent';
+  training_sessions: {
+    date: string;
+    start_time: string;
+    end_time: string;
+    branch_id: string;
+    coach_id: string;
+    branches: { name: string };
+    coaches: { name: string };
+  };
 };
 
 export function StudentsManager() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isRecordsDialogOpen, setIsRecordsDialogOpen] = useState(false);
   const [editingStudent, setEditingStudent] = useState<Student | null>(null);
+  const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [formData, setFormData] = useState({
     name: "",
@@ -30,6 +50,7 @@ export function StudentsManager() {
     phone: "",
     sessions: 0,
     remaining_sessions: 0,
+    package_type: "",
   });
 
   const queryClient = useQueryClient();
@@ -44,6 +65,34 @@ export function StudentsManager() {
       if (error) throw error;
       return data as Student[];
     },
+  });
+
+  const { data: attendanceRecords, isLoading: recordsLoading, error: recordsError } = useQuery({
+    queryKey: ["attendance_records", selectedStudent?.id],
+    queryFn: async () => {
+      if (!selectedStudent) return [];
+      const { data, error } = await supabase
+        .from("attendance_records")
+        .select(`
+          session_id,
+          student_id,
+          status,
+          training_sessions (
+            date,
+            start_time,
+            end_time,
+            branch_id,
+            coach_id,
+            branches (name),
+            coaches (name)
+          )
+        `)
+        .eq("student_id", selectedStudent.id)
+        .order("date", { ascending: false, referencedTable: "training_sessions" });
+      if (error) throw error;
+      return data as AttendanceRecord[];
+    },
+    enabled: !!selectedStudent,
   });
 
   const filteredStudents = students?.filter((student) =>
@@ -108,7 +157,7 @@ export function StudentsManager() {
   });
 
   const resetForm = () => {
-    setFormData({ name: "", email: "", phone: "", sessions: 0, remaining_sessions: 0 });
+    setFormData({ name: "", email: "", phone: "", sessions: 0, remaining_sessions: 0, package_type: "" });
     setEditingStudent(null);
     setIsDialogOpen(false);
   };
@@ -130,8 +179,14 @@ export function StudentsManager() {
       phone: student.phone || "",
       sessions: student.sessions,
       remaining_sessions: student.remaining_sessions,
+      package_type: student.package_type || "",
     });
     setIsDialogOpen(true);
+  };
+
+  const handleShowRecords = (student: Student) => {
+    setSelectedStudent(student);
+    setIsRecordsDialogOpen(true);
   };
 
   if (isLoading) {
@@ -216,6 +271,22 @@ export function StudentsManager() {
                         onChange={(e) => setFormData((prev) => ({ ...prev, phone: e.target.value }))}
                         className="mt-1 border-2 border-[#fc7416]/20 rounded-xl focus:border-[#fc7416] focus:ring-[#fc7416]/20"
                       />
+                    </div>
+                    <div>
+                      <Label htmlFor="packageType" className="text-gray-700 font-medium">Package Type</Label>
+                      <select
+                        id="packageType"
+                        value={formData.package_type}
+                        onChange={(e) =>
+                          setFormData((prev) => ({ ...prev, package_type: e.target.value }))
+                        }
+                        required
+                        className="mt-1 border-2 border-[#fc7416]/20 rounded-xl focus:border-[#fc7416] focus:ring-[#fc7416]/20 w-full h-10 px-2"
+                      >
+                        <option value="">Select Package</option>
+                        <option value="Camp Training">Camp Training</option>
+                        <option value="Personal Training">Personal Training</option>
+                      </select>
                     </div>
                     <div>
                       <Label htmlFor="totalSessions" className="text-gray-700 font-medium">Total Sessions</Label>
@@ -303,7 +374,8 @@ export function StudentsManager() {
                       return (
                         <tr
                           key={student.id}
-                          className={`transition-all duration-300 hover:bg-[#fc7416]/5 ${
+                          onClick={() => handleShowRecords(student)}
+                          className={`transition-all duration-300 hover:bg-[#fc7416]/5 cursor-pointer ${
                             index % 2 === 0 ? "bg-white" : "bg-[#faf0e8]/20"
                           }`}
                         >
@@ -323,7 +395,7 @@ export function StudentsManager() {
                               <Progress value={progressPercentage} className="h-2 mt-1" />
                             </div>
                           </td>
-                          <td className="py-4 px-6">
+                          <td className="py-4 px-6" onClick={(e) => e.stopPropagation()}>
                             <div className="flex items-center space-x-2">
                               <Button
                                 size="sm"
@@ -365,6 +437,108 @@ export function StudentsManager() {
             </div>
           </CardContent>
         </Card>
+
+        {/* Attendance Records Modal */}
+        <Dialog open={isRecordsDialogOpen} onOpenChange={setIsRecordsDialogOpen}>
+          <DialogContent className="max-w-4xl border-2 border-[#fc7416]/20 bg-gradient-to-br from-[#faf0e8]/30 to-white shadow-lg">
+            <DialogHeader>
+              <DialogTitle className="text-2xl font-bold text-black">
+                History Records for {selectedStudent?.name}
+              </DialogTitle>
+              <DialogDescription className="text-gray-600 text-base">
+                View session attendance and details for this player
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-6">
+              {/* Player Details */}
+              <div className="border-b border-[#fc7416]/20 pb-4">
+                <h3 className="text-lg font-semibold text-black mb-3">Player Details</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <p className="text-sm text-gray-700"><span className="font-medium">Name:</span> {selectedStudent?.name}</p>
+                    <p className="text-sm text-gray-700"><span className="font-medium">Email:</span> {selectedStudent?.email}</p>
+                    <p className="text-sm text-gray-700"><span className="font-medium">Phone:</span> {selectedStudent?.phone || "N/A"}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-700"><span className="font-medium">Package Type:</span> {selectedStudent?.package_type || "N/A"}</p>
+                    <p className="text-sm text-gray-700"><span className="font-medium">Total Sessions:</span> {selectedStudent?.sessions}</p>
+                    <p className="text-sm text-gray-700"><span className="font-medium">Remaining Sessions:</span> {selectedStudent?.remaining_sessions}</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Session Records */}
+              <div>
+                <h3 className="text-lg font-semibold text-black mb-3">Session Records</h3>
+                {recordsLoading ? (
+                  <div className="text-center py-4">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 mx-auto" style={{ borderColor: '#fc7416' }}></div>
+                    <p className="text-gray-600 mt-2">Loading attendance records...</p>
+                  </div>
+                ) : recordsError ? (
+                  <p className="text-red-600 text-sm">Error loading records: {(recordsError as Error).message}</p>
+                ) : attendanceRecords?.length === 0 ? (
+                  <p className="text-gray-600 text-sm">No attendance records found for this player.</p>
+                ) : (
+                  <div className="overflow-x-auto">
+                    <table className="w-full border-2 border-[#fc7416]/20 rounded-xl">
+                      <thead className="bg-gradient-to-r from-[#fc7416] to-[#fe822d] text-white">
+                        <tr>
+                          <th className="py-3 px-4 text-left font-semibold"><Calendar className="w-4 h-4 inline mr-2" />Date</th>
+                          <th className="py-3 px-4 text-left font-semibold"><Clock className="w-4 h-4 inline mr-2" />Time</th>
+                          <th className="py-3 px-4 text-left font-semibold"><MapPin className="w-4 h-4 inline mr-2" />Branch</th>
+                          <th className="py-3 px-4 text-left font-semibold"><User className="w-4 h-4 inline mr-2" />Coach</th>
+                          <th className="py-3 px-4 text-left font-semibold">Status</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {attendanceRecords?.map((record, index) => (
+                          <tr
+                            key={record.session_id}
+                            className={`transition-all duration-300 ${index % 2 === 0 ? "bg-white" : "bg-[#faf0e8]/20"}`}
+                          >
+                            <td className="py-3 px-4 text-gray-700">
+                              {format(new Date(record.training_sessions.date), 'MMM dd, yyyy')}
+                            </td>
+                            <td className="py-3 px-4 text-gray-700">
+                              {format(new Date(`1970-01-01T${record.training_sessions.start_time}`), 'hh:mm a')} - 
+                              {format(new Date(`1970-01-01T${record.training_sessions.end_time}`), 'hh:mm a')}
+                            </td>
+                            <td className="py-3 px-4 text-gray-700">{record.training_sessions.branches.name}</td>
+                            <td className="py-3 px-4 text-gray-700">{record.training_sessions.coaches.name}</td>
+                            <td className="py-3 px-4">
+                              <span
+                                className={`px-2 py-1 rounded-full text-xs font-medium ${
+                                  record.status === 'present'
+                                    ? 'bg-green-100 text-green-800'
+                                    : record.status === 'absent'
+                                    ? 'bg-red-100 text-red-800'
+                                    : 'bg-gray-100 text-gray-800'
+                                }`}
+                              >
+                                {record.status}
+                              </span>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </div>
+
+              <div className="flex justify-end">
+                <Button
+                  variant="outline"
+                  onClick={() => setIsRecordsDialogOpen(false)}
+                  className="border-[#fc7416]/30 text-[#fc7416] hover:bg-[#fc7416] hover:text-white transition-all duration-300 hover:scale-105"
+                >
+                  Close
+                </Button>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
       </div>
     </div>
   );

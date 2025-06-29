@@ -259,7 +259,7 @@ export function DashboardStats() {
                 { label: "Manage Students", icon: Users, route: "/dashboard/students" },
                 { label: "Track Attendance", icon: CheckCircle, route: "/dashboard/attendance" },
                 { label: "Manage Coaches", icon: BookOpen, route: "/dashboard/coaches" },
-                { label: "MAnage Branches", icon: MapPin, route: "/dashboard/branches" }
+                { label: "Manage Branches", icon: MapPin, route: "/dashboard/branches" }
               ].map((action, index) => {
                 const IconComponent = action.icon;
                 return (
