@@ -123,7 +123,7 @@ export function SessionsManager() {
         throw error;
       }
       console.log(`Fetched coaches for ${formData.package_type}:`, data); // Debug: Log coaches
-      return data as { id: string; name: string; package_type: "Camp Training" | "Personal Training" | null }[];
+      return data as { id: string; name: string; }[];
     },
     enabled: !!formData.package_type, // Only fetch when package_type is selected
   });
@@ -524,7 +524,7 @@ export function SessionsManager() {
                         <SelectContent>
                           {coaches?.map(coach => (
                             <SelectItem key={coach.id} value={coach.id}>
-                              {coach.name} ({coach.package_type || "No package"})
+                              {coach.name}
                             </SelectItem>
                           ))}
                         </SelectContent>

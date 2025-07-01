@@ -28,6 +28,7 @@ export function StudentsManager() {
   const [editingStudent, setEditingStudent] = useState<Student | null>(null);
   const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
+  const [filterPackageType, setFilterPackageType] = useState<"All" | "Personal Training" | "Camp Training">("All");
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -120,7 +121,8 @@ export function StudentsManager() {
   });
 
   const filteredStudents = students?.filter((student) =>
-    student.name.toLowerCase().includes(searchTerm.toLowerCase())
+    student.name.toLowerCase().includes(searchTerm.toLowerCase()) &&
+    (filterPackageType === "All" || student.package_type === filterPackageType)
   ) || [];
 
   const createMutation = useMutation({
@@ -422,16 +424,40 @@ export function StudentsManager() {
                 <Filter className="h-5 w-5 text-[#fc7416] mr-2" />
                 <h3 className="text-lg font-semibold text-black">Filter Players</h3>
               </div>
-              <div className="relative max-w-md">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
-                <input
-                  type="text"
-                  placeholder="Search players..."
-                  className="pl-10 pr-4 py-3 w-full border-2 border-[#fc7416]/20 rounded-xl text-sm focus:border-[#fc7416] focus:ring-[#fc7416]/20 bg-white"
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                />
+              <div className="flex flex-col sm:flex-row sm:items-end gap-4">
+                <div className="relative flex-1">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+                  <input
+                    type="text"
+                    placeholder="Search players..."
+                    className="pl-10 pr-4 py-3 w-full border-2 border-[#fc7416]/20 rounded-xl text-sm focus:border-[#fc7416] focus:ring-[#fc7416]/20 bg-white"
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                  />
+                </div>
+                <div className="flex-1">
+                  <Label htmlFor="filter-package" className="flex items-center text-sm font-medium text-gray-700 mb-2">
+                    <Users className="w-4 h-4 mr-2" style={{ color: '#fc7416' }} />
+                    Filter by Package Type
+                  </Label>
+                  <Select
+                    value={filterPackageType}
+                    onValueChange={(value: "All" | "Personal Training" | "Camp Training") => setFilterPackageType(value)}
+                  >
+                    <SelectTrigger className="border-2 focus:border-[#fc7416] rounded-xl">
+                      <SelectValue placeholder="Select package type" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="All">All Players</SelectItem>
+                      <SelectItem value="Personal Training">Personal Training</SelectItem>
+                      <SelectItem value="Camp Training">Camp Training</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
+              <p className="text-sm text-gray-600 mt-3">
+                Showing {filteredStudents.length} player{filteredStudents.length === 1 ? '' : 's'}
+              </p>
             </div>
             <div className="border-2 border-[#fc7416]/20 rounded-2xl bg-gradient-to-br from-[#faf0e8]/30 to-white shadow-lg overflow-hidden">
               <div className="overflow-x-auto">
@@ -510,10 +536,10 @@ export function StudentsManager() {
                 <div className="py-12 text-center">
                   <Users className="w-16 h-16 text-gray-300 mx-auto mb-4" />
                   <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                    {searchTerm ? "No players found" : "No players"}
+                    {searchTerm || filterPackageType !== "All" ? `No ${filterPackageType === "All" ? "" : filterPackageType} players found` : "No players"}
                   </h3>
                   <p className="text-gray-600">
-                    {searchTerm ? "Try adjusting your search terms." : "Add a new player to get started."}
+                    {searchTerm || filterPackageType !== "All" ? "Try adjusting your search or filter." : "Add a new player to get started."}
                   </p>
                 </div>
               )}

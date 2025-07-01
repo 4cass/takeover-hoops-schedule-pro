@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Plus, Edit, Trash2, Filter, Search, Users, Calendar, Clock, MapPin, User } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -15,7 +16,7 @@ type Coach = {
   name: string;
   email: string;
   phone: string | null;
-  package_type?: string;
+  package_type?: string | null;
   created_at: string;
 };
 
@@ -26,6 +27,7 @@ type SessionRecord = {
   end_time: string;
   branch_id: string;
   branches: { name: string };
+  coaches: { package_type: string | null };
   session_participants: { students: { name: string } }[];
 };
 
@@ -35,6 +37,7 @@ export function CoachesManager() {
   const [editingCoach, setEditingCoach] = useState<Coach | null>(null);
   const [selectedCoach, setSelectedCoach] = useState<Coach | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
+  const [filterSessionPackageType, setFilterSessionPackageType] = useState<"All" | "Personal Training" | "Camp Training">("All");
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -69,6 +72,7 @@ export function CoachesManager() {
           end_time,
           branch_id,
           branches (name),
+          coaches (package_type),
           session_participants (students (name))
         `)
         .eq("coach_id", selectedCoach.id)
@@ -83,11 +87,15 @@ export function CoachesManager() {
     coach.name.toLowerCase().includes(searchTerm.toLowerCase())
   ) || [];
 
+  const filteredSessionRecords = sessionRecords?.filter((record) =>
+    filterSessionPackageType === "All" || record.coaches.package_type === filterSessionPackageType
+  ) || [];
+
   const createMutation = useMutation({
     mutationFn: async (coach: typeof formData) => {
       const { data, error } = await supabase
         .from("coaches")
-        .insert([{ name: coach.name, email: coach.email, phone: coach.phone || null, package_type: coach.package_type }])
+        .insert([{ name: coach.name, email: coach.email, phone: coach.phone || null, package_type: coach.package_type || null }])
         .select()
         .single();
       if (error) throw error;
@@ -107,7 +115,7 @@ export function CoachesManager() {
     mutationFn: async ({ id, ...coach }: typeof formData & { id: string }) => {
       const { data, error } = await supabase
         .from("coaches")
-        .update({ name: coach.name, email: coach.email, phone: coach.phone || null, package_type: coach.package_type })
+        .update({ name: coach.name, email: coach.email, phone: coach.phone || null, package_type: coach.package_type || null })
         .eq("id", id)
         .select()
         .single();
@@ -166,6 +174,7 @@ export function CoachesManager() {
 
   const handleShowRecords = (coach: Coach) => {
     setSelectedCoach(coach);
+    setFilterSessionPackageType("All"); // Reset filter when opening modal
     setIsRecordsDialogOpen(true);
   };
 
@@ -319,7 +328,6 @@ export function CoachesManager() {
                       <th className="py-4 px-6 text-left font-semibold">Coach Name</th>
                       <th className="py-4 px-6 text-left font-semibold">Email</th>
                       <th className="py-4 px-6 text-left font-semibold">Phone</th>
-                      <th className="py-4 px-6 text-left font-semibold">Package Type</th>
                       <th className="py-4 px-6 text-left font-semibold">Actions</th>
                     </tr>
                   </thead>
@@ -342,7 +350,6 @@ export function CoachesManager() {
                         </td>
                         <td className="py-4 px-6 text-gray-700 font-medium">{coach.email}</td>
                         <td className="py-4 px-6 text-gray-700 font-medium">{coach.phone || "N/A"}</td>
-                        <td className="py-4 px-6 text-gray-700 font-medium">{coach.package_type || "N/A"}</td>
                         <td className="py-4 px-6" onClick={(e) => e.stopPropagation()}>
                           <div className="flex items-center space-x-2">
                             <Button
@@ -414,7 +421,32 @@ export function CoachesManager() {
 
               {/* Session Records */}
               <div>
-                <h3 className="text-lg font-semibold text-black mb-3">Session Records</h3>
+                <div className="flex items-center mb-4">
+                  <Filter className="h-5 w-5 text-[#fc7416] mr-2" />
+                  <h3 className="text-lg font-semibold text-black">Session Records</h3>
+                </div>
+                <div className="mb-4 max-w-md">
+                  <Label htmlFor="filter-session-package" className="flex items-center text-sm font-medium text-gray-700 mb-2">
+                    <Users className="w-4 h-4 mr-2" style={{ color: '#fc7416' }} />
+                    Filter by Package Type
+                  </Label>
+                  <Select
+                    value={filterSessionPackageType}
+                    onValueChange={(value: "All" | "Personal Training" | "Camp Training") => setFilterSessionPackageType(value)}
+                  >
+                    <SelectTrigger className="border-2 focus:border-[#fc7416] rounded-xl">
+                      <SelectValue placeholder="Select package type" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="All">All Sessions</SelectItem>
+                      <SelectItem value="Personal Training">Personal Training</SelectItem>
+                      <SelectItem value="Camp Training">Camp Training</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <p className="text-sm text-gray-600 mt-2">
+                    Showing {filteredSessionRecords.length} session{filteredSessionRecords.length === 1 ? '' : 's'}
+                  </p>
+                </div>
                 {recordsLoading ? (
                   <div className="text-center py-4">
                     <div className="animate-spin rounded-full h-8 w-8 border-b-2 mx-auto" style={{ borderColor: '#fc7416' }}></div>
@@ -422,8 +454,12 @@ export function CoachesManager() {
                   </div>
                 ) : recordsError ? (
                   <p className="text-red-600 text-sm">Error loading records: {(recordsError as Error).message}</p>
-                ) : sessionRecords?.length === 0 ? (
-                  <p className="text-gray-600 text-sm">No session records found for this coach.</p>
+                ) : filteredSessionRecords.length === 0 ? (
+                  <p className="text-gray-600 text-sm">
+                    {filterSessionPackageType !== "All" ? 
+                      `No ${filterSessionPackageType} sessions found for this coach.` : 
+                      "No session records found for this coach."}
+                  </p>
                 ) : (
                   <div className="overflow-x-auto">
                     <table className="w-full border-2 border-[#fc7416]/20 rounded-xl">
@@ -432,11 +468,12 @@ export function CoachesManager() {
                           <th className="py-3 px-4 text-left font-semibold"><Calendar className="w-4 h-4 inline mr-2" />Date</th>
                           <th className="py-3 px-4 text-left font-semibold"><Clock className="w-4 h-4 inline mr-2" />Time</th>
                           <th className="py-3 px-4 text-left font-semibold"><MapPin className="w-4 h-4 inline mr-2" />Branch</th>
+                          <th className="py-3 px-4 text-left font-semibold"><Users className="w-4 h-4 inline mr-2" />Package Type</th>
                           <th className="py-3 px-4 text-left font-semibold"><User className="w-4 h-4 inline mr-2" />Students</th>
                         </tr>
                       </thead>
                       <tbody>
-                        {sessionRecords?.map((record, index) => (
+                        {filteredSessionRecords.map((record, index) => (
                           <tr
                             key={record.id}
                             className={`transition-all duration-300 ${index % 2 === 0 ? "bg-white" : "bg-[#faf0e8]/20"}`}
@@ -449,6 +486,7 @@ export function CoachesManager() {
                               {format(new Date(`1970-01-01T${record.end_time}`), 'hh:mm a')}
                             </td>
                             <td className="py-3 px-4 text-gray-700">{record.branches.name}</td>
+                            <td className="py-3 px-4 text-gray-700">{record.coaches.package_type || "N/A"}</td>
                             <td className="py-3 px-4 text-gray-700">
                               {record.session_participants.map(participant => participant.students.name).join(", ") || "No students"}
                             </td>
