@@ -5,41 +5,26 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Plus, Edit, Trash2, Filter, Search, Users, Calendar, Clock, MapPin, User } from "lucide-react";
+import { Plus, Edit, Trash2, Filter, Search, Users } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { format } from "date-fns";
 
 type Coach = {
   id: string;
   name: string;
   email: string;
   phone: string | null;
-  package_type?: string;
   created_at: string;
-};
-
-type SessionRecord = {
-  id: string;
-  date: string;
-  start_time: string;
-  end_time: string;
-  branch_id: string;
-  branches: { name: string };
-  session_participants: { students: { name: string } }[];
 };
 
 export function CoachesManager() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [isRecordsDialogOpen, setIsRecordsDialogOpen] = useState(false);
   const [editingCoach, setEditingCoach] = useState<Coach | null>(null);
-  const [selectedCoach, setSelectedCoach] = useState<Coach | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [formData, setFormData] = useState({
     name: "",
     email: "",
     phone: "",
-    package_type: "",
   });
 
   const queryClient = useQueryClient();
@@ -56,29 +41,6 @@ export function CoachesManager() {
     },
   });
 
-  const { data: sessionRecords, isLoading: recordsLoading, error: recordsError } = useQuery({
-    queryKey: ["training_sessions", selectedCoach?.id],
-    queryFn: async () => {
-      if (!selectedCoach) return [];
-      const { data, error } = await supabase
-        .from("training_sessions")
-        .select(`
-          id,
-          date,
-          start_time,
-          end_time,
-          branch_id,
-          branches (name),
-          session_participants (students (name))
-        `)
-        .eq("coach_id", selectedCoach.id)
-        .order("date", { ascending: false });
-      if (error) throw error;
-      return data as SessionRecord[];
-    },
-    enabled: !!selectedCoach,
-  });
-
   const filteredCoaches = coaches?.filter((coach) =>
     coach.name.toLowerCase().includes(searchTerm.toLowerCase())
   ) || [];
@@ -87,7 +49,7 @@ export function CoachesManager() {
     mutationFn: async (coach: typeof formData) => {
       const { data, error } = await supabase
         .from("coaches")
-        .insert([{ name: coach.name, email: coach.email, phone: coach.phone || null, package_type: coach.package_type }])
+        .insert([{ name: coach.name, email: coach.email, phone: coach.phone || null }])
         .select()
         .single();
       if (error) throw error;
@@ -107,7 +69,7 @@ export function CoachesManager() {
     mutationFn: async ({ id, ...coach }: typeof formData & { id: string }) => {
       const { data, error } = await supabase
         .from("coaches")
-        .update({ name: coach.name, email: coach.email, phone: coach.phone || null, package_type: coach.package_type })
+        .update({ name: coach.name, email: coach.email, phone: coach.phone || null })
         .eq("id", id)
         .select()
         .single();
@@ -139,7 +101,7 @@ export function CoachesManager() {
   });
 
   const resetForm = () => {
-    setFormData({ name: "", email: "", phone: "", package_type: "" });
+    setFormData({ name: "", email: "", phone: "" });
     setEditingCoach(null);
     setIsDialogOpen(false);
   };
@@ -159,14 +121,8 @@ export function CoachesManager() {
       name: coach.name,
       email: coach.email,
       phone: coach.phone || "",
-      package_type: coach.package_type || "",
     });
     setIsDialogOpen(true);
-  };
-
-  const handleShowRecords = (coach: Coach) => {
-    setSelectedCoach(coach);
-    setIsRecordsDialogOpen(true);
   };
 
   if (isLoading) {
@@ -187,7 +143,7 @@ export function CoachesManager() {
         {/* Header */}
         <div className="mb-8">
           <h1 className="text-4xl font-bold text-black mb-2 tracking-tight">Coaches Manager</h1>
-          <p className="text-lg text-gray-700">Manage coach information and session history</p>
+          <p className="text-lg text-gray-700">Manage coach information</p>
         </div>
 
         {/* Coaches Card */}
@@ -253,22 +209,6 @@ export function CoachesManager() {
                         className="mt-1 pl-4 pr-4 py-3 border-2 border-[#fc7416]/20 rounded-xl text-sm focus:border-[#fc7416] focus:ring-[#fc7416]/20 bg-white"
                       />
                     </div>
-                    <div>
-                      <Label htmlFor="packageType" className="text-gray-700 font-medium">Package Type</Label>
-                      <select
-                        id="packageType"
-                        value={formData.package_type}
-                        onChange={(e) =>
-                          setFormData((prev) => ({ ...prev, package_type: e.target.value }))
-                        }
-                        required
-                        className="mt-1 border-2 border-[#fc7416]/20 rounded-xl focus:border-[#fc7416] focus:ring-[#fc7416]/20 w-full h-10 px-2"
-                      >
-                        <option value="">Select Package</option>
-                        <option value="Camp Training">Camp Training</option>
-                        <option value="Personal Training">Personal Training</option>
-                      </select>
-                    </div>
                     <div className="flex justify-end space-x-3">
                       <Button
                         type="button"
@@ -319,7 +259,6 @@ export function CoachesManager() {
                       <th className="py-4 px-6 text-left font-semibold">Coach Name</th>
                       <th className="py-4 px-6 text-left font-semibold">Email</th>
                       <th className="py-4 px-6 text-left font-semibold">Phone</th>
-                      <th className="py-4 px-6 text-left font-semibold">Package Type</th>
                       <th className="py-4 px-6 text-left font-semibold">Actions</th>
                     </tr>
                   </thead>
@@ -327,8 +266,7 @@ export function CoachesManager() {
                     {filteredCoaches.map((coach, index) => (
                       <tr
                         key={coach.id}
-                        onClick={() => handleShowRecords(coach)}
-                        className={`transition-all duration-300 hover:bg-[#fc7416]/5 cursor-pointer ${
+                        className={`transition-all duration-300 hover:bg-[#fc7416]/5 ${
                           index % 2 === 0 ? "bg-white" : "bg-[#faf0e8]/20"
                         }`}
                       >
@@ -342,8 +280,7 @@ export function CoachesManager() {
                         </td>
                         <td className="py-4 px-6 text-gray-700 font-medium">{coach.email}</td>
                         <td className="py-4 px-6 text-gray-700 font-medium">{coach.phone || "N/A"}</td>
-                        <td className="py-4 px-6 text-gray-700 font-medium">{coach.package_type || "N/A"}</td>
-                        <td className="py-4 px-6" onClick={(e) => e.stopPropagation()}>
+                        <td className="py-4 px-6">
                           <div className="flex items-center space-x-2">
                             <Button
                               size="sm"
@@ -384,94 +321,6 @@ export function CoachesManager() {
             </div>
           </CardContent>
         </Card>
-
-        {/* Session Records Modal */}
-        <Dialog open={isRecordsDialogOpen} onOpenChange={setIsRecordsDialogOpen}>
-          <DialogContent className="max-w-4xl border-2 border-[#fc7416]/20 bg-gradient-to-br from-[#faf0e8]/30 to-white shadow-lg">
-            <DialogHeader>
-              <DialogTitle className="text-2xl font-bold text-black">
-                Session History for {selectedCoach?.name}
-              </DialogTitle>
-              <DialogDescription className="text-gray-600 text-base">
-                View session details for this coach
-              </DialogDescription>
-            </DialogHeader>
-            <div className="space-y-6">
-              {/* Coach Details */}
-              <div className="border-b border-[#fc7416]/20 pb-4">
-                <h3 className="text-lg font-semibold text-black mb-3">Coach Details</h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <p className="text-sm text-gray-700"><span className="font-medium">Name:</span> {selectedCoach?.name}</p>
-                    <p className="text-sm text-gray-700"><span className="font-medium">Email:</span> {selectedCoach?.email}</p>
-                    <p className="text-sm text-gray-700"><span className="font-medium">Phone:</span> {selectedCoach?.phone || "N/A"}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm text-gray-700"><span className="font-medium">Package Type:</span> {selectedCoach?.package_type || "N/A"}</p>
-                  </div>
-                </div>
-              </div>
-
-              {/* Session Records */}
-              <div>
-                <h3 className="text-lg font-semibold text-black mb-3">Session Records</h3>
-                {recordsLoading ? (
-                  <div className="text-center py-4">
-                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 mx-auto" style={{ borderColor: '#fc7416' }}></div>
-                    <p className="text-gray-600 mt-2">Loading session records...</p>
-                  </div>
-                ) : recordsError ? (
-                  <p className="text-red-600 text-sm">Error loading records: {(recordsError as Error).message}</p>
-                ) : sessionRecords?.length === 0 ? (
-                  <p className="text-gray-600 text-sm">No session records found for this coach.</p>
-                ) : (
-                  <div className="overflow-x-auto">
-                    <table className="w-full border-2 border-[#fc7416]/20 rounded-xl">
-                      <thead className="bg-gradient-to-r from-[#fc7416] to-[#fe822d] text-white">
-                        <tr>
-                          <th className="py-3 px-4 text-left font-semibold"><Calendar className="w-4 h-4 inline mr-2" />Date</th>
-                          <th className="py-3 px-4 text-left font-semibold"><Clock className="w-4 h-4 inline mr-2" />Time</th>
-                          <th className="py-3 px-4 text-left font-semibold"><MapPin className="w-4 h-4 inline mr-2" />Branch</th>
-                          <th className="py-3 px-4 text-left font-semibold"><User className="w-4 h-4 inline mr-2" />Students</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {sessionRecords?.map((record, index) => (
-                          <tr
-                            key={record.id}
-                            className={`transition-all duration-300 ${index % 2 === 0 ? "bg-white" : "bg-[#faf0e8]/20"}`}
-                          >
-                            <td className="py-3 px-4 text-gray-700">
-                              {format(new Date(record.date), 'MMM dd, yyyy')}
-                            </td>
-                            <td className="py-3 px-4 text-gray-700">
-                              {format(new Date(`1970-01-01T${record.start_time}`), 'hh:mm a')} - 
-                              {format(new Date(`1970-01-01T${record.end_time}`), 'hh:mm a')}
-                            </td>
-                            <td className="py-3 px-4 text-gray-700">{record.branches.name}</td>
-                            <td className="py-3 px-4 text-gray-700">
-                              {record.session_participants.map(participant => participant.students.name).join(", ") || "No students"}
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                )}
-              </div>
-
-              <div className="flex justify-end">
-                <Button
-                  variant="outline"
-                  onClick={() => setIsRecordsDialogOpen(false)}
-                  className="border-[#fc7416]/30 text-[#fc7416] hover:bg-[#fc7416] hover:text-white transition-all duration-300 hover:scale-105"
-                >
-                  Close
-                </Button>
-              </div>
-            </div>
-          </DialogContent>
-        </Dialog>
       </div>
     </div>
   );
