@@ -37,11 +37,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       if (session?.user) {
         console.log("AuthContext - Fetching role for user:", session.user.id); // Debug log
-        // Fetch role from coaches table
+        // Fetch role from coaches table using auth_id instead of id
         const { data, error } = await supabase
           .from("coaches")
           .select("role")
-          .eq("id", session.user.id)
+          .eq("auth_id", session.user.id)
           .single();
 
         console.log("AuthContext - Role query result:", { data, error }); // Debug log
@@ -72,7 +72,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         const { data, error } = await supabase
           .from("coaches")
           .select("role")
-          .eq("id", session.user.id)
+          .eq("auth_id", session.user.id)
           .single();
 
         console.log("AuthContext - Role query result (auth change):", { data, error }); // Debug log
