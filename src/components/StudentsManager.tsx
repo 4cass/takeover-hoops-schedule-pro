@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -6,34 +5,18 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Progress } from "@/components/ui/progress";
 import { Plus, Edit, Trash2, Filter, Search, Users, Calendar, Clock, MapPin, User } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { format } from "date-fns";
+import { Database } from "@/integrations/supabase/types";
 
-type Student = {
-  coach_id: string;
-  id: string;
-  name: string;
-  email: string;
-  phone: string | null;
-  sessions: number;
-  remaining_sessions: number;
-  package_type?: string;
-  created_at: string;
-};
-
-type AttendanceRecord = {
-  session_id: string;
-  student_id: string;
-  status: 'pending' | 'present' | 'absent';
-  training_sessions: {
-    date: string;
-    start_time: string;
-    end_time: string;
-    branch_id: string;
-    coach_id: string;
+type Student = Database["public"]["Tables"]["students"]["Row"];
+type Coach = Database["public"]["Tables"]["coaches"]["Row"];
+type AttendanceRecord = Database["public"]["Tables"]["attendance_records"]["Row"] & {
+  training_sessions: Database["public"]["Tables"]["training_sessions"]["Row"] & {
     branches: { name: string };
     coaches: { name: string };
   };
@@ -51,8 +34,8 @@ export function StudentsManager() {
     phone: "",
     sessions: 0,
     remaining_sessions: 0,
-    package_type: "",
-    coach_id: null as string | null,  
+    package_type: null as "Camp Training" | "Personal Training" | null,
+    coach_id: null as string | null,
   });
 
   const queryClient = useQueryClient();
@@ -62,23 +45,47 @@ export function StudentsManager() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("students")
-        .select("*")
+        .select("id, name, email, phone, sessions, remaining_sessions, package_type, coach_id, created_at, updated_at")
         .order("created_at", { ascending: false });
-      if (error) throw error;
+      if (error) {
+        console.error("students query error:", error);
+        throw error;
+      }
+      console.log("Fetched students:", data); // Debug: Log students data
       return data as Student[];
     },
   });
 
-  const { data: coaches } = useQuery({
-    queryKey: ["coaches"],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("coaches")
-        .select("id, name")
-        .order("name");
-      if (error) throw error;
-      return data;
-    },
+  const fetchCoaches = async (packageType: "Camp Training" | "Personal Training" | null): Promise<Coach[]> => {
+    console.log("fetchCoaches called with packageType:", packageType); // Debug: Log packageType
+    const query = supabase
+      .from("coaches")
+      .select("id, name, package_type")
+      .order("name");
+
+    let data, error;
+
+    if (packageType === "Camp Training") {
+      ({ data, error } = await query.or("package_type.eq.Camp Training, package_type.eq.Personal Training, package_type.is.null"));
+    } else if (packageType === "Personal Training") {
+      ({ data, error } = await query.eq("package_type", "Personal Training"));
+    } else {
+      ({ data, error } = await query);
+    }
+
+    if (error) {
+      console.error("coaches query error:", error);
+      throw error;
+    }
+
+    console.log(`Fetched coaches for ${packageType || "all"}:`, data); // Debug: Log fetched coaches
+    return data as Coach[];
+  };
+
+  const { data: coaches, isLoading: coachesLoading, error: coachesError } = useQuery({
+    queryKey: ["coaches", formData.package_type],
+    queryFn: () => fetchCoaches(formData.package_type),
+    enabled: !!formData.package_type, // Only fetch when package_type is selected
   });
 
   const { data: attendanceRecords, isLoading: recordsLoading, error: recordsError } = useQuery({
@@ -103,7 +110,10 @@ export function StudentsManager() {
         `)
         .eq("student_id", selectedStudent.id)
         .order("date", { ascending: false, referencedTable: "training_sessions" });
-      if (error) throw error;
+      if (error) {
+        console.error("attendance_records query error:", error);
+        throw error;
+      }
       return data as AttendanceRecord[];
     },
     enabled: !!selectedStudent,
@@ -117,7 +127,15 @@ export function StudentsManager() {
     mutationFn: async (student: typeof formData) => {
       const { data, error } = await supabase
         .from("students")
-        .insert([student])
+        .insert([{
+          name: student.name,
+          email: student.email,
+          phone: student.phone || null,
+          sessions: student.sessions,
+          remaining_sessions: student.remaining_sessions,
+          package_type: student.package_type,
+          coach_id: student.coach_id,
+        }])
         .select()
         .single();
       if (error) throw error;
@@ -126,11 +144,11 @@ export function StudentsManager() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["students"] });
       queryClient.invalidateQueries({ queryKey: ["dashboard-stats"] });
-      toast.success("Student created successfully");
+      toast.success("Player created successfully");
       resetForm();
     },
-    onError: (error) => {
-      toast.error("Failed to create student: " + error.message);
+    onError: (error: any) => {
+      toast.error("Failed to create player: " + error.message);
     },
   });
 
@@ -138,7 +156,15 @@ export function StudentsManager() {
     mutationFn: async ({ id, ...student }: typeof formData & { id: string }) => {
       const { data, error } = await supabase
         .from("students")
-        .update(student)
+        .update({
+          name: student.name,
+          email: student.email,
+          phone: student.phone || null,
+          sessions: student.sessions,
+          remaining_sessions: student.remaining_sessions,
+          package_type: student.package_type,
+          coach_id: student.coach_id,
+        })
         .eq("id", id)
         .select()
         .single();
@@ -147,11 +173,11 @@ export function StudentsManager() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["students"] });
-      toast.success("Student updated successfully");
+      toast.success("Player updated successfully");
       resetForm();
     },
-    onError: (error) => {
-      toast.error("Failed to update student: " + error.message);
+    onError: (error: any) => {
+      toast.error("Failed to update player: " + error.message);
     },
   });
 
@@ -163,21 +189,33 @@ export function StudentsManager() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["students"] });
       queryClient.invalidateQueries({ queryKey: ["dashboard-stats"] });
-      toast.success("Student deleted successfully");
+      toast.success("Player deleted successfully");
     },
-    onError: (error) => {
-      toast.error("Failed to delete student: " + error.message);
+    onError: (error: any) => {
+      toast.error("Failed to delete player: " + error.message);
     },
   });
 
   const resetForm = () => {
-    setFormData({ name: "", email: "", phone: "", sessions: 0, remaining_sessions: 0, package_type: "", coach_id: null });
+    setFormData({
+      name: "",
+      email: "",
+      phone: "",
+      sessions: 0,
+      remaining_sessions: 0,
+      package_type: null,
+      coach_id: null,
+    });
     setEditingStudent(null);
     setIsDialogOpen(false);
   };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    if (!formData.package_type) {
+      toast.error("Please select a package type");
+      return;
+    }
     if (editingStudent) {
       updateMutation.mutate({ ...formData, id: editingStudent.id });
     } else {
@@ -191,10 +229,10 @@ export function StudentsManager() {
       name: student.name,
       email: student.email,
       phone: student.phone || "",
-      sessions: student.sessions,
+      sessions: student.sessions || 0,
       remaining_sessions: student.remaining_sessions,
-      package_type: student.package_type || "",
-      coach_id: student.coach_id || "",   
+      package_type: student.package_type as "Camp Training" | "Personal Training" | null,
+      coach_id: student.coach_id || null,
     });
     setIsDialogOpen(true);
   };
@@ -218,13 +256,10 @@ export function StudentsManager() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-[#faf0e8] to-[#fffefe] pt-4 p-6">
       <div className="max-w-7xl mx-auto space-y-8 -mt-5">
-        {/* Header */}
         <div className="mb-8">
           <h1 className="text-4xl font-bold text-black mb-2 tracking-tight">Players Manager</h1>
           <p className="text-lg text-gray-700">Manage player information and session quotas</p>
         </div>
-
-        {/* Students Card */}
         <Card className="border-2 border-[#fc7416]/20 bg-white/90 backdrop-blur-sm shadow-xl">
           <CardHeader className="border-b border-[#fc7416]/10 bg-gradient-to-r from-[#fc7416]/5 to-[#fe822d]/5">
             <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between space-y-4 lg:space-y-0">
@@ -253,7 +288,7 @@ export function StudentsManager() {
                       {editingStudent ? "Edit Player" : "Add New Player"}
                     </DialogTitle>
                     <DialogDescription className="text-gray-600 text-base">
-                      {editingStudent ? "Update Player information" : "Add a new player to the system"}
+                      {editingStudent ? "Update player information" : "Add a new player to the system"}
                     </DialogDescription>
                   </DialogHeader>
                   <form onSubmit={handleSubmit} className="space-y-6">
@@ -287,44 +322,58 @@ export function StudentsManager() {
                         className="mt-1 border-2 border-[#fc7416]/20 rounded-xl focus:border-[#fc7416] focus:ring-[#fc7416]/20"
                       />
                     </div>
-                     <div>
-                      <Label htmlFor="packageType" className="text-gray-700 font-medium">Package Type</Label>
-                      <select
-                        id="packageType"
-                        value={formData.package_type}
-                        onChange={(e) =>
-                          setFormData((prev) => ({ ...prev, package_type: e.target.value }))
+                    <div>
+                      <Label htmlFor="package_type" className="text-gray-700 font-medium">Package Type</Label>
+                      <Select
+                        value={formData.package_type ?? undefined}
+                        onValueChange={(value) =>
+                          setFormData((prev) => ({
+                            ...prev,
+                            package_type: value as "Camp Training" | "Personal Training",
+                            coach_id: null, // Reset coach_id when package_type changes
+                          }))
                         }
-                        required
-                        className="mt-1 border-2 border-[#fc7416]/20 rounded-xl focus:border-[#fc7416] focus:ring-[#fc7416]/20 w-full h-10 px-2"
                       >
-                        <option value="">Select Package</option>
-                        <option value="Camp Training">Camp Training</option>
-                        <option value="Personal Training">Personal Training</option>
-                      </select>
+                        <SelectTrigger className="mt-1 border-2 border-[#fc7416]/20 rounded-xl focus:border-[#fc7416] focus:ring-[#fc7416]/20">
+                          <SelectValue placeholder="Select Package" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="Camp Training">Camp Training</SelectItem>
+                          <SelectItem value="Personal Training">Personal Training</SelectItem>
+                        </SelectContent>
+                      </Select>
                     </div>
                     <div>
-                      <Label htmlFor="coach" className="text-gray-700 font-medium">Assigned Coach</Label>
-                      <select
-                        id="coach"
-                        value={formData.coach_id || ""}
-                        onChange={(e) =>
-                          setFormData((prev) => ({ ...prev, coach_id: e.target.value || null }))
-                        }
-                        className="mt-1 border-2 border-[#fc7416]/20 rounded-xl focus:border-[#fc7416] focus:ring-[#fc7416]/20 w-full h-10 px-2"
+                      <Label htmlFor="coach_id" className="text-gray-700 font-medium">Assigned Coach</Label>
+                      <Select
+                        value={formData.coach_id ?? undefined}
+                        onValueChange={(value) => setFormData((prev) => ({ ...prev, coach_id: value }))}
+                        disabled={!formData.package_type || coachesLoading}
                       >
-                        <option value="">Select Coach</option>
-                        {coaches?.map((coach) => (
-                          <option key={coach.id} value={coach.id}>
-                            {coach.name}
-                          </option>
-                        ))}
-                      </select>
+                        <SelectTrigger className="mt-1 border-2 border-[#fc7416]/20 rounded-xl focus:border-[#fc7416] focus:ring-[#fc7416]/20">
+                          <SelectValue placeholder={coachesLoading ? "Loading coaches..." : coachesError ? "Error loading coaches" : coaches?.length === 0 ? "No coaches available" : "Select Coach"} />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {coaches?.map((coach) => (
+                            <SelectItem key={coach.id} value={coach.id}>
+                              {coach.name} ({coach.package_type || "No package"})
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      {coachesError && (
+                        <p className="text-red-600 text-sm mt-1">Error loading coaches: {(coachesError as Error).message}</p>
+                      )}
+                      {!coachesLoading && coaches?.length === 0 && (
+                        <p className="text-gray-600 text-sm mt-1">
+                          No coaches available for {formData.package_type}.
+                        </p>
+                      )}
                     </div>
                     <div>
-                      <Label htmlFor="totalSessions" className="text-gray-700 font-medium">Total Sessions</Label>
+                      <Label htmlFor="sessions" className="text-gray-700 font-medium">Total Sessions</Label>
                       <Input
-                        id="totalSessions"
+                        id="sessions"
                         type="number"
                         min="0"
                         value={formData.sessions}
@@ -333,9 +382,9 @@ export function StudentsManager() {
                       />
                     </div>
                     <div>
-                      <Label htmlFor="sessions" className="text-gray-700 font-medium">Remaining Sessions</Label>
+                      <Label htmlFor="remaining_sessions" className="text-gray-700 font-medium">Remaining Sessions</Label>
                       <Input
-                        id="sessions"
+                        id="remaining_sessions"
                         type="number"
                         min="0"
                         value={formData.remaining_sessions}
@@ -356,7 +405,7 @@ export function StudentsManager() {
                       </Button>
                       <Button
                         type="submit"
-                        disabled={createMutation.isPending || updateMutation.isPending}
+                        disabled={createMutation.isPending || updateMutation.isPending || !formData.package_type}
                         className="bg-[#fc7416] hover:bg-[#fe822d] text-white transition-all duration-300 hover:scale-105"
                       >
                         {editingStudent ? "Update" : "Create"}
@@ -368,7 +417,6 @@ export function StudentsManager() {
             </div>
           </CardHeader>
           <CardContent className="p-8">
-            {/* Search and Filter */}
             <div className="mb-6">
               <div className="flex items-center mb-4">
                 <Filter className="h-5 w-5 text-[#fc7416] mr-2" />
@@ -385,8 +433,6 @@ export function StudentsManager() {
                 />
               </div>
             </div>
-
-            {/* Students Table */}
             <div className="border-2 border-[#fc7416]/20 rounded-2xl bg-gradient-to-br from-[#faf0e8]/30 to-white shadow-lg overflow-hidden">
               <div className="overflow-x-auto">
                 <table className="w-full">
@@ -395,14 +441,15 @@ export function StudentsManager() {
                       <th className="py-4 px-6 text-left font-semibold">Player Name</th>
                       <th className="py-4 px-6 text-left font-semibold">Email</th>
                       <th className="py-4 px-6 text-left font-semibold">Phone</th>
+                      <th className="py-4 px-6 text-left font-semibold">Package</th>
                       <th className="py-4 px-6 text-left font-semibold">Session Progress</th>
                       <th className="py-4 px-6 text-left font-semibold">Actions</th>
                     </tr>
                   </thead>
                   <tbody>
                     {filteredStudents.map((student, index) => {
-                      const attended = student.sessions - student.remaining_sessions;
-                      const total = student.sessions;
+                      const attended = (student.sessions || 0) - student.remaining_sessions;
+                      const total = student.sessions || 0;
                       const progressPercentage = total > 0 ? (attended / total) * 100 : 0;
                       return (
                         <tr
@@ -422,6 +469,9 @@ export function StudentsManager() {
                           </td>
                           <td className="py-4 px-6 text-gray-700 font-medium">{student.email}</td>
                           <td className="py-4 px-6 text-gray-700 font-medium">{student.phone || "N/A"}</td>
+                          <td className="py-4 px-6 text-gray-700 font-medium">
+                            {student.package_type || "N/A"}
+                          </td>
                           <td className="py-4 px-6">
                             <div className="space-y-2">
                               <p className="text-gray-700 font-medium">{attended} of {total} sessions attended</p>
@@ -470,8 +520,6 @@ export function StudentsManager() {
             </div>
           </CardContent>
         </Card>
-
-        {/* Attendance Records Modal */}
         <Dialog open={isRecordsDialogOpen} onOpenChange={setIsRecordsDialogOpen}>
           <DialogContent className="max-w-4xl border-2 border-[#fc7416]/20 bg-gradient-to-br from-[#faf0e8]/30 to-white shadow-lg">
             <DialogHeader>
@@ -483,7 +531,6 @@ export function StudentsManager() {
               </DialogDescription>
             </DialogHeader>
             <div className="space-y-6">
-              {/* Player Details */}
               <div className="border-b border-[#fc7416]/20 pb-4">
                 <h3 className="text-lg font-semibold text-black mb-3">Player Details</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -494,18 +541,16 @@ export function StudentsManager() {
                   </div>
                   <div>
                     <p className="text-sm text-gray-700"><span className="font-medium">Package Type:</span> {selectedStudent?.package_type || "N/A"}</p>
-                    <p className="text-sm text-gray-700"><span className="font-medium">Total Sessions:</span> {selectedStudent?.sessions}</p>
+                    <p className="text-sm text-gray-700"><span className="font-medium">Total Sessions:</span> {selectedStudent?.sessions || 0}</p>
                     <p className="text-sm text-gray-700"><span className="font-medium">Remaining Sessions:</span> {selectedStudent?.remaining_sessions}</p>
                   </div>
                 </div>
               </div>
-
-              {/* Session Records */}
               <div>
                 <h3 className="text-lg font-semibold text-black mb-3">Session Records</h3>
                 {recordsLoading ? (
                   <div className="text-center py-4">
-                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 mx-auto" style={{ borderColor: '#fc7416' }}></div>
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 mx-auto" style={{ borderColor: "#fc7416" }}></div>
                     <p className="text-gray-600 mt-2">Loading attendance records...</p>
                   </div>
                 ) : recordsError ? (
@@ -531,22 +576,22 @@ export function StudentsManager() {
                             className={`transition-all duration-300 ${index % 2 === 0 ? "bg-white" : "bg-[#faf0e8]/20"}`}
                           >
                             <td className="py-3 px-4 text-gray-700">
-                              {format(new Date(record.training_sessions.date), 'MMM dd, yyyy')}
+                              {format(new Date(record.training_sessions.date), "MMM dd, yyyy")}
                             </td>
                             <td className="py-3 px-4 text-gray-700">
-                              {format(new Date(`1970-01-01T${record.training_sessions.start_time}`), 'hh:mm a')} - 
-                              {format(new Date(`1970-01-01T${record.training_sessions.end_time}`), 'hh:mm a')}
+                              {format(new Date(`1970-01-01T${record.training_sessions.start_time}`), "hh:mm a")} - 
+                              {format(new Date(`1970-01-01T${record.training_sessions.end_time}`), "hh:mm a")}
                             </td>
                             <td className="py-3 px-4 text-gray-700">{record.training_sessions.branches.name}</td>
                             <td className="py-3 px-4 text-gray-700">{record.training_sessions.coaches.name}</td>
                             <td className="py-3 px-4">
                               <span
                                 className={`px-2 py-1 rounded-full text-xs font-medium ${
-                                  record.status === 'present'
-                                    ? 'bg-green-100 text-green-800'
-                                    : record.status === 'absent'
-                                    ? 'bg-red-100 text-red-800'
-                                    : 'bg-gray-100 text-gray-800'
+                                  record.status === "present"
+                                    ? "bg-green-100 text-green-800"
+                                    : record.status === "absent"
+                                    ? "bg-red-100 text-red-800"
+                                    : "bg-gray-100 text-gray-800"
                                 }`}
                               >
                                 {record.status}
@@ -559,7 +604,6 @@ export function StudentsManager() {
                   </div>
                 )}
               </div>
-
               <div className="flex justify-end">
                 <Button
                   variant="outline"

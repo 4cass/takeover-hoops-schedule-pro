@@ -18,7 +18,7 @@ type Student = {
   id: string;
   name: string;
   remaining_sessions: number;
-  package_type: string | null;
+  package_type: "Camp Training" | "Personal Training" | null;
   coach_id: string | null;
 };
 
@@ -31,13 +31,13 @@ type TrainingSession = {
   coach_id: string;
   notes: string | null;
   status: SessionStatus;
-  package_type: string | null;
+  package_type: "Camp Training" | "Personal Training" | null;
   branches: { name: string };
   coaches: { name: string };
   session_participants: Array<{
     id: string;
     student_id: string;
-    students: { name: string; package_type: string | null };
+    students: { name: string; package_type: "Camp Training" | "Personal Training" | null };
   }>;
 };
 
@@ -55,11 +55,11 @@ export function SessionsManager() {
     coach_id: "",
     notes: "",
     status: "scheduled" as SessionStatus,
-    package_type: "",
+    package_type: "" as "Camp Training" | "Personal Training" | "",
   });
 
   const queryClient = useQueryClient();
-  
+
   const { data: sessions, isLoading, error } = useQuery({
     queryKey: ['training-sessions'],
     queryFn: async () => {
@@ -94,48 +94,72 @@ export function SessionsManager() {
         .order('name');
       
       if (error) throw error;
+      console.log('Fetched branches:', data); // Debug: Log branches
       return data;
     }
   });
 
-  const { data: coaches } = useQuery({
-    queryKey: ['coaches-select'],
+  const { data: coaches, isLoading: coachesLoading, error: coachesError } = useQuery({
+    queryKey: ['coaches-select', formData.package_type],
     queryFn: async () => {
-      const { data, error } = await supabase
+      const query = supabase
         .from('coaches')
-        .select('id, name')
+        .select('id, name, package_type')
         .order('name');
-      
-      if (error) throw error;
-      return data;
-    }
+
+      let data, error;
+      if (formData.package_type === 'Camp Training') {
+        ({ data, error } = await query.or('package_type.eq.Camp Training, package_type.eq.Personal Training, package_type.is.null'));
+      } else if (formData.package_type === 'Personal Training') {
+        ({ data, error } = await query.eq('package_type', 'Personal Training'));
+      } else {
+        return []; // Return empty array if no package_type is selected
+      }
+
+      if (error) {
+        console.error('coaches query error:', error);
+        throw error;
+      }
+      console.log(`Fetched coaches for ${formData.package_type}:`, data); // Debug: Log coaches
+      return data as { id: string; name: string; package_type: "Camp Training" | "Personal Training" | null }[];
+    },
+    enabled: !!formData.package_type, // Only fetch when package_type is selected
   });
 
-  const { data: students } = useQuery({
-    queryKey: ['students-select'],
+  const { data: students, isLoading: studentsLoading, error: studentsError } = useQuery({
+    queryKey: ['students-select', formData.package_type, formData.coach_id],
     queryFn: async () => {
+      if (!formData.package_type || !formData.coach_id) return []; // Return empty array if package_type or coach_id is not selected
       const { data, error } = await supabase
         .from('students')
         .select('id, name, remaining_sessions, package_type, coach_id')
+        .eq('package_type', formData.package_type)
+        .eq('coach_id', formData.coach_id)
         .order('name');
       
-      if (error) throw error;
+      if (error) {
+        console.error('students query error:', error);
+        throw error;
+      }
+      console.log(`Fetched students for package_type=${formData.package_type} and coach_id=${formData.coach_id}:`, data); // Debug: Log students
       return data as Student[];
-    }
+    },
+    enabled: !!formData.package_type && !!formData.coach_id, // Only fetch when both package_type and coach_id are selected
   });
 
   const createMutation = useMutation({
     mutationFn: async (session: typeof formData) => {
-      // Skip validation if no package_type is selected
-      if (session.package_type) {
-        const invalidStudents = selectedStudents.filter(studentId => {
-          const student = students?.find(s => s.id === studentId);
-          return student && student.package_type !== session.package_type;
-        });
+      if (!session.package_type) {
+        throw new Error('Package type is required');
+      }
 
-        if (invalidStudents.length > 0) {
-          throw new Error('Selected students must match the session package type');
-        }
+      const invalidStudents = selectedStudents.filter(studentId => {
+        const student = students?.find(s => s.id === studentId);
+        return student && (student.package_type !== session.package_type || student.coach_id !== session.coach_id);
+      });
+
+      if (invalidStudents.length > 0) {
+        throw new Error('Selected students must match the session package type and coach');
       }
 
       // Check for conflicts
@@ -202,16 +226,17 @@ export function SessionsManager() {
 
   const updateMutation = useMutation({
     mutationFn: async ({ id, ...session }: typeof formData & { id: string }) => {
-      // Skip validation if no package_type is selected
-      if (session.package_type) {
-        const invalidStudents = selectedStudents.filter(studentId => {
-          const student = students?.find(s => s.id === studentId);
-          return student && student.package_type !== session.package_type;
-        });
+      if (!session.package_type) {
+        throw new Error('Package type is required');
+      }
 
-        if (invalidStudents.length > 0) {
-          throw new Error('Selected students must match the session package type');
-        }
+      const invalidStudents = selectedStudents.filter(studentId => {
+        const student = students?.find(s => s.id === studentId);
+        return student && (student.package_type !== session.package_type || student.coach_id !== session.coach_id);
+      });
+
+      if (invalidStudents.length > 0) {
+        throw new Error('Selected students must match the session package type and coach');
       }
 
       const { data, error } = await supabase
@@ -307,6 +332,16 @@ export function SessionsManager() {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
+    if (!formData.package_type) {
+      toast.error('Please select a package type');
+      return;
+    }
+
+    if (!formData.coach_id) {
+      toast.error('Please select a coach');
+      return;
+    }
+
     // Conflict Check
     const hasConflict = sessions?.some(session =>
       session.coach_id === formData.coach_id &&
@@ -340,7 +375,7 @@ export function SessionsManager() {
       coach_id: session.coach_id,
       notes: session.notes || "",
       status: session.status,
-      package_type: session.package_type || '',
+      package_type: session.package_type || "",
     });
     setSelectedStudents(session.session_participants.map(p => p.student_id));
     setIsDialogOpen(true);
@@ -404,6 +439,92 @@ export function SessionsManager() {
                 </DialogHeader>
                 
                 <form onSubmit={handleSubmit} className="space-y-6">
+                  {/* Package Type Selection */}
+                  <div className="space-y-2">
+                    <Label htmlFor="package_type" className="flex items-center text-sm font-medium text-gray-700">
+                      <Users className="w-4 h-4 mr-2" style={{ color: '#fc7416' }} />
+                      Package Type
+                    </Label>
+                    <Select
+                      value={formData.package_type}
+                      onValueChange={(value: "Camp Training" | "Personal Training") => {
+                        setFormData(prev => ({ ...prev, package_type: value, coach_id: "", notes: prev.notes }));
+                        setSelectedStudents([]); // Reset students when package_type changes
+                      }}
+                      required
+                    >
+                      <SelectTrigger className="border-2 focus:border-orange-500 rounded-lg">
+                        <SelectValue placeholder="Select package type" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="Camp Training">Camp Training</SelectItem>
+                        <SelectItem value="Personal Training">Personal Training</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  {/* Branch and Coach Row */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="space-y-2">
+                      <Label htmlFor="branch" className="flex items-center text-sm font-medium text-gray-700">
+                        <MapPin className="w-4 h-4 mr-2" style={{ color: '#fc7416' }} />
+                        Branch Location
+                      </Label>
+                      <Select 
+                        value={formData.branch_id} 
+                        onValueChange={(value) => setFormData(prev => ({ ...prev, branch_id: value }))}
+                        disabled={!formData.package_type}
+                      >
+                        <SelectTrigger className="border-2 focus:border-orange-500 rounded-lg">
+                          <SelectValue placeholder={formData.package_type ? "Select branch" : "Select package type first"} />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {branches?.map(branch => (
+                            <SelectItem key={branch.id} value={branch.id}>
+                              {branch.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="coach" className="flex items-center text-sm font-medium text-gray-700">
+                        <User className="w-4 h-4 mr-2" style={{ color: '#fc7416' }} />
+                        Assigned Coach
+                      </Label>
+                      <Select 
+                        value={formData.coach_id} 
+                        onValueChange={(value) => {
+                          setFormData(prev => ({ ...prev, coach_id: value }));
+                          setSelectedStudents([]); // Reset students when coach changes
+                        }}
+                        disabled={!formData.package_type || coachesLoading}
+                      >
+                        <SelectTrigger className="border-2 focus:border-orange-500 rounded-lg">
+                          <SelectValue placeholder={
+                            coachesLoading ? "Loading coaches..." : 
+                            coachesError ? "Error loading coaches" : 
+                            coaches?.length === 0 ? `No coaches for ${formData.package_type}` : 
+                            formData.package_type ? "Select coach" : "Select package type first"
+                          } />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {coaches?.map(coach => (
+                            <SelectItem key={coach.id} value={coach.id}>
+                              {coach.name} ({coach.package_type || "No package"})
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      {coachesError && (
+                        <p className="text-sm text-red-600 mt-1">Error loading coaches: {(coachesError as Error).message}</p>
+                      )}
+                      {!coachesLoading && coaches?.length === 0 && formData.package_type && (
+                        <p className="text-sm text-gray-600 mt-1">No coaches available for {formData.package_type}.</p>
+                      )}
+                    </div>
+                  </div>
+
                   {/* Date and Status Row */}
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div className="space-y-2">
@@ -418,11 +539,16 @@ export function SessionsManager() {
                         onChange={(e) => setFormData(prev => ({ ...prev, date: e.target.value }))}
                         required
                         className="border-2 focus:border-orange-500 rounded-lg"
+                        disabled={!formData.package_type}
                       />
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="status" className="text-sm font-medium text-gray-700">Session Status</Label>
-                      <Select value={formData.status} onValueChange={(value: SessionStatus) => setFormData(prev => ({ ...prev, status: value }))}>
+                      <Select 
+                        value={formData.status} 
+                        onValueChange={(value: SessionStatus) => setFormData(prev => ({ ...prev, status: value }))}
+                        disabled={!formData.package_type}
+                      >
                         <SelectTrigger className="border-2 focus:border-orange-500 rounded-lg">
                           <SelectValue />
                         </SelectTrigger>
@@ -449,6 +575,7 @@ export function SessionsManager() {
                         onChange={(e) => setFormData(prev => ({ ...prev, start_time: e.target.value }))}
                         required
                         className="border-2 focus:border-orange-500 rounded-lg"
+                        disabled={!formData.package_type}
                       />
                     </div>
                     <div className="space-y-2">
@@ -463,68 +590,9 @@ export function SessionsManager() {
                         onChange={(e) => setFormData(prev => ({ ...prev, end_time: e.target.value }))}
                         required
                         className="border-2 focus:border-orange-500 rounded-lg"
+                        disabled={!formData.package_type}
                       />
                     </div>
-                  </div>
-
-                  {/* Branch and Coach Row */}
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div className="space-y-2">
-                      <Label htmlFor="branch" className="flex items-center text-sm font-medium text-gray-700">
-                        <MapPin className="w-4 h-4 mr-2" style={{ color: '#fc7416' }} />
-                        Branch Location
-                      </Label>
-                      <Select value={formData.branch_id} onValueChange={(value) => setFormData(prev => ({ ...prev, branch_id: value }))}>
-                        <SelectTrigger className="border-2 focus:border-orange-500 rounded-lg">
-                          <SelectValue placeholder="Select branch" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {branches?.map(branch => (
-                            <SelectItem key={branch.id} value={branch.id}>
-                              {branch.name}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="coach" className="flex items-center text-sm font-medium text-gray-700">
-                        <User className="w-4 h-4 mr-2" style={{ color: '#fc7416' }} />
-                        Assigned Coach
-                      </Label>
-                      <Select value={formData.coach_id} onValueChange={(value) => setFormData(prev => ({ ...prev, coach_id: value }))}>
-                        <SelectTrigger className="border-2 focus:border-orange-500 rounded-lg">
-                          <SelectValue placeholder="Select coach" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {coaches?.map(coach => (
-                            <SelectItem key={coach.id} value={coach.id}>
-                              {coach.name}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  </div>
-
-                  {/* Package Type Selection */}
-                  <div className="space-y-2">
-                    <Label htmlFor="package_type" className="flex items-center text-sm font-medium text-gray-700">
-                      <Users className="w-4 h-4 mr-2" style={{ color: '#fc7416' }} />
-                      Package Type
-                    </Label>
-                    <Select
-                      value={formData.package_type}
-                      onValueChange={(value: string) => setFormData(prev => ({ ...prev, package_type: value }))}
-                    >
-                      <SelectTrigger className="border-2 focus:border-orange-500 rounded-lg">
-                        <SelectValue placeholder="Select package type" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="Camp Training">Camp Training</SelectItem>
-                        <SelectItem value="Personal Training">Personal Training</SelectItem>
-                      </SelectContent>
-                    </Select>
                   </div>
 
                   {/* Players Selection */}
@@ -534,33 +602,40 @@ export function SessionsManager() {
                       Select Players ({selectedStudents.length} selected)
                     </Label>
                     <div className="border-2 rounded-lg p-4 max-h-48 overflow-y-auto" style={{ backgroundColor: '#faf0e8', borderColor: '#fc7416' }}>
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                        {students
-                          ?.filter(student => formData.package_type === '' || student.package_type === formData.package_type)
-                          .map(student => (
-                            <div key={student.id} className="flex items-center space-x-3 p-2 rounded-md hover:bg-white transition-colors">
-                              <input
-                                type="checkbox"
-                                id={student.id}
-                                checked={selectedStudents.includes(student.id)}
-                                onChange={(e) => {
-                                  if (e.target.checked) {
-                                    setSelectedStudents(prev => [...prev, student.id]);
-                                  } else {
-                                    setSelectedStudents(prev => prev.filter(id => id !== student.id));
-                                  }
-                                }}
-                                className="w-4 h-4 rounded border-2 border-orange-400 text-orange-500 focus:ring-orange-500"
-                              />
-                              <Label htmlFor={student.id} className="flex-1 text-sm cursor-pointer">
-                                <span className="font-medium">{student.name}</span>
-                                <span className="text-gray-500 ml-2">({student.remaining_sessions} sessions left)</span>
-                              </Label>
-                            </div>
-                          ))}
-                      </div>
-                      {students?.filter(student => formData.package_type === '' || student.package_type === formData.package_type).length === 0 && formData.package_type !== '' && (
-                        <p className="text-sm text-red-600">No students available for {formData.package_type} training.</p>
+                      {formData.package_type && formData.coach_id ? (
+                        studentsLoading ? (
+                          <p className="text-sm text-gray-600">Loading students...</p>
+                        ) : studentsError ? (
+                          <p className="text-sm text-red-600">Error loading students: {(studentsError as Error).message}</p>
+                        ) : students?.length === 0 ? (
+                          <p className="text-sm text-gray-600">No students available for this coach and {formData.package_type}.</p>
+                        ) : (
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            {students?.map(student => (
+                              <div key={student.id} className="flex items-center space-x-3 p-2 rounded-md hover:bg-white transition-colors">
+                                <input
+                                  type="checkbox"
+                                  id={student.id}
+                                  checked={selectedStudents.includes(student.id)}
+                                  onChange={(e) => {
+                                    if (e.target.checked) {
+                                      setSelectedStudents(prev => [...prev, student.id]);
+                                    } else {
+                                      setSelectedStudents(prev => prev.filter(id => id !== student.id));
+                                    }
+                                  }}
+                                  className="w-4 h-4 rounded border-2 border-orange-400 text-orange-500 focus:ring-orange-500"
+                                />
+                                <Label htmlFor={student.id} className="flex-1 text-sm cursor-pointer">
+                                  <span className="font-medium">{student.name}</span>
+                                  <span className="text-gray-500 ml-2">({student.remaining_sessions} sessions left)</span>
+                                </Label>
+                              </div>
+                            ))}
+                          </div>
+                        )
+                      ) : (
+                        <p className="text-sm text-gray-600">Select a package type and coach to view available students.</p>
                       )}
                     </div>
                   </div>
@@ -577,6 +652,7 @@ export function SessionsManager() {
                       onChange={(e) => setFormData(prev => ({ ...prev, notes: e.target.value }))}
                       placeholder="Add any special notes or instructions for this session..."
                       className="border-2 focus:border-orange-500 rounded-lg"
+                      disabled={!formData.package_type}
                     />
                   </div>
 
@@ -592,7 +668,7 @@ export function SessionsManager() {
                             resetForm();
                           }
                         }}
-                        disabled={deleteMutation.isPending}
+                        disabled={deleteMutation.isPending || !formData.package_type}
                         className="w-full sm:w-auto"
                       >
                         <Trash2 className="w-4 h-4 mr-2" />
@@ -600,12 +676,17 @@ export function SessionsManager() {
                       </Button>
                     )}
                     <div className="flex space-x-3 w-full sm:w-auto">
-                      <Button type="button" variant="outline" onClick={resetForm} className="flex-1 sm:flex-none">
+                      <Button 
+                        type="button" 
+                        variant="outline" 
+                        onClick={resetForm} 
+                        className="flex-1 sm:flex-none"
+                      >
                         Cancel
                       </Button>
                       <Button 
                         type="submit" 
-                        disabled={createMutation.isPending || updateMutation.isPending}
+                        disabled={createMutation.isPending || updateMutation.isPending || !formData.package_type || !formData.coach_id}
                         className="flex-1 sm:flex-none font-semibold"
                         style={{ backgroundColor: '#fc7416', color: 'white' }}
                       >
@@ -677,6 +758,11 @@ export function SessionsManager() {
                         <span className="text-sm"><span className="font-medium">Branch:</span> {session.branches.name}</span>
                       </div>
                       
+                      <div className="flex items-center space-x-2">
+                        <Users className="w-4 h-4 text-gray-500" />
+                        <span className="text-sm"><span className="font-medium">Package:</span> {session.package_type || 'N/A'}</span>
+                      </div>
+                      
                       <div className="flex items-center justify-between">
                         <div className="flex items-center space-x-2">
                           <Users className="w-4 h-4 text-gray-500" />
@@ -689,7 +775,7 @@ export function SessionsManager() {
                             e.stopPropagation();
                             handleManageParticipants(session);
                           }}
-                          className="text-xs border-[#fc7416] text-[#fc7416] hover:bg-orange-500 text-[#fc7416]"
+                          className="text-xs border-[#fc7416] text-[#fc7416] hover:bg-orange-500 hover:text-white"
                         >
                           Manage
                         </Button>
@@ -724,7 +810,13 @@ export function SessionsManager() {
                   <span className="font-medium">Session Date:</span>{' '}
                   {selectedSession?.date ? format(new Date(selectedSession.date), 'MMMM dd, yyyy') : 'Invalid Date'}
                 </p>
-                <p className="text-xs text-gray-600">
+                <p className="text-sm text-gray-700 mb-1">
+                  <span className="font-medium">Package Type:</span> {selectedSession?.package_type || 'N/A'}
+                </p>
+                <p className="text-sm text-gray-700">
+                  <span className="font-medium">Coach:</span> {selectedSession?.coaches.name || 'N/A'}
+                </p>
+                <p className="text-xs text-gray-600 mt-1">
                   Currently selected: {selectedStudents.length} players
                 </p>
               </div>
@@ -732,9 +824,14 @@ export function SessionsManager() {
               <div className="space-y-2">
                 <Label className="text-sm font-medium text-gray-700">Available Players</Label>
                 <div className="border-2 rounded-lg p-3 max-h-60 overflow-y-auto space-y-2" style={{ borderColor: '#fc7416', backgroundColor: '#faf0e8' }}>
-                  {students
-                    ?.filter(student => !selectedSession?.package_type || student.package_type === selectedSession.package_type)
-                    .map(student => (
+                  {studentsLoading ? (
+                    <p className="text-sm text-gray-600">Loading students...</p>
+                  ) : studentsError ? (
+                    <p className="text-sm text-red-600">Error loading students: {(studentsError as Error).message}</p>
+                  ) : students?.length === 0 ? (
+                    <p className="text-sm text-gray-600">No students available for this coach and {selectedSession?.package_type}.</p>
+                  ) : (
+                    students?.map(student => (
                       <div key={student.id} className="flex items-center space-x-3 p-2 rounded-md hover:bg-white transition-colors">
                         <input
                           type="checkbox"
@@ -754,9 +851,7 @@ export function SessionsManager() {
                           <span className="text-gray-500 ml-2">({student.remaining_sessions} sessions left)</span>
                         </Label>
                       </div>
-                    ))}
-                  {students?.filter(student => !selectedSession?.package_type || student.package_type === selectedSession.package_type).length === 0 && selectedSession?.package_type && (
-                    <p className="text-sm text-red-600">No students available for {selectedSession.package_type} training.</p>
+                    ))
                   )}
                 </div>
               </div>
@@ -769,6 +864,17 @@ export function SessionsManager() {
                   onClick={async () => {
                     if (!selectedSession) return;
                     
+                    // Validate students
+                    const invalidStudents = selectedStudents.filter(studentId => {
+                      const student = students?.find(s => s.id === studentId);
+                      return student && (student.package_type !== selectedSession.package_type || student.coach_id !== selectedSession.coach_id);
+                    });
+
+                    if (invalidStudents.length > 0) {
+                      toast.error('Selected students must match the session package type and coach');
+                      return;
+                    }
+
                     // Remove all participants
                     await supabase
                       .from('session_participants')
