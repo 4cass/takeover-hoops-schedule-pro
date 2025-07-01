@@ -1,3 +1,4 @@
+
 import { createContext, useContext, useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { User } from "@supabase/supabase-js";
@@ -9,6 +10,11 @@ type AuthContextType = {
 };
 
 const AuthContext = createContext<AuthContextType>({ user: null, role: null, loading: true });
+
+// Helper function to validate role
+const isValidRole = (role: string): role is 'admin' | 'coach' => {
+  return role === 'admin' || role === 'coach';
+};
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
@@ -39,7 +45,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           console.error("Error fetching role:", error.message);
           setRole(null); // Handle missing record or column
         } else {
-          setRole(data?.role || null);
+          // Validate and set role with proper type checking
+          const dbRole = data?.role;
+          setRole(dbRole && isValidRole(dbRole) ? dbRole : null);
         }
       }
 
@@ -62,7 +70,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           console.error("Error fetching role:", error.message);
           setRole(null);
         } else {
-          setRole(data?.role || null);
+          // Validate and set role with proper type checking
+          const dbRole = data?.role;
+          setRole(dbRole && isValidRole(dbRole) ? dbRole : null);
         }
       } else {
         setRole(null);
