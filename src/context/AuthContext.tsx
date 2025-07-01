@@ -24,6 +24,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     // Check current session
     const fetchSession = async () => {
+      console.log("AuthContext - Fetching session..."); // Debug log
       const { data: { session }, error: sessionError } = await supabase.auth.getSession();
       if (sessionError) {
         console.error("Error fetching session:", sessionError.message);
@@ -31,9 +32,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         return;
       }
 
+      console.log("AuthContext - Session:", session); // Debug log
       setUser(session?.user ?? null);
 
       if (session?.user) {
+        console.log("AuthContext - Fetching role for user:", session.user.id); // Debug log
         // Fetch role from coaches table
         const { data, error } = await supabase
           .from("coaches")
@@ -41,13 +44,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           .eq("id", session.user.id)
           .single();
 
+        console.log("AuthContext - Role query result:", { data, error }); // Debug log
+
         if (error) {
           console.error("Error fetching role:", error.message);
           setRole(null); // Handle missing record or column
         } else {
           // Validate and set role with proper type checking
           const dbRole = data?.role;
-          setRole(dbRole && isValidRole(dbRole) ? dbRole : null);
+          console.log("AuthContext - DB role:", dbRole); // Debug log
+          const validatedRole = dbRole && isValidRole(dbRole) ? dbRole : null;
+          console.log("AuthContext - Validated role:", validatedRole); // Debug log
+          setRole(validatedRole);
         }
       }
 
@@ -57,7 +65,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     fetchSession();
 
     // Listen for auth changes
-    const { data: authListener } = supabase.auth.onAuthStateChange(async (_, session) => {
+    const { data: authListener } = supabase.auth.onAuthStateChange(async (event, session) => {
+      console.log("AuthContext - Auth state changed:", event, session); // Debug log
       setUser(session?.user ?? null);
       if (session?.user) {
         const { data, error } = await supabase
@@ -66,13 +75,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           .eq("id", session.user.id)
           .single();
 
+        console.log("AuthContext - Role query result (auth change):", { data, error }); // Debug log
+
         if (error) {
           console.error("Error fetching role:", error.message);
           setRole(null);
         } else {
           // Validate and set role with proper type checking
           const dbRole = data?.role;
-          setRole(dbRole && isValidRole(dbRole) ? dbRole : null);
+          const validatedRole = dbRole && isValidRole(dbRole) ? dbRole : null;
+          console.log("AuthContext - Setting role (auth change):", validatedRole); // Debug log
+          setRole(validatedRole);
         }
       } else {
         setRole(null);
@@ -84,6 +97,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       authListener.subscription.unsubscribe();
     };
   }, []);
+
+  console.log("AuthContext - Current state:", { user: user?.email, role, loading }); // Debug log
 
   return (
     <AuthContext.Provider value={{ user, role, loading }}>

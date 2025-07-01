@@ -38,10 +38,17 @@ export function AppSidebar({ activeTab, onTabChange, userRole }: AppSidebarProps
   const { setOpen, isMobile } = useSidebar();
   const navigate = useNavigate();
 
+  console.log("AppSidebar - userRole:", userRole); // Debug log
+  console.log("AppSidebar - all menu items:", menuItems); // Debug log
+
   // Filter menu items based on user role
-  const filteredMenuItems = menuItems.filter(item => 
-    userRole && item.roles.includes(userRole)
-  );
+  const filteredMenuItems = menuItems.filter(item => {
+    const hasAccess = userRole && item.roles.includes(userRole);
+    console.log(`Menu item ${item.title} - userRole: ${userRole}, item.roles: ${item.roles}, hasAccess: ${hasAccess}`);
+    return hasAccess;
+  });
+
+  console.log("AppSidebar - filtered menu items:", filteredMenuItems); // Debug log
 
   const handleTabChange = (value: string) => {
     onTabChange(value);
@@ -89,6 +96,11 @@ export function AppSidebar({ activeTab, onTabChange, userRole }: AppSidebarProps
 
           <SidebarGroupContent>
             <SidebarMenu>
+              {filteredMenuItems.length === 0 && (
+                <div className="px-6 py-4 text-white/60 text-sm">
+                  No menu items available for role: {userRole || 'none'}
+                </div>
+              )}
               {filteredMenuItems.map((item) => (
                 <SidebarMenuItem key={item.value} className="mb-2">
                   <SidebarMenuButton
