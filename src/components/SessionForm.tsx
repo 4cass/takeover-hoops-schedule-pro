@@ -36,13 +36,10 @@ interface SessionFormProps {
 }
 
 export const SessionForm: React.FC<SessionFormProps> = ({ session, onSubmit, onCancel }) => {
-  const [selectedCoachId, setSelectedCoachId] = useState<string | undefined>(
-    session?.coach_id || undefined
-  );
+  const [selectedCoach, setSelectedCoach] = useState<Tables<'coaches'> | undefined>();
   const [selectedPackageType, setSelectedPackageType] = useState<string | undefined>(
     session?.package_type || undefined
   );
-  const [selectedCoach, setSelectedCoach] = useState<Tables<'coaches'> | undefined>();
 
   // Fetch branches
   const { data: branches = [] } = useQuery({
@@ -54,7 +51,7 @@ export const SessionForm: React.FC<SessionFormProps> = ({ session, onSubmit, onC
     },
   });
 
-  // Fetch coaches
+  // Fetch all coaches
   const { data: coaches = [] } = useQuery({
     queryKey: ['coaches'],
     queryFn: async () => {
@@ -64,8 +61,11 @@ export const SessionForm: React.FC<SessionFormProps> = ({ session, onSubmit, onC
     },
   });
 
-  // Fetch filtered students based on coach and package type
-  const { data: students = [] } = useFilteredStudents(selectedCoachId, selectedPackageType);
+  // Fetch students filtered by selected coach and package type
+  const { data: filteredStudents = [] } = useFilteredStudents(
+    selectedCoach?.id, 
+    selectedPackageType
+  );
 
   const {
     register,
@@ -91,27 +91,25 @@ export const SessionForm: React.FC<SessionFormProps> = ({ session, onSubmit, onC
   const watchedPackageType = watch('package_type');
   const watchedParticipantIds = watch('participant_ids') || [];
 
-  // Update selected coach when coach ID changes
+  // Update selected coach when coach selection changes
   useEffect(() => {
-    if (watchedCoachId !== selectedCoachId) {
-      setSelectedCoachId(watchedCoachId);
-      const coach = coaches.find(c => c.id === watchedCoachId);
-      setSelectedCoach(coach);
-      
-      // Reset package type and participants when coach changes
+    const coach = coaches.find(c => c.id === watchedCoachId);
+    setSelectedCoach(coach);
+    
+    // Reset package type and participants when coach changes
+    if (coach) {
       setValue('package_type', undefined);
       setValue('participant_ids', []);
       setSelectedPackageType(undefined);
     }
-  }, [watchedCoachId, selectedCoachId, setValue, coaches]);
+  }, [watchedCoachId, coaches, setValue]);
 
+  // Update selected package type when package type changes
   useEffect(() => {
-    if (watchedPackageType !== selectedPackageType) {
-      setSelectedPackageType(watchedPackageType);
-      // Reset participants when package type changes
-      setValue('participant_ids', []);
-    }
-  }, [watchedPackageType, selectedPackageType, setValue]);
+    setSelectedPackageType(watchedPackageType);
+    // Reset participants when package type changes
+    setValue('participant_ids', []);
+  }, [watchedPackageType, setValue]);
 
   const handleParticipantToggle = (studentId: string, checked: boolean) => {
     const currentIds = watchedParticipantIds;
@@ -126,9 +124,12 @@ export const SessionForm: React.FC<SessionFormProps> = ({ session, onSubmit, onC
   const getAvailablePackageTypes = () => {
     if (!selectedCoach?.package_type) return [];
     
+    // If coach is Personal Training, only show Personal Training
     if (selectedCoach.package_type === 'Personal Training') {
       return ['Personal Training'];
-    } else if (selectedCoach.package_type === 'Camp Training') {
+    } 
+    // If coach is Camp Training, show both Camp Training and Personal Training
+    else if (selectedCoach.package_type === 'Camp Training') {
       return ['Camp Training', 'Personal Training'];
     }
     
@@ -202,11 +203,8 @@ export const SessionForm: React.FC<SessionFormProps> = ({ session, onSubmit, onC
       <div>
         <Label htmlFor="coach_id">Coach</Label>
         <Select
-          value={selectedCoachId || ''}
-          onValueChange={(value) => {
-            setValue('coach_id', value);
-            setSelectedCoachId(value);
-          }}
+          value={watchedCoachId || ''}
+          onValueChange={(value) => setValue('coach_id', value)}
         >
           <SelectTrigger>
             <SelectValue placeholder="Select coach" />
@@ -225,6 +223,7 @@ export const SessionForm: React.FC<SessionFormProps> = ({ session, onSubmit, onC
         )}
       </div>
 
+      {/* Show selected coach's package type */}
       {selectedCoach && (
         <div className="p-3 bg-blue-50 rounded-md border border-blue-200">
           <p className="text-sm text-blue-800">
@@ -233,9 +232,10 @@ export const SessionForm: React.FC<SessionFormProps> = ({ session, onSubmit, onC
         </div>
       )}
 
+      {/* Show package type selection based on coach's capabilities */}
       {selectedCoach && availablePackageTypes.length > 0 && (
         <div>
-          <Label htmlFor="package_type">Package Type</Label>
+          <Label htmlFor="package_type">Session Package Type</Label>
           <Select
             value={selectedPackageType || ''}
             onValueChange={(value) => {
@@ -245,7 +245,7 @@ export const SessionForm: React.FC<SessionFormProps> = ({ session, onSubmit, onC
             }}
           >
             <SelectTrigger>
-              <SelectValue placeholder="Select package type" />
+              <SelectValue placeholder="Select package type for this session" />
             </SelectTrigger>
             <SelectContent>
               {availablePackageTypes.map((packageType) => (
@@ -258,11 +258,12 @@ export const SessionForm: React.FC<SessionFormProps> = ({ session, onSubmit, onC
         </div>
       )}
 
-      {selectedCoachId && selectedPackageType && students.length > 0 && (
+      {/* Show participants based on selected coach and package type */}
+      {selectedCoach && selectedPackageType && filteredStudents.length > 0 && (
         <div>
           <Label>Participants</Label>
           <div className="mt-2 space-y-2 max-h-40 overflow-y-auto border rounded-md p-3">
-            {students.map((student) => (
+            {filteredStudents.map((student) => (
               <div key={student.id} className="flex items-center space-x-2">
                 <Checkbox
                   id={`student-${student.id}`}
@@ -283,7 +284,8 @@ export const SessionForm: React.FC<SessionFormProps> = ({ session, onSubmit, onC
         </div>
       )}
 
-      {selectedCoachId && selectedPackageType && students.length === 0 && (
+      {/* Show message when no students found */}
+      {selectedCoach && selectedPackageType && filteredStudents.length === 0 && (
         <div className="text-sm text-gray-500 p-3 bg-gray-50 rounded-md">
           No students found with the selected coach and package type combination.
         </div>
