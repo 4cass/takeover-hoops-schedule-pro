@@ -31,3 +31,4 @@ export function ProtectedRoute({ allowedRoles, restrictedForCoach = false }: Pro
 
   return <Outlet />;
 }
+</ProtectedRoute>
