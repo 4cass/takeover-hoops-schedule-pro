@@ -57,6 +57,8 @@ export function SessionsManager() {
     status: "scheduled" as SessionStatus,
     package_type: "" as "Camp Training" | "Personal Training" | "",
   });
+  const [filterPackageType, setFilterPackageType] = useState<"All" | "Personal Training" | "Camp Training">("All");
+  const [sortOrder, setSortOrder] = useState<"closest" | "furthest">("furthest");
 
   const queryClient = useQueryClient();
 
@@ -109,7 +111,7 @@ export function SessionsManager() {
 
       let data, error;
       if (formData.package_type === 'Camp Training') {
-        ({ data, error } = await query.or('package_type.eq.Camp Training, package_type.eq.Personal Training, package_type.is.null'));
+        ({ data, error } = await query.or('package_type.eq.Camp Training,package_type.is.null'));
       } else if (formData.package_type === 'Personal Training') {
         ({ data, error } = await query.eq('package_type', 'Personal Training'));
       } else {
@@ -159,7 +161,7 @@ export function SessionsManager() {
       });
 
       if (invalidStudents.length > 0) {
-        throw new Error('Selected students must match the session package type and coach');
+        throw new Error('Selected students must match the session package_type and coach');
       }
 
       // Check for conflicts
@@ -236,7 +238,7 @@ export function SessionsManager() {
       });
 
       if (invalidStudents.length > 0) {
-        throw new Error('Selected students must match the session package type and coach');
+        throw new Error('Selected students must match the session package_type and coach');
       }
 
       const { data, error } = await supabase
@@ -397,6 +399,17 @@ export function SessionsManager() {
       default: return 'bg-gray-50 text-gray-700 border border-gray-200';
     }
   };
+
+  // Filter and sort sessions
+  const filteredSessions = sessions
+    ?.filter(session => 
+      filterPackageType === "All" || session.package_type === filterPackageType
+    )
+    .sort((a, b) => {
+      const dateA = new Date(a.date).getTime();
+      const dateB = new Date(b.date).getTime();
+      return sortOrder === "closest" ? dateA - dateB : dateB - dateA;
+    });
 
   if (isLoading) {
     return (
@@ -698,28 +711,78 @@ export function SessionsManager() {
               </DialogContent>
             </Dialog>
           </div>
+          
+          {/* Filter and Sort Controls */}
+          <div className="mt-6 p-4 bg-white rounded-lg shadow-md border border-[#fc7416]/20">
+            <div className="flex flex-col sm:flex-row sm:items-end gap-4">
+              <div className="flex-1">
+                <Label htmlFor="filter-package" className="flex items-center text-sm font-medium text-gray-700 mb-2">
+                  <Users className="w-4 h-4 mr-2" style={{ color: '#fc7416' }} />
+                  Filter by Package Type
+                </Label>
+                <Select
+                  value={filterPackageType}
+                  onValueChange={(value: "All" | "Personal Training" | "Camp Training") => setFilterPackageType(value)}
+                >
+                  <SelectTrigger className="border-2 focus:border-orange-500 rounded-lg">
+                    <SelectValue placeholder="Select package type" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="All">All Sessions</SelectItem>
+                    <SelectItem value="Personal Training">Personal Training</SelectItem>
+                    <SelectItem value="Camp Training">Camp Training</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="flex-1">
+                <Label htmlFor="sort-order" className="flex items-center text-sm font-medium text-gray-700 mb-2">
+                  <Calendar className="w-4 h-4 mr-2" style={{ color: '#fc7416' }} />
+                  Sort by Date
+                </Label>
+                <Select
+                  value={sortOrder}
+                  onValueChange={(value: "closest" | "furthest") => setSortOrder(value)}
+                >
+                  <SelectTrigger className="border-2 focus:border-orange-500 rounded-lg">
+                    <SelectValue placeholder="Select sort order" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="closest">Closest Date</SelectItem>
+                    <SelectItem value="furthest">Furthest Date</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            <p className="text-sm text-gray-600 mt-3">
+              Showing {filteredSessions?.length || 0} session{filteredSessions?.length === 1 ? '' : 's'}
+            </p>
+          </div>
         </div>
 
         {/* Sessions Grid */}
         <Card className="shadow-xl border-2 border-[#fc7416]/20" style={{ backgroundColor: '#fffefe' }}>
           <CardContent className="p-6 border-b border-[#fc7416]/10">
-            {sessions?.length === 0 ? (
+            {filteredSessions?.length === 0 ? (
               <div className="text-center py-16">
                 <Calendar className="w-16 h-16 mx-auto mb-4 text-gray-400" />
                 <h3 className="text-xl font-semibold text-gray-900 mb-2">No Training Sessions</h3>
-                <p className="text-gray-600 mb-6">Get started by scheduling your first training session</p>
+                <p className="text-gray-600 mb-6">
+                  {filterPackageType === "All" 
+                    ? "Get started by scheduling your first training session" 
+                    : `No ${filterPackageType} sessions found. Try adjusting the filter or schedule a new session.`}
+                </p>
                 <Button 
                   onClick={() => setIsDialogOpen(true)}
                   className="font-semibold"
                   style={{ backgroundColor: '#fc7416', color: 'white' }}
                 >
                   <Plus className="w-4 h-4 mr-2" />
-                  Schedule First Session
+                  Schedule {filterPackageType === "All" ? "First" : filterPackageType} Session
                 </Button>
               </div>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                {sessions.map((session) => (
+                {filteredSessions.map((session) => (
                   <Card 
                     key={session.id} 
                     onClick={() => handleEdit(session)} 

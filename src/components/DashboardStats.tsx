@@ -110,7 +110,7 @@ export function DashboardStats() {
         ...(studentsRes.data?.map(item => ({
           id: item.id,
           type: 'student',
-          description: `New student ${item.name} added`,
+          description: `New player ${item.name} added`,
           created_at: item.created_at
         })) || [])
       ];
@@ -139,7 +139,7 @@ export function DashboardStats() {
 
   const statCards = [
     {
-      title: "Total Students",
+      title: "Total Players",
       value: stats?.students || 0,
       icon: Users,
       color: "text-[#fc7416]",
@@ -256,7 +256,7 @@ export function DashboardStats() {
             <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4">
               {[
                 { label: "Schedule Session", icon: Calendar, route: "/dashboard/sessions" },
-                { label: "Manage Students", icon: Users, route: "/dashboard/students" },
+                { label: "Manage Players", icon: Users, route: "/dashboard/students" },
                 { label: "Track Attendance", icon: CheckCircle, route: "/dashboard/attendance" },
                 { label: "Manage Coaches", icon: BookOpen, route: "/dashboard/coaches" },
                 { label: "Manage Branches", icon: MapPin, route: "/dashboard/branches" }
