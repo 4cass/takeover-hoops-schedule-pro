@@ -11,10 +11,15 @@ export const useFilteredCoaches = (packageType?: string | null) => {
         .select('*')
         .order('name');
 
+      // Only filter if a specific package type is provided
       if (packageType === 'Personal Training') {
         query = query.eq('package_type', 'Personal Training');
+      } else if (packageType === 'Camp Training') {
+        // For Camp Training, show both Camp Training coaches and Personal Training coaches
+        // since Camp Training coaches can do both types
+        query = query.in('package_type', ['Camp Training', 'Personal Training']);
       }
-      // For Camp Training or no package type, show all coaches
+      // For no package type or other values, show all coaches
       
       const { data, error } = await query;
       

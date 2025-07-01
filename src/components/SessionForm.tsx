@@ -42,6 +42,7 @@ export const SessionForm: React.FC<SessionFormProps> = ({ session, onSubmit, onC
   const [selectedPackageType, setSelectedPackageType] = useState<string | undefined>(
     session?.package_type || undefined
   );
+  const [selectedCoach, setSelectedCoach] = useState<Tables<'coaches'> | undefined>();
 
   // Fetch branches
   const { data: branches = [] } = useQuery({
@@ -90,13 +91,19 @@ export const SessionForm: React.FC<SessionFormProps> = ({ session, onSubmit, onC
   const watchedPackageType = watch('package_type');
   const watchedParticipantIds = watch('participant_ids') || [];
 
+  // Update selected coach when coach ID changes
   useEffect(() => {
     if (watchedCoachId !== selectedCoachId) {
       setSelectedCoachId(watchedCoachId);
-      // Reset participants when coach changes
+      const coach = coaches.find(c => c.id === watchedCoachId);
+      setSelectedCoach(coach);
+      
+      // Reset package type and participants when coach changes
+      setValue('package_type', undefined);
       setValue('participant_ids', []);
+      setSelectedPackageType(undefined);
     }
-  }, [watchedCoachId, selectedCoachId, setValue]);
+  }, [watchedCoachId, selectedCoachId, setValue, coaches]);
 
   useEffect(() => {
     if (watchedPackageType !== selectedPackageType) {
@@ -114,6 +121,21 @@ export const SessionForm: React.FC<SessionFormProps> = ({ session, onSubmit, onC
       setValue('participant_ids', currentIds.filter(id => id !== studentId));
     }
   };
+
+  // Get available package types based on selected coach
+  const getAvailablePackageTypes = () => {
+    if (!selectedCoach?.package_type) return [];
+    
+    if (selectedCoach.package_type === 'Personal Training') {
+      return ['Personal Training'];
+    } else if (selectedCoach.package_type === 'Camp Training') {
+      return ['Camp Training', 'Personal Training'];
+    }
+    
+    return [];
+  };
+
+  const availablePackageTypes = getAvailablePackageTypes();
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
@@ -203,25 +225,38 @@ export const SessionForm: React.FC<SessionFormProps> = ({ session, onSubmit, onC
         )}
       </div>
 
-      <div>
-        <Label htmlFor="package_type">Package Type</Label>
-        <Select
-          value={selectedPackageType || ''}
-          onValueChange={(value) => {
-            const packageType = value as 'Personal Training' | 'Camp Training';
-            setValue('package_type', packageType);
-            setSelectedPackageType(packageType);
-          }}
-        >
-          <SelectTrigger>
-            <SelectValue placeholder="Select package type" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="Personal Training">Personal Training</SelectItem>
-            <SelectItem value="Camp Training">Camp Training</SelectItem>
-          </SelectContent>
-        </Select>
-      </div>
+      {selectedCoach && (
+        <div className="p-3 bg-blue-50 rounded-md border border-blue-200">
+          <p className="text-sm text-blue-800">
+            <span className="font-medium">Coach Package Type:</span> {selectedCoach.package_type || 'Not specified'}
+          </p>
+        </div>
+      )}
+
+      {selectedCoach && availablePackageTypes.length > 0 && (
+        <div>
+          <Label htmlFor="package_type">Package Type</Label>
+          <Select
+            value={selectedPackageType || ''}
+            onValueChange={(value) => {
+              const packageType = value as 'Personal Training' | 'Camp Training';
+              setValue('package_type', packageType);
+              setSelectedPackageType(packageType);
+            }}
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="Select package type" />
+            </SelectTrigger>
+            <SelectContent>
+              {availablePackageTypes.map((packageType) => (
+                <SelectItem key={packageType} value={packageType}>
+                  {packageType}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+      )}
 
       {selectedCoachId && selectedPackageType && students.length > 0 && (
         <div>
