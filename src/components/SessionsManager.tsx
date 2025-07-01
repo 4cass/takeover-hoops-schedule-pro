@@ -18,7 +18,8 @@ type Student = {
   id: string;
   name: string;
   remaining_sessions: number;
-  package_type: 'camp' | 'personal' | null;
+  package_type: string | null;
+  coach_id: string | null;
 };
 
 type TrainingSession = {
@@ -30,13 +31,13 @@ type TrainingSession = {
   coach_id: string;
   notes: string | null;
   status: SessionStatus;
-  package_type: 'camp' | 'personal' | null;
+  package_type: string | null;
   branches: { name: string };
   coaches: { name: string };
   session_participants: Array<{
     id: string;
     student_id: string;
-    students: { name: string; package_type: 'camp' | 'personal' | null };
+    students: { name: string; package_type: string | null };
   }>;
 };
 
@@ -54,12 +55,12 @@ export function SessionsManager() {
     coach_id: "",
     notes: "",
     status: "scheduled" as SessionStatus,
-    package_type: "" as 'camp' | 'personal' | '',
+    package_type: "",
   });
 
   const queryClient = useQueryClient();
   
-const { data: sessions, isLoading, error } = useQuery({
+  const { data: sessions, isLoading, error } = useQuery({
     queryKey: ['training-sessions'],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -68,7 +69,6 @@ const { data: sessions, isLoading, error } = useQuery({
           *,
           branches (name),
           coaches (name),
-          package_type,
           session_participants (
             id,
             student_id,
@@ -116,7 +116,7 @@ const { data: sessions, isLoading, error } = useQuery({
     queryFn: async () => {
       const { data, error } = await supabase
         .from('students')
-        .select('id, name, remaining_sessions, package_type') // Add package_type
+        .select('id, name, remaining_sessions, package_type, coach_id')
         .order('name');
       
       if (error) throw error;
@@ -152,11 +152,9 @@ const { data: sessions, isLoading, error } = useQuery({
         throw new Error(conflicts[0].conflict_details);
       }
 
-      const { data, error } =
-
- await supabase
+      const { data, error } = await supabase
         .from('training_sessions')
-        .insert([{ ...session, package_type: session.package_type || null }]) // Handle empty package_type
+        .insert([{ ...session, package_type: session.package_type || null }])
         .select()
         .single();
       
@@ -218,7 +216,7 @@ const { data: sessions, isLoading, error } = useQuery({
 
       const { data, error } = await supabase
         .from('training_sessions')
-        .update({ ...session, package_type: session.package_type || null }) // Handle empty package_type
+        .update({ ...session, package_type: session.package_type || null })
         .eq('id', id)
         .select()
         .single();
@@ -298,7 +296,7 @@ const { data: sessions, isLoading, error } = useQuery({
       coach_id: "",
       notes: "",
       status: "scheduled" as SessionStatus,
-      package_type: "", // Add package_type
+      package_type: "",
     });
     setSelectedStudents([]);
     setEditingSession(null);
@@ -517,14 +515,14 @@ const { data: sessions, isLoading, error } = useQuery({
                     </Label>
                     <Select
                       value={formData.package_type}
-                      onValueChange={(value: 'camp' | 'personal') => setFormData(prev => ({ ...prev, package_type: value }))}
+                      onValueChange={(value: string) => setFormData(prev => ({ ...prev, package_type: value }))}
                     >
                       <SelectTrigger className="border-2 focus:border-orange-500 rounded-lg">
                         <SelectValue placeholder="Select package type" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="camp">Camp Training</SelectItem>
-                        <SelectItem value="personal">Personal Training</SelectItem>
+                        <SelectItem value="Camp Training">Camp Training</SelectItem>
+                        <SelectItem value="Personal Training">Personal Training</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>

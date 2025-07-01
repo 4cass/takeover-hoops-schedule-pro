@@ -17,9 +17,10 @@ type Student = {
   name: string;
   email: string;
   phone: string | null;
-  sessions: number;
+  sessions: number | null;
   remaining_sessions: number;
-  package_type?: string;
+  package_type: string | null;
+  coach_id: string | null;
   created_at: string;
 };
 
@@ -51,6 +52,7 @@ export function StudentsManager() {
     sessions: 0,
     remaining_sessions: 0,
     package_type: "",
+    coach_id: null as string | null,
   });
 
   const queryClient = useQueryClient();
@@ -64,6 +66,18 @@ export function StudentsManager() {
         .order("created_at", { ascending: false });
       if (error) throw error;
       return data as Student[];
+    },
+  });
+
+  const { data: coaches } = useQuery({
+    queryKey: ["coaches"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("coaches")
+        .select("id, name")
+        .order("name");
+      if (error) throw error;
+      return data;
     },
   });
 
@@ -157,7 +171,15 @@ export function StudentsManager() {
   });
 
   const resetForm = () => {
-    setFormData({ name: "", email: "", phone: "", sessions: 0, remaining_sessions: 0, package_type: "" });
+    setFormData({ 
+      name: "", 
+      email: "", 
+      phone: "", 
+      sessions: 0, 
+      remaining_sessions: 0, 
+      package_type: "",
+      coach_id: null
+    });
     setEditingStudent(null);
     setIsDialogOpen(false);
   };
@@ -177,9 +199,10 @@ export function StudentsManager() {
       name: student.name,
       email: student.email,
       phone: student.phone || "",
-      sessions: student.sessions,
+      sessions: student.sessions || 0,
       remaining_sessions: student.remaining_sessions,
       package_type: student.package_type || "",
+      coach_id: student.coach_id,
     });
     setIsDialogOpen(true);
   };
@@ -289,6 +312,24 @@ export function StudentsManager() {
                       </select>
                     </div>
                     <div>
+                      <Label htmlFor="coach" className="text-gray-700 font-medium">Assigned Coach</Label>
+                      <select
+                        id="coach"
+                        value={formData.coach_id || ""}
+                        onChange={(e) =>
+                          setFormData((prev) => ({ ...prev, coach_id: e.target.value || null }))
+                        }
+                        className="mt-1 border-2 border-[#fc7416]/20 rounded-xl focus:border-[#fc7416] focus:ring-[#fc7416]/20 w-full h-10 px-2"
+                      >
+                        <option value="">Select Coach</option>
+                        {coaches?.map((coach) => (
+                          <option key={coach.id} value={coach.id}>
+                            {coach.name}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                    <div>
                       <Label htmlFor="totalSessions" className="text-gray-700 font-medium">Total Sessions</Label>
                       <Input
                         id="totalSessions"
@@ -368,8 +409,8 @@ export function StudentsManager() {
                   </thead>
                   <tbody>
                     {filteredStudents.map((student, index) => {
-                      const attended = student.sessions - student.remaining_sessions;
-                      const total = student.sessions;
+                      const attended = (student.sessions || 0) - student.remaining_sessions;
+                      const total = student.sessions || 0;
                       const progressPercentage = total > 0 ? (attended / total) * 100 : 0;
                       return (
                         <tr
@@ -461,7 +502,7 @@ export function StudentsManager() {
                   </div>
                   <div>
                     <p className="text-sm text-gray-700"><span className="font-medium">Package Type:</span> {selectedStudent?.package_type || "N/A"}</p>
-                    <p className="text-sm text-gray-700"><span className="font-medium">Total Sessions:</span> {selectedStudent?.sessions}</p>
+                    <p className="text-sm text-gray-700"><span className="font-medium">Total Sessions:</span> {selectedStudent?.sessions || 0}</p>
                     <p className="text-sm text-gray-700"><span className="font-medium">Remaining Sessions:</span> {selectedStudent?.remaining_sessions}</p>
                   </div>
                 </div>
