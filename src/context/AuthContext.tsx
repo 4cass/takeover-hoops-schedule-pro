@@ -53,6 +53,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       if (coachError) {
         console.error("Error fetching coach record:", coachError);
+        setRole(null);
+        setCoachData(null);
+        return;
       }
 
       if (coachRecord) {
@@ -96,40 +99,32 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   useEffect(() => {
-    let mounted = true;
-
     // Check current session
     const fetchSession = async () => {
       try {
         const { data: { session }, error: sessionError } = await supabase.auth.getSession();
         if (sessionError) {
           console.error("Error fetching session:", sessionError.message);
-          if (mounted) {
-            setLoading(false);
-          }
+          setLoading(false);
           return;
         }
 
-        if (session?.user && mounted) {
+        if (session?.user) {
           setUser(session.user);
           await fetchUserRole(session.user);
-        } else if (mounted) {
+        } else {
           setUser(null);
           setRole(null);
           setCoachData(null);
         }
 
-        if (mounted) {
-          setLoading(false);
-        }
+        setLoading(false);
       } catch (error) {
         console.error("Error in fetchSession:", error);
-        if (mounted) {
-          setUser(null);
-          setRole(null);
-          setCoachData(null);
-          setLoading(false);
-        }
+        setUser(null);
+        setRole(null);
+        setCoachData(null);
+        setLoading(false);
       }
     };
 
@@ -139,22 +134,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const { data: authListener } = supabase.auth.onAuthStateChange(async (event, session) => {
       console.log("Auth state changed:", event, session?.user?.email);
       
-      if (session?.user && mounted) {
+      if (session?.user) {
         setUser(session.user);
         await fetchUserRole(session.user);
-      } else if (mounted) {
+      } else {
         setUser(null);
         setRole(null);
         setCoachData(null);
       }
-      
-      if (mounted) {
-        setLoading(false);
-      }
+      setLoading(false);
     });
 
     return () => {
-      mounted = false;
       authListener.subscription.unsubscribe();
     };
   }, []);

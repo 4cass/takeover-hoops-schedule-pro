@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
@@ -38,7 +37,7 @@ const formatTime12Hour = (timeString: string) => {
 };
 
 export function CalendarManager() {
-  const { role, coachData, loading: authLoading } = useAuth();
+  const { role } = useAuth();
 
   // If user is a coach, show coach-specific calendar
   if (role === 'coach') {
@@ -52,11 +51,9 @@ export function CalendarManager() {
   const [currentMonth, setCurrentMonth] = useState<Date>(new Date());
   const navigate = useNavigate();
 
-  const { data: sessions = [], isLoading: sessionsLoading } = useQuery({
-    queryKey: ['training-sessions', selectedCoach, selectedBranch, filterPackageType, currentMonth, role],
+  const { data: sessions, isLoading } = useQuery({
+    queryKey: ['training-sessions', selectedCoach, selectedBranch, filterPackageType, currentMonth],
     queryFn: async () => {
-      console.log("Fetching sessions with role:", role);
-      
       let query = supabase
         .from('training_sessions')
         .select(`
@@ -78,66 +75,34 @@ export function CalendarManager() {
       }
 
       const { data, error } = await query.order('date', { ascending: true });
-      if (error) {
-        console.error("Error fetching sessions:", error);
-        throw error;
-      }
-      
-      console.log("Fetched sessions:", data);
+      if (error) throw error;
       return data as TrainingSession[];
-    },
-    enabled: !authLoading && role === 'admin' // Only fetch if not loading auth and user is admin
+    }
   });
 
-  const { data: coaches = [] } = useQuery({
-    queryKey: ['coaches-select', role],
+  const { data: coaches } = useQuery({
+    queryKey: ['coaches-select'],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('coaches')
         .select('id, name')
         .order('name');
-      if (error) {
-        console.error("Error fetching coaches:", error);
-        throw error;
-      }
+      if (error) throw error;
       return data;
-    },
-    enabled: !authLoading && role === 'admin'
+    }
   });
 
-  const { data: branches = [] } = useQuery({
-    queryKey: ['branches-select', role],
+  const { data: branches } = useQuery({
+    queryKey: ['branches-select'],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('branches')
         .select('id, name')
         .order('name');
-      if (error) {
-        console.error("Error fetching branches:", error);
-        throw error;
-      }
+      if (error) throw error;
       return data;
-    },
-    enabled: !authLoading && role === 'admin'
+    }
   });
-
-  // Show loading while auth is being determined
-  if (authLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-lg">Loading...</div>
-      </div>
-    );
-  }
-
-  // Redirect if not admin (coaches should see CoachCalendarManager above)
-  if (role !== 'admin') {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-lg">Access denied. Admin role required.</div>
-      </div>
-    );
-  }
 
   const filteredSessions = sessions
     ?.filter((session) =>
@@ -179,13 +144,9 @@ export function CalendarManager() {
     return session.status === 'completed' || isBefore(sessionDate, todayDateOnly);
   }) || [];
 
-  if (sessionsLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-lg">Loading calendar data...</div>
-      </div>
-    );
-  }
+  const handleSessionSelect = (sessionId: string) => {
+    navigate(`/attendance/${sessionId}`);
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-[#faf0e8] to-[#fffefe] pt-4 p-6">
