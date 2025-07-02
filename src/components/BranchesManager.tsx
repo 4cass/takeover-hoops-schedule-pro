@@ -161,14 +161,14 @@ export function BranchesManager() {
 
         {/* Branches Card */}
         <Card className="border-2 border-black bg-white shadow-xl">
-          <CardHeader className="border-b border-black bg-accent/5">
+          <CardHeader className="border-b border-black bg-black">
             <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between space-y-4 lg:space-y-0">
               <div>
-                <CardTitle className="text-2xl font-bold text-black flex items-center">
+                <CardTitle className="text-2xl font-bold text-white flex items-center">
                   <Users className="h-6 w-6 mr-3 text-accent" />
                   Branch Management
                 </CardTitle>
-                <CardDescription className="text-gray-600 text-base">
+                <CardDescription className="text-gray-400 text-base">
                   View and manage branch profiles
                 </CardDescription>
               </div>

@@ -429,14 +429,14 @@ export function SessionsManager() {
           <p className="text-lg text-gray-700">Manage session information</p>
         </div>
         <Card className="shadow-xl border-2 border-black" style={{ backgroundColor: '#fffefe' }}>
-          <CardHeader className="border-b border-black bg-gradient-to-r from-[#fc7416]/5 to-[#fe822d]/5">
+          <CardHeader className="border-b border-black bg-black">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
               <div>
-                <CardTitle className="text-2xl font-bold text-black flex items-center">
+                <CardTitle className="text-2xl font-bold text-white flex items-center">
                   <Calendar className="h-6 w-6 mr-3 text-[#fc7416]" />
                   Training Sessions
                 </CardTitle>
-                <CardDescription className="text-gray-600 text-base">
+                <CardDescription className="text-gray-400 text-base">
                   View and manage all basketball training sessions
                 </CardDescription>
               </div>

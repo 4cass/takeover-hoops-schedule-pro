@@ -155,12 +155,12 @@ export function CalendarManager() {
 
         {/* Main Calendar Card */}
         <Card className="border-2 border-black bg-white/90 backdrop-blur-sm shadow-xl">
-          <CardHeader className="border-b border-black bg-gradient-to-r from-[#fc7416]/5 to-[#fe822d]/5">
-            <CardTitle className="text-2xl font-bold text-black flex items-center">
+          <CardHeader className="border-b border-black bg-black">
+            <CardTitle className="text-2xl font-bold text-white flex items-center">
               <CalendarIcon className="h-6 w-6 mr-3 text-[#fc7416]" />
               Monthly Overview
             </CardTitle>
-            <CardDescription className="text-gray-600 text-base">
+            <CardDescription className="text-gray-400 text-base">
               View and manage training sessions for {format(currentMonth, 'MMMM yyyy')}
             </CardDescription>
           </CardHeader>

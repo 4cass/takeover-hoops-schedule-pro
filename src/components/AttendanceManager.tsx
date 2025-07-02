@@ -160,12 +160,12 @@ export function AttendanceManager() {
 
         {/* Session Selection Card */}
         <Card className="border-2 border-black bg-white shadow-xl">
-          <CardHeader className="border-b border-black bg-accent/5">
-            <CardTitle className="text-2xl font-bold text-black flex items-center">
+          <CardHeader className="border-b border-black bg-black">
+            <CardTitle className="text-2xl font-bold text-white flex items-center">
               <Calendar className="h-6 w-6 mr-3 text-accent" />
               Training Sessions
             </CardTitle>
-            <CardDescription className="text-gray-600 text-base">
+            <CardDescription className="text-gray-400 text-base">
               Select a training session to manage player attendance
             </CardDescription>
           </CardHeader>

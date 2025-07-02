@@ -263,14 +263,14 @@ export function StudentsManager() {
           <p className="text-lg text-gray-700">Manage player information and session quotas</p>
         </div>
         <Card className="border-2 border-black bg-white/90 backdrop-blur-sm shadow-xl">
-          <CardHeader className="border-b border-black bg-gradient-to-r from-[#fc7416]/5 to-[#fe822d]/5">
+          <CardHeader className="border-b border-black bg-black">
             <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between space-y-4 lg:space-y-0">
               <div>
-                <CardTitle className="text-2xl font-bold text-black flex items-center">
+                <CardTitle className="text-2xl font-bold text-white flex items-center">
                   <Users className="h-6 w-6 mr-3 text-[#fc7416]" />
                   Player profiles
                 </CardTitle>
-                <CardDescription className="text-gray-600 text-base">
+                <CardDescription className="text-gray-400 text-base">
                   View and manage player profiles
                 </CardDescription>
               </div>
