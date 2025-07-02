@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -20,52 +21,58 @@ export default function Login() {
     e.preventDefault();
     setLoading(true);
 
-if (isSignUp) {
-  // Sign Up Flow
-  const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
-    email,
-    password,
-  });
+    try {
+      if (isSignUp) {
+        // Sign Up Flow
+        const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
+          email,
+          password,
+        });
 
-  if (signUpError) {
-    toast.error("Sign up failed: " + signUpError.message);
-    setLoading(false);
-    return;
-  }
+        if (signUpError) {
+          toast.error("Sign up failed: " + signUpError.message);
+          setLoading(false);
+          return;
+        }
 
-  // Insert into coaches table
-  const userId = signUpData.user?.id;
-  if (userId) {
-    const { error: insertError } = await supabase.from("coaches").insert({
-      id: userId,
-      name,
-      email,
-      phone,
-      role: 'coach', // Default role
-    });
+        // Insert into coaches table
+        const userId = signUpData.user?.id;
+        if (userId) {
+          const { error: insertError } = await supabase.from("coaches").insert({
+            id: userId,
+            name,
+            email,
+            phone,
+            role: 'coach', // Default role
+            auth_id: userId,
+          });
 
-    if (insertError) {
-      toast.error("Account created but failed to save profile: " + insertError.message);
-    } else {
-      toast.success("Account created successfully! Please log in.");
-      setIsSignUp(false);
-      setName("");
-      setPhone("");
-    }
-  }
+          if (insertError) {
+            toast.error("Account created but failed to save profile: " + insertError.message);
+          } else {
+            toast.success("Account created successfully! Please log in.");
+            setIsSignUp(false);
+            setName("");
+            setPhone("");
+          }
+        }
+      } else {
+        // Login Flow
+        const { data, error } = await supabase.auth.signInWithPassword({ 
+          email, 
+          password 
+        });
 
-  setLoading(false);
-  return;
-}
-
-    // Login Flow
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
-
-    if (error) {
-      toast.error("Login failed: " + error.message);
-    } else {
-      toast.success("Logged in successfully!");
-      navigate("/index");
+        if (error) {
+          toast.error("Login failed: " + error.message);
+        } else if (data.user) {
+          toast.success("Logged in successfully!");
+          // Navigate to dashboard instead of index
+          navigate("/dashboard");
+        }
+      }
+    } catch (error: any) {
+      toast.error("An unexpected error occurred: " + error.message);
     }
 
     setLoading(false);

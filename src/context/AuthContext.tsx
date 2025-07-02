@@ -32,12 +32,24 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       console.log("Fetching role for user:", currentUser.email);
       
-      // Try to find the user in coaches table by auth_id or email
+      // Try to find the user in coaches table by auth_id first, then by email
       let { data: coachRecord, error: coachError } = await supabase
         .from("coaches")
         .select("*")
-        .or(`auth_id.eq.${currentUser.id},email.eq.${currentUser.email}`)
+        .eq("auth_id", currentUser.id)
         .maybeSingle();
+
+      // If not found by auth_id, try by email
+      if (!coachRecord && !coachError) {
+        const { data: emailRecord, error: emailError } = await supabase
+          .from("coaches")
+          .select("*")
+          .eq("email", currentUser.email)
+          .maybeSingle();
+        
+        coachRecord = emailRecord;
+        coachError = emailError;
+      }
 
       if (coachError) {
         console.error("Error fetching coach record:", coachError);
@@ -52,12 +64,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         // Update auth_id if it's missing
         if (!coachRecord.auth_id) {
           console.log("Updating auth_id for coach...");
-          await supabase
+          const { error: updateError } = await supabase
             .from("coaches")
             .update({ auth_id: currentUser.id })
             .eq("id", coachRecord.id);
           
-          coachRecord.auth_id = currentUser.id;
+          if (updateError) {
+            console.error("Error updating auth_id:", updateError);
+          } else {
+            coachRecord.auth_id = currentUser.id;
+          }
         }
 
         const dbRole = coachRecord.role;
@@ -93,15 +109,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           return;
         }
 
-        setUser(session?.user ?? null);
-
         if (session?.user) {
+          setUser(session.user);
           await fetchUserRole(session.user);
+        } else {
+          setUser(null);
+          setRole(null);
+          setCoachData(null);
         }
 
         setLoading(false);
       } catch (error) {
         console.error("Error in fetchSession:", error);
+        setUser(null);
+        setRole(null);
+        setCoachData(null);
         setLoading(false);
       }
     };
@@ -111,11 +133,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     // Listen for auth changes
     const { data: authListener } = supabase.auth.onAuthStateChange(async (event, session) => {
       console.log("Auth state changed:", event, session?.user?.email);
-      setUser(session?.user ?? null);
       
       if (session?.user) {
+        setUser(session.user);
         await fetchUserRole(session.user);
       } else {
+        setUser(null);
         setRole(null);
         setCoachData(null);
       }
