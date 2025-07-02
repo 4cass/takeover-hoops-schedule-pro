@@ -154,8 +154,8 @@ export function CalendarManager() {
         </div>
 
         {/* Main Calendar Card */}
-        <Card className="border-2 border-[#fc7416]/20 bg-white/90 backdrop-blur-sm shadow-xl">
-          <CardHeader className="border-b border-[#fc7416]/10 bg-gradient-to-r from-[#fc7416]/5 to-[#fe822d]/5">
+        <Card className="border-2 border-black bg-white/90 backdrop-blur-sm shadow-xl">
+          <CardHeader className="border-b border-black bg-gradient-to-r from-[#fc7416]/5 to-[#fe822d]/5">
             <CardTitle className="text-2xl font-bold text-black flex items-center">
               <CalendarIcon className="h-6 w-6 mr-3 text-[#fc7416]" />
               Monthly Overview
@@ -176,7 +176,7 @@ export function CalendarManager() {
                 <div className="space-y-2">
                   <label className="text-sm font-medium text-gray-700">Coach</label>
                   <Select value={selectedCoach} onValueChange={setSelectedCoach}>
-                    <SelectTrigger className="border-[#fc7416]/20 focus:border-[#fc7416] focus:ring-[#fc7416]/20">
+                    <SelectTrigger className="border-[#fc7416]/40 focus:border-[#fc7416] focus:ring-[#fc7416]/20">
                       <SelectValue placeholder="Select coach" />
                     </SelectTrigger>
                     <SelectContent>
@@ -190,7 +190,7 @@ export function CalendarManager() {
                 <div className="space-y-2">
                   <label className="text-sm font-medium text-gray-700">Branch</label>
                   <Select value={selectedBranch} onValueChange={setSelectedBranch}>
-                    <SelectTrigger className="border-[#fc7416]/20 focus:border-[#fc7416] focus:ring-[#fc7416]/20">
+                    <SelectTrigger className="border-[#fc7416]/40 focus:border-[#fc7416] focus:ring-[#fc7416]/20">
                       <SelectValue placeholder="Select branch" />
                     </SelectTrigger>
                     <SelectContent>
@@ -207,7 +207,7 @@ export function CalendarManager() {
                     value={filterPackageType}
                     onValueChange={(value: "All" | "Camp Training" | "Personal Training") => setFilterPackageType(value)}
                   >
-                    <SelectTrigger className="border-[#fc7416]/20 focus:border-[#fc7416] focus:ring-[#fc7416]/20">
+                    <SelectTrigger className="border-[#fc7416]/40 focus:border-[#fc7416] focus:ring-[#fc7416]/20">
                       <SelectValue placeholder="Select package type" />
                     </SelectTrigger>
                     <SelectContent>
@@ -224,7 +224,7 @@ export function CalendarManager() {
             </div>
 
             {/* Calendar Grid */}
-            <div className="border-2 border-[#fc7416]/20 rounded-2xl p-6 bg-gradient-to-br from-[#faf0e8]/30 to-white shadow-lg">
+            <div className="border-2 border-black rounded-2xl p-6 bg-gradient-to-br from-[#faf0e8]/30 to-white shadow-lg">
               
               {/* Calendar Navigation */}
               <div className="flex justify-between items-center mb-6">
@@ -232,7 +232,7 @@ export function CalendarManager() {
                   onClick={handlePrevMonth}
                   variant="outline"
                   size="sm"
-                  className="border-[#fc7416]/30 text-[#fc7416] hover:bg-[#fc7416] hover:text-white transition-all duration-300"
+                  className="border-[#fc7416]/40 text-[#fc7416] hover:bg-[#fc7416] hover:text-white transition-all duration-300"
                 >
                   <ChevronLeft className="h-4 w-4" />
                 </Button>
@@ -252,7 +252,7 @@ export function CalendarManager() {
               {/* Days of Week Header */}
               <div className="grid grid-cols-7 gap-2 mb-4">
                 {['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'].map(day => (
-                  <div key={day} className="text-center py-3 bg-gradient-to-r from-[#fc7416] to-[#fe822d] text-white font-semibold rounded-lg text-sm">
+                  <div key={day} className="text-center py-3 bg-black text-white font-semibold rounded-lg text-sm">
                     {day.slice(0, 3)}
                   </div>
                 ))}
@@ -325,8 +325,8 @@ export function CalendarManager() {
 
         {/* Selected Date Sessions */}
         {selectedDate && (
-          <Card className="border-2 border-[#fc7416]/20 bg-white/90 backdrop-blur-sm shadow-xl">
-            <CardHeader className="border-b border-[#fc7416]/10 bg-gradient-to-r from-[#fc7416]/5 to-[#fe822d]/5">
+          <Card className="border-2 border-black bg-white/90 backdrop-blur-sm shadow-xl">
+            <CardHeader className="border-b border-black bg-gradient-to-r from-[#fc7416]/5 to-[#fe822d]/5">
               <CardTitle className="text-xl font-bold text-black flex items-center">
                 <Eye className="h-5 w-5 mr-3 text-[#fc7416]" />
                 Sessions on {format(selectedDate, 'EEEE, MMMM dd, yyyy')}
@@ -336,9 +336,9 @@ export function CalendarManager() {
               {selectedDateSessions.length > 0 ? (
                 <div className="space-y-4">
                   {selectedDateSessions.map(session => (
-                    <Card key={session.id} className="border border-[#fc7416]/20 bg-gradient-to-r from-[#faf0e8]/50 to-white hover:shadow-lg transition-all duration-300">
+                    <Card key={session.id} className="border border-black bg-gradient-to-r from-[#faf0e8]/50 to-white hover:shadow-lg transition-all duration-300">
                       <CardContent className="p-6">
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-4 items-center">
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-7 gap-4 items-center">
                           <div className="flex items-center space-x-2">
                             <Clock className="h-4 w-4 text-[#fc7416]" />
                             <div>
@@ -381,7 +381,7 @@ export function CalendarManager() {
                               {session.status.charAt(0).toUpperCase() + session.status.slice(1)}
                             </Badge>
                           </div>
-                          <div className="flex justify-end">
+                          <div className="flex justify-end ">
                             <Button
                               onClick={() => navigate(`/dashboard/attendance/${session.id}`)}
                               className="bg-gradient-to-r from-[#fc7416] to-[#fe822d] hover:from-[#fe822d] hover:to-[#fc7416] text-white font-medium transition-all duration-300 hover:scale-105 hover:shadow-lg"
@@ -412,8 +412,8 @@ export function CalendarManager() {
         <div className="grid gap-8 lg:grid-cols-2">
           
           {/* Upcoming Sessions */}
-          <Card className="border-2 border-green-200 bg-gradient-to-br from-green-50 to-white shadow-lg">
-            <CardHeader className="border-b border-green-200 bg-gradient-to-r from-green-100/50 to-green-50">
+          <Card className="border-2 border-black bg-gradient-to-br from-green-50 to-white shadow-lg">
+            <CardHeader className="border-b border-black bg-gradient-to-r from-green-100/50 to-green-50">
               <CardTitle className="text-xl font-bold text-green-800 flex items-center">
                 <Clock className="h-5 w-5 mr-3 text-green-600" />
                 Upcoming Sessions
@@ -427,7 +427,7 @@ export function CalendarManager() {
                 <div className="overflow-hidden">
                   <Table>
                     <TableHeader>
-                      <TableRow className="bg-gradient-to-r from-green-100 to-green-50 border-b border-green-200">
+                      <TableRow className="bg-gradient-to-r from-green-100 to-green-50 border-b border-black">
                         <TableHead className="font-semibold text-green-800">Date & Time</TableHead>
                         <TableHead className="font-semibold text-green-800">Branch</TableHead>
                         <TableHead className="font-semibold text-green-800">Coach</TableHead>
@@ -491,8 +491,8 @@ export function CalendarManager() {
           </Card>
 
           {/* Past Sessions */}
-          <Card className="border-2 border-gray-200 bg-gradient-to-br from-gray-50 to-white shadow-lg">
-            <CardHeader className="border-b border-gray-200 bg-gradient-to-r from-gray-100/50 to-gray-50">
+          <Card className="border-2 border-black bg-gradient-to-br from-gray-50 to-white shadow-lg">
+            <CardHeader className="border-b border-black bg-gradient-to-r from-gray-100/50 to-gray-50">
               <CardTitle className="text-xl font-bold text-gray-800 flex items-center">
                 <CalendarIcon className="h-5 w-5 mr-3 text-gray-600" />
                 Past Sessions
@@ -506,7 +506,7 @@ export function CalendarManager() {
                 <div className="overflow-hidden">
                   <Table>
                     <TableHeader>
-                      <TableRow className="bg-gradient-to-r from-gray-100 to-gray-50 border-b border-gray-200">
+                      <TableRow className="bg-gradient-to-r from-gray-100 to-gray-50 border-b border-black">
                         <TableHead className="font-semibold text-gray-800">Date & Time</TableHead>
                         <TableHead className="font-semibold text-gray-800">Branch</TableHead>
                         <TableHead className="font-semibold text-gray-800">Coach</TableHead>

@@ -200,8 +200,8 @@ export function CoachesManager() {
         </div>
 
         {/* Coaches Card */}
-        <Card className="border-2 border-[#fc7416]/20 bg-white/90 backdrop-blur-sm shadow-xl">
-          <CardHeader className="border-b border-[#fc7416]/10 bg-gradient-to-r from-[#fc7416]/5 to-[#fe822d]/5">
+        <Card className="border-2 border-black bg-white/90 backdrop-blur-sm shadow-xl">
+          <CardHeader className="border-b border-black bg-gradient-to-r from-[#fc7416]/5 to-[#fe822d]/5">
             <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between space-y-4 lg:space-y-0">
               <div>
                 <CardTitle className="text-2xl font-bold text-black flex items-center">
@@ -312,7 +312,7 @@ export function CoachesManager() {
                 <input
                   type="text"
                   placeholder="Search coaches..."
-                  className="pl-10 pr-4 py-3 w-full border-2 border-[#fc7416]/20 rounded-xl text-sm focus:border-[#fc7416] focus:ring-[#fc7416]/20 bg-white"
+                  className="pl-10 pr-4 py-3 w-full border-2 border-accent/40 rounded-xl text-sm focus:border-[#fc7416] focus:ring-[#fc7416]/20 bg-white"
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                 />
@@ -320,10 +320,10 @@ export function CoachesManager() {
             </div>
 
             {/* Coaches Table */}
-            <div className="border-2 border-[#fc7416]/20 rounded-2xl bg-gradient-to-br from-[#faf0e8]/30 to-white shadow-lg overflow-hidden">
+            <div className="border-2 border-black rounded-2xl bg-gradient-to-br from-[#faf0e8]/30 to-white shadow-lg overflow-hidden">
               <div className="overflow-x-auto">
                 <table className="w-full">
-                  <thead className="bg-gradient-to-r from-[#fc7416] to-[#fe822d] text-white">
+                  <thead className="bg-black text-white">
                     <tr>
                       <th className="py-4 px-6 text-left font-semibold">Coach Name</th>
                       <th className="py-4 px-6 text-left font-semibold">Email</th>
@@ -405,7 +405,7 @@ export function CoachesManager() {
             </DialogHeader>
             <div className="space-y-6">
               {/* Coach Details */}
-              <div className="border-b border-[#fc7416]/20 pb-4">
+              <div className="border-b border-black pb-4">
                 <h3 className="text-lg font-semibold text-black mb-3">Coach Details</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
@@ -462,8 +462,8 @@ export function CoachesManager() {
                   </p>
                 ) : (
                   <div className="overflow-x-auto">
-                    <table className="w-full border-2 border-[#fc7416]/20 rounded-xl">
-                      <thead className="bg-gradient-to-r from-[#fc7416] to-[#fe822d] text-white">
+                    <table className="w-full border-2 border-black rounded-xl">
+                      <thead className="bg-black text-white">
                         <tr>
                           <th className="py-3 px-4 text-left font-semibold"><Calendar className="w-4 h-4 inline mr-2" />Date</th>
                           <th className="py-3 px-4 text-left font-semibold"><Clock className="w-4 h-4 inline mr-2" />Time</th>

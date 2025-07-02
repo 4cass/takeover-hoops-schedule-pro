@@ -428,8 +428,8 @@ export function SessionsManager() {
           <h1 className="text-4xl font-bold text-black mb-2 tracking-tight">Sessions Manager</h1>
           <p className="text-lg text-gray-700">Manage session information</p>
         </div>
-        <Card className="shadow-xl border-2 border-[#fc7416]/20" style={{ backgroundColor: '#fffefe' }}>
-          <CardHeader className="border-b border-[#fc7416]/10 bg-gradient-to-r from-[#fc7416]/5 to-[#fe822d]/5">
+        <Card className="shadow-xl border-2 border-black" style={{ backgroundColor: '#fffefe' }}>
+          <CardHeader className="border-b border-black bg-gradient-to-r from-[#fc7416]/5 to-[#fe822d]/5">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
               <div>
                 <CardTitle className="text-2xl font-bold text-black flex items-center">
@@ -620,7 +620,7 @@ export function SessionsManager() {
                           <Users className="w-4 h-4 mr-2" style={{ color: '#fc7416' }} />
                           Select Players ({selectedStudents.length} selected)
                         </Label>
-                        <div className="border-2 rounded-lg p-4 max-h-48 overflow-y-auto" style={{ backgroundColor: '#faf0e8', borderColor: '#fc7416' }}>
+                        <div className="border-2 rounded-lg p-4 max-h-48 overflow-y-auto" style={{ backgroundColor: '#faf0e8', borderColor: 'black' }}>
                           {formData.package_type && formData.coach_id ? (
                             studentsLoading ? (
                               <p className="text-sm text-gray-600">Loading students...</p>

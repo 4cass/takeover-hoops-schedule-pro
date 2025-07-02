@@ -159,8 +159,8 @@ export function AttendanceManager() {
         </div>
 
         {/* Session Selection Card */}
-        <Card className="border-2 border-accent/20 bg-white shadow-xl">
-          <CardHeader className="border-b border-accent/10 bg-accent/5">
+        <Card className="border-2 border-black bg-white shadow-xl">
+          <CardHeader className="border-b border-black bg-accent/5">
             <CardTitle className="text-2xl font-bold text-black flex items-center">
               <Calendar className="h-6 w-6 mr-3 text-accent" />
               Training Sessions
@@ -181,7 +181,7 @@ export function AttendanceManager() {
                   <input
                     type="text"
                     placeholder="Search by coach or branch..."
-                    className="pl-10 pr-4 py-3 w-full border-2 border-accent/20 rounded-xl text-sm focus:border-accent focus:ring-accent/20 bg-white"
+                    className="pl-10 pr-4 py-3 w-full border-2 border-accent/40 rounded-xl text-sm focus:border-accent focus:ring-accent/20 bg-white"
                     value={sessionSearchTerm}
                     onChange={(e) => setSessionSearchTerm(e.target.value)}
                   />
@@ -286,7 +286,7 @@ export function AttendanceManager() {
 
         {/* Attendance Management Card */}
         {selectedSessionDetails && attendanceRecords && (
-          <Card className="border-2 border-accent/20 bg-white shadow-xl">
+          <Card className="border-2 border-black bg-white shadow-xl">
             <CardHeader className="border-b border-accent/10 bg-accent/5">
               <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between space-y-4 lg:space-y-0">
                 <div>
@@ -331,7 +331,7 @@ export function AttendanceManager() {
                   <input
                     type="text"
                     placeholder="Search players..."
-                    className="pl-10 pr-4 py-3 w-full border-2 border-accent/20 rounded-xl text-sm focus:border-accent focus:ring-accent/20 bg-white"
+                    className="pl-10 pr-4 py-3 w-full border-2 border-accent/40 rounded-xl text-sm focus:border-accent focus:ring-accent/20 bg-white"
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
                   />
@@ -339,7 +339,7 @@ export function AttendanceManager() {
               </div>
 
               {/* Attendance Table */}
-              <div className="border-2 border-accent/20 rounded-2xl bg-white shadow-lg overflow-hidden">
+              <div className="border-2 border-black rounded-2xl bg-white shadow-lg overflow-hidden">
                 <div className="overflow-x-auto">
                   <table className="w-full">
                     <thead className="bg-black text-white">

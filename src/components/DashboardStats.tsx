@@ -144,7 +144,7 @@ export function DashboardStats() {
       icon: Users,
       color: "text-[#fc7416]",
       bgGradient: "from-[#fc7416]/10 to-[#fe822d]/10",
-      borderColor: "border-[#fc7416]/20"
+      borderColor: "border-black"
     },
     {
       title: "Active Coaches",
@@ -152,7 +152,7 @@ export function DashboardStats() {
       icon: BookOpen,
       color: "text-[#fe822d]",
       bgGradient: "from-[#fe822d]/10 to-[#fc7416]/10",
-      borderColor: "border-[#fe822d]/20"
+      borderColor: "border-black"
     },
     {
       title: "Branch Locations",
@@ -160,7 +160,7 @@ export function DashboardStats() {
       icon: MapPin,
       color: "text-[#fc7416]",
       bgGradient: "from-[#fc7416]/10 to-[#fe822d]/10",
-      borderColor: "border-[#fc7416]/20"
+      borderColor: "border-black"
     },
     {
       title: "Scheduled Sessions",
@@ -168,7 +168,7 @@ export function DashboardStats() {
       icon: Calendar,
       color: "text-[#fe822d]",
       bgGradient: "from-[#fe822d]/10 to-[#fc7416]/10",
-      borderColor: "border-[#fe822d]/20"
+      borderColor: "border-black"
     }
   ];
 
@@ -242,8 +242,8 @@ export function DashboardStats() {
         </div>
 
         {/* Quick Actions */}
-        <Card className="border-2 border-[#fc7416]/20 bg-white/80 backdrop-blur-sm shadow-lg">
-          <CardHeader className="border-b border-[#fc7416]/10 bg-gradient-to-r from-[#fc7416]/5 to-[#fe822d]/5">
+        <Card className="border-2 border-black bg-white/80 backdrop-blur-sm shadow-lg">
+          <CardHeader className="border-b border-black bg-gradient-to-r from-[#fc7416]/5 to-[#fe822d]/5">
             <CardTitle className="text-2xl font-bold text-black flex items-center">
               <Plus className="h-6 w-6 mr-3 text-[#fc7416]" />
               Quick Actions
@@ -285,8 +285,8 @@ export function DashboardStats() {
         <div className="grid gap-8 lg:grid-cols-2">
           
           {/* Upcoming Sessions */}
-          <Card className="border-2 border-[#fc7416]/20 bg-white/80 backdrop-blur-sm shadow-lg">
-            <CardHeader className="border-b border-[#fc7416]/10 bg-gradient-to-r from-[#fc7416]/5 to-[#fe822d]/5">
+          <Card className="border-2 border-black bg-white/80 backdrop-blur-sm shadow-lg">
+            <CardHeader className="border-b border-black bg-gradient-to-r from-[#fc7416]/5 to-[#fe822d]/5">
               <div className="flex items-center justify-between">
                 <div>
                   <CardTitle className="text-xl font-bold text-black flex items-center">
@@ -358,8 +358,8 @@ export function DashboardStats() {
           </Card>
 
           {/* Recent Activity */}
-          <Card className="border-2 border-[#fc7416]/20 bg-white/80 backdrop-blur-sm shadow-lg">
-            <CardHeader className="border-b border-[#fc7416]/10 bg-gradient-to-r from-[#fc7416]/5 to-[#fe822d]/5">
+          <Card className="border-2 border-black bg-white/80 backdrop-blur-sm shadow-lg">
+            <CardHeader className="border-b border-black bg-gradient-to-r from-[#fc7416]/5 to-[#fe822d]/5">
               <CardTitle className="text-xl font-bold text-black flex items-center">
                 <Activity className="h-5 w-5 mr-3 text-[#fc7416]" />
                 Recent Activity
