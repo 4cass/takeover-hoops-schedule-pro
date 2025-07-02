@@ -4,7 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Calendar } from "@/components/ui/calendar";
 import { Badge } from "@/components/ui/badge";
-import { Calendar as CalendarIcon, Clock, MapPin, Users, Filter } from "lucide-react";
+import { Calendar as CalendarIcon, Clock, MapPin, Users } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/context/AuthContext";
 import { format } from "date-fns";
@@ -21,26 +21,18 @@ type Session = {
 
 export function CoachCalendarManager() {
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
-  const { user } = useAuth();
-
-  const { data: coachId } = useQuery({
-    queryKey: ["coach-id", user?.id],
-    queryFn: async () => {
-      if (!user?.id) return null;
-      const { data: coach } = await supabase
-        .from("coaches")
-        .select("id")
-        .eq("auth_id", user.id)
-        .single();
-      return coach?.id;
-    },
-    enabled: !!user?.id,
-  });
+  const { coachData, loading: authLoading } = useAuth();
 
   const { data: sessions = [], isLoading } = useQuery({
-    queryKey: ["coach-sessions", coachId],
+    queryKey: ["coach-sessions", coachData?.id],
     queryFn: async () => {
-      if (!coachId) return [];
+      if (!coachData?.id) {
+        console.log("No coach data available");
+        return [];
+      }
+      
+      console.log("Fetching sessions for coach:", coachData.id);
+      
       const { data, error } = await supabase
         .from("training_sessions")
         .select(`
@@ -52,12 +44,18 @@ export function CoachCalendarManager() {
           branches (name),
           session_participants (students (name))
         `)
-        .eq("coach_id", coachId)
+        .eq("coach_id", coachData.id)
         .order("date", { ascending: true });
-      if (error) throw error;
+        
+      if (error) {
+        console.error("Error fetching coach sessions:", error);
+        throw error;
+      }
+
+      console.log("Fetched coach sessions:", data);
       return data as Session[];
     },
-    enabled: !!coachId,
+    enabled: !authLoading && !!coachData?.id,
   });
 
   const selectedDateSessions = sessions.filter(
@@ -79,6 +77,18 @@ export function CoachCalendarManager() {
       default: return "bg-gray-50 text-gray-700 border-gray-200";
     }
   };
+
+  if (authLoading) {
+    return (
+      <div className="min-h-screen bg-white p-6">
+        <div className="max-w-7xl mx-auto text-center py-16">
+          <CalendarIcon className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+          <h3 className="text-2xl font-bold text-black mb-3">Loading authentication...</h3>
+          <p className="text-lg text-gray-600">Please wait while we verify your access.</p>
+        </div>
+      </div>
+    );
+  }
 
   if (isLoading) {
     return (
@@ -106,7 +116,7 @@ export function CoachCalendarManager() {
           <Card className="border-2 border-black bg-white shadow-xl">
             <CardHeader className="border-b border-black bg-black">
               <CardTitle className="text-2xl font-bold text-white flex items-center">
-                <CalendarIcon className="h-6 w-6 mr-3 text-accent" />
+                <CalendarIcon className="h-6 w-6 mr-3 text-[#fc7416]" />
                 Session Calendar
               </CardTitle>
               <CardDescription className="text-gray-400 text-base">
@@ -118,16 +128,16 @@ export function CoachCalendarManager() {
                 mode="single"
                 selected={selectedDate}
                 onSelect={setSelectedDate}
-                className="rounded-md border-2 border-accent/20"
+                className="rounded-md border-2 border-[#fc7416]/20"
               />
             </CardContent>
           </Card>
 
           {/* Sessions for Selected Date */}
           <Card className="border-2 border-black bg-white shadow-xl">
-            <CardHeader className="border-b border-accent/10 bg-accent/5">
+            <CardHeader className="border-b border-[#fc7416]/10 bg-[#fc7416]/5">
               <CardTitle className="text-2xl font-bold text-black flex items-center">
-                <Clock className="h-6 w-6 mr-3 text-accent" />
+                <Clock className="h-6 w-6 mr-3 text-[#fc7416]" />
                 Sessions for {selectedDate ? format(selectedDate, "MMM dd, yyyy") : "Select a date"}
               </CardTitle>
               <CardDescription className="text-gray-600 text-base">
@@ -138,10 +148,10 @@ export function CoachCalendarManager() {
               {selectedDateSessions.length > 0 ? (
                 <div className="space-y-4">
                   {selectedDateSessions.map((session) => (
-                    <div key={session.id} className="border-2 border-accent/20 rounded-xl p-4 bg-gradient-to-r from-white to-accent/5">
+                    <div key={session.id} className="border-2 border-[#fc7416]/20 rounded-xl p-4 bg-gradient-to-r from-white to-[#fc7416]/5">
                       <div className="flex items-start justify-between mb-3">
                         <div className="flex items-center space-x-3">
-                          <Clock className="w-5 h-5 text-accent" />
+                          <Clock className="w-5 h-5 text-[#fc7416]" />
                           <span className="font-bold text-black text-lg">
                             {formatTime12Hour(session.start_time)} - {formatTime12Hour(session.end_time)}
                           </span>
