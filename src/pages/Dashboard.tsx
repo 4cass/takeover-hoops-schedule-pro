@@ -4,8 +4,10 @@ import { AppSidebar } from "@/components/AppSidebar";
 import { useLocation, Routes, Route, useNavigate, Navigate } from "react-router-dom";
 import { DashboardStats } from "@/components/DashboardStats";
 import { CalendarManager } from "@/components/CalendarManager";
+import { CoachCalendarManager } from "@/components/CoachCalendarManager";
 import { SessionsManager } from "@/components/SessionsManager";
 import { AttendanceManager } from "@/components/AttendanceManager";
+import { CoachAttendanceManager } from "@/components/CoachAttendanceManager";
 import { StudentsManager } from "@/components/StudentsManager";
 import { CoachesManager } from "@/components/CoachesManager";
 import { BranchesManager } from "@/components/BranchesManager";
@@ -17,6 +19,8 @@ export default function Dashboard() {
   const navigate = useNavigate();
   const { role, loading } = useAuth();
 
+  console.log("Dashboard - Role:", role, "Loading:", loading, "Path:", location.pathname);
+
   useEffect(() => {
     window.scrollTo(0, 0);
   }, [location.pathname]);
@@ -24,14 +28,18 @@ export default function Dashboard() {
   // Show loading while auth is being determined
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-lg">Loading...</div>
+      <div className="min-h-screen flex items-center justify-center bg-white">
+        <div className="text-center">
+          <div className="text-2xl font-bold text-black mb-2">Loading Dashboard...</div>
+          <div className="text-lg text-gray-600">Please wait while we verify your access.</div>
+        </div>
       </div>
     );
   }
 
   // Redirect to login if no role is found
   if (!role) {
+    console.log("No role found, redirecting to login");
     return <Navigate to="/login" replace />;
   }
 
@@ -46,17 +54,6 @@ export default function Dashboard() {
     path.includes("/dashboard/branches") ? "branches" :
     "overview";
 
-  // Function to check if route is allowed for current role
-  const isRouteAllowed = (routePath: string) => {
-    const adminOnlyRoutes = ['/dashboard/sessions', '/dashboard/students', '/dashboard/coaches', '/dashboard/branches'];
-    
-    if (role === 'admin') return true;
-    if (role === 'coach' && adminOnlyRoutes.some(route => routePath.includes(route))) {
-      return false;
-    }
-    return true;
-  };
-
   return (
     <SidebarProvider>
       <div className="min-h-screen bg-white flex w-full">
@@ -69,10 +66,21 @@ export default function Dashboard() {
             <Routes>
               <Route path="/" element={<DashboardStats />} />
               
-              {/* Routes available to both admin and coach */}
-              <Route path="calendar" element={<CalendarManager />} />
-              <Route path="attendance" element={<AttendanceManager />} />
-              <Route path="attendance/:sessionId" element={<AttendanceManager />} />
+              {/* Calendar routes - role-specific components */}
+              <Route 
+                path="calendar" 
+                element={role === 'coach' ? <CoachCalendarManager /> : <CalendarManager />} 
+              />
+              
+              {/* Attendance routes - role-specific components */}
+              <Route 
+                path="attendance" 
+                element={role === 'coach' ? <CoachAttendanceManager /> : <AttendanceManager />} 
+              />
+              <Route 
+                path="attendance/:sessionId" 
+                element={role === 'coach' ? <CoachAttendanceManager /> : <AttendanceManager />} 
+              />
               
               {/* Admin-only routes */}
               {role === 'admin' && (

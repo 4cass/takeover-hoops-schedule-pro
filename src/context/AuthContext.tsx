@@ -80,7 +80,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         if (dbRole && isValidRole(dbRole)) {
           setRole(dbRole);
           setCoachData(coachRecord);
-          console.log("Set role to:", dbRole);
+          console.log("Set role to:", dbRole, "Coach data:", coachRecord);
         } else {
           console.log("Invalid role in database:", dbRole);
           setRole(null);

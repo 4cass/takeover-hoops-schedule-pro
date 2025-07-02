@@ -1,4 +1,3 @@
-
 import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -18,11 +17,14 @@ type RecentActivity = {
 
 export function CoachDashboardStats() {
   const navigate = useNavigate();
-  const { coachData } = useAuth();
+  const { coachData, loading } = useAuth();
+
+  console.log("CoachDashboardStats - Coach data:", coachData, "Loading:", loading);
 
   const { data: stats } = useQuery({
     queryKey: ['coach-dashboard-stats', coachData?.id],
     queryFn: async () => {
+      console.log("Fetching coach stats for ID:", coachData?.id);
       if (!coachData?.id) return { students: 0, sessions: 0 };
 
       const [studentsRes, sessionsRes] = await Promise.all([
@@ -37,12 +39,15 @@ export function CoachDashboardStats() {
           .eq('status', 'scheduled')
       ]);
 
+      console.log("Students result:", studentsRes);
+      console.log("Sessions result:", sessionsRes);
+
       return {
         students: studentsRes.data?.length || 0,
         sessions: sessionsRes.data?.length || 0
       };
     },
-    enabled: !!coachData?.id
+    enabled: !!coachData?.id && !loading
   });
 
   const { data: upcomingSessions } = useQuery({
@@ -57,7 +62,7 @@ export function CoachDashboardStats() {
           date,
           start_time,
           end_time,
-          branches (name),
+          branches!inner (name),
           session_participants (count)
         `)
         .eq('coach_id', coachData.id)
@@ -66,10 +71,15 @@ export function CoachDashboardStats() {
         .order('date', { ascending: true })
         .limit(5);
 
-      if (error) throw error;
+      if (error) {
+        console.error("Error fetching upcoming sessions:", error);
+        throw error;
+      }
+      
+      console.log("Upcoming sessions:", data);
       return data || [];
     },
-    enabled: !!coachData?.id
+    enabled: !!coachData?.id && !loading
   });
 
   const { data: recentActivity } = useQuery({
@@ -83,7 +93,7 @@ export function CoachDashboardStats() {
           .select(`
             id,
             created_at,
-            students (name),
+            students!inner (name),
             training_sessions!inner (
               date,
               coach_id
@@ -121,8 +131,20 @@ export function CoachDashboardStats() {
         .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
         .slice(0, 5);
     },
-    enabled: !!coachData?.id
+    enabled: !!coachData?.id && !loading
   });
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-[#faf0e8] to-[#fffefe] pt-4 p-6">
+        <div className="max-w-7xl mx-auto text-center py-16">
+          <Users className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+          <h3 className="text-2xl font-bold text-black mb-3">Loading your dashboard...</h3>
+          <p className="text-lg text-gray-600">Please wait while we fetch your data.</p>
+        </div>
+      </div>
+    );
+  }
 
   const statCards = [
     {

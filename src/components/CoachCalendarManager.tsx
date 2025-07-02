@@ -21,26 +21,19 @@ type Session = {
 
 export function CoachCalendarManager() {
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
-  const { user } = useAuth();
+  const { coachData, loading } = useAuth();
 
-  const { data: coachId } = useQuery({
-    queryKey: ["coach-id", user?.id],
-    queryFn: async () => {
-      if (!user?.id) return null;
-      const { data: coach } = await supabase
-        .from("coaches")
-        .select("id")
-        .eq("auth_id", user.id)
-        .single();
-      return coach?.id;
-    },
-    enabled: !!user?.id,
-  });
+  console.log("CoachCalendarManager - Coach data:", coachData, "Loading:", loading);
 
-  const { data: sessions = [], isLoading } = useQuery({
-    queryKey: ["coach-sessions", coachId],
+  const { data: sessions = [], isLoading: sessionsLoading, error } = useQuery({
+    queryKey: ["coach-sessions", coachData?.id],
     queryFn: async () => {
-      if (!coachId) return [];
+      console.log("Fetching sessions for coach ID:", coachData?.id);
+      if (!coachData?.id) {
+        console.log("No coach ID available");
+        return [];
+      }
+      
       const { data, error } = await supabase
         .from("training_sessions")
         .select(`
@@ -52,12 +45,18 @@ export function CoachCalendarManager() {
           branches (name),
           session_participants (students (name))
         `)
-        .eq("coach_id", coachId)
+        .eq("coach_id", coachData.id)
         .order("date", { ascending: true });
-      if (error) throw error;
+      
+      if (error) {
+        console.error("Error fetching sessions:", error);
+        throw error;
+      }
+      
+      console.log("Fetched sessions:", data);
       return data as Session[];
     },
-    enabled: !!coachId,
+    enabled: !!coachData?.id && !loading,
   });
 
   const selectedDateSessions = sessions.filter(
@@ -80,13 +79,25 @@ export function CoachCalendarManager() {
     }
   };
 
-  if (isLoading) {
+  if (loading || sessionsLoading) {
     return (
       <div className="min-h-screen bg-white p-6">
         <div className="max-w-7xl mx-auto text-center py-16">
           <CalendarIcon className="w-16 h-16 text-gray-300 mx-auto mb-4" />
           <h3 className="text-2xl font-bold text-black mb-3">Loading your calendar...</h3>
           <p className="text-lg text-gray-600">Please wait while we fetch your sessions.</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-white p-6">
+        <div className="max-w-7xl mx-auto text-center py-16">
+          <CalendarIcon className="w-16 h-16 text-red-300 mx-auto mb-4" />
+          <h3 className="text-2xl font-bold text-black mb-3">Error loading calendar</h3>
+          <p className="text-lg text-gray-600">Please try refreshing the page.</p>
         </div>
       </div>
     );
