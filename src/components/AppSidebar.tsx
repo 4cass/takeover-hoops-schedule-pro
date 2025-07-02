@@ -47,9 +47,17 @@ export function AppSidebar({ activeTab, onTabChange }: AppSidebarProps) {
     try {
       const { error } = await supabase.auth.signOut();
       if (error) throw error;
+      
+      // Clear local storage to ensure clean logout
+      localStorage.clear();
+      sessionStorage.clear();
+      
       toast.success("Logged out successfully");
+      
+      // Force page reload to ensure clean state
       window.location.href = "/";
     } catch (error: any) {
+      console.error("Logout error:", error);
       toast.error("Error logging out: " + error.message);
     }
   };
@@ -59,11 +67,15 @@ export function AppSidebar({ activeTab, onTabChange }: AppSidebarProps) {
     role && item.allowedRoles.includes(role as 'admin' | 'coach')
   );
 
+  if (!role) {
+    return null; // Don't render sidebar if no role is determined
+  }
+
   return (
     <Sidebar className="border-r bg-black">
       <SidebarHeader className="p-6 border-b border-gray-800">
         <div className="flex items-center gap-3">
-          <div className="w-30 h-30  rounded-lg flex items-center justify-center">
+          <div className="w-30 h-30 rounded-lg flex items-center justify-center">
             <img src="/1.png" alt="Logo" className="h-20 w-20 object-contain" />
           </div>
           <div className="flex flex-col">

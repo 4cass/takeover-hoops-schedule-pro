@@ -6,10 +6,16 @@ import { User } from "@supabase/supabase-js";
 type AuthContextType = {
   user: User | null;
   role: 'admin' | 'coach' | null;
+  coachData: any | null;
   loading: boolean;
 };
 
-const AuthContext = createContext<AuthContextType>({ user: null, role: null, loading: true });
+const AuthContext = createContext<AuthContextType>({ 
+  user: null, 
+  role: null, 
+  coachData: null,
+  loading: true 
+});
 
 // Helper function to validate role
 const isValidRole = (role: string): role is 'admin' | 'coach' => {
@@ -19,71 +25,85 @@ const isValidRole = (role: string): role is 'admin' | 'coach' => {
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [role, setRole] = useState<'admin' | 'coach' | null>(null);
+  const [coachData, setCoachData] = useState<any | null>(null);
   const [loading, setLoading] = useState(true);
 
   const fetchUserRole = async (currentUser: User) => {
     try {
-      // First try to match by auth_id
-      let { data, error } = await supabase
+      console.log("Fetching role for user:", currentUser.email);
+      
+      // Try to find the user in coaches table by auth_id or email
+      let { data: coachRecord, error: coachError } = await supabase
         .from("coaches")
-        .select("role")
-        .eq("auth_id", currentUser.id)
-        .single();
+        .select("*")
+        .or(`auth_id.eq.${currentUser.id},email.eq.${currentUser.email}`)
+        .maybeSingle();
 
-      // If no match by auth_id, try to match by email
-      if (error || !data) {
-        console.log("No match by auth_id, trying email match...");
-        const { data: emailData, error: emailError } = await supabase
-          .from("coaches")
-          .select("role")
-          .eq("email", currentUser.email)
-          .single();
+      if (coachError) {
+        console.error("Error fetching coach record:", coachError);
+        setRole(null);
+        setCoachData(null);
+        return;
+      }
+
+      if (coachRecord) {
+        console.log("Found coach record:", coachRecord);
         
-        data = emailData;
-        error = emailError;
-        
-        // If we found a match by email, update the auth_id for future queries
-        if (emailData && !emailError) {
-          console.log("Found coach by email, updating auth_id...");
+        // Update auth_id if it's missing
+        if (!coachRecord.auth_id) {
+          console.log("Updating auth_id for coach...");
           await supabase
             .from("coaches")
             .update({ auth_id: currentUser.id })
-            .eq("email", currentUser.email);
+            .eq("id", coachRecord.id);
+          
+          coachRecord.auth_id = currentUser.id;
         }
-      }
 
-      if (error) {
-        console.error("Error fetching role:", error.message);
-        setRole(null);
+        const dbRole = coachRecord.role;
+        if (dbRole && isValidRole(dbRole)) {
+          setRole(dbRole);
+          setCoachData(coachRecord);
+          console.log("Set role to:", dbRole);
+        } else {
+          console.log("Invalid role in database:", dbRole);
+          setRole(null);
+          setCoachData(null);
+        }
       } else {
-        // Validate and set role with proper type checking
-        const dbRole = data?.role;
-        console.log("Fetched role from database:", dbRole);
-        setRole(dbRole && isValidRole(dbRole) ? dbRole : null);
+        console.log("No coach record found for user");
+        setRole(null);
+        setCoachData(null);
       }
     } catch (error) {
       console.error("Exception while fetching role:", error);
       setRole(null);
+      setCoachData(null);
     }
   };
 
   useEffect(() => {
     // Check current session
     const fetchSession = async () => {
-      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-      if (sessionError) {
-        console.error("Error fetching session:", sessionError.message);
+      try {
+        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+        if (sessionError) {
+          console.error("Error fetching session:", sessionError.message);
+          setLoading(false);
+          return;
+        }
+
+        setUser(session?.user ?? null);
+
+        if (session?.user) {
+          await fetchUserRole(session.user);
+        }
+
         setLoading(false);
-        return;
+      } catch (error) {
+        console.error("Error in fetchSession:", error);
+        setLoading(false);
       }
-
-      setUser(session?.user ?? null);
-
-      if (session?.user) {
-        await fetchUserRole(session.user);
-      }
-
-      setLoading(false);
     };
 
     fetchSession();
@@ -97,6 +117,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         await fetchUserRole(session.user);
       } else {
         setRole(null);
+        setCoachData(null);
       }
       setLoading(false);
     });
@@ -107,7 +128,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   return (
-    <AuthContext.Provider value={{ user, role, loading }}>
+    <AuthContext.Provider value={{ user, role, coachData, loading }}>
       {children}
     </AuthContext.Provider>
   );
