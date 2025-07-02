@@ -10,6 +10,8 @@ import { Calendar as CalendarIcon, Users, Clock, MapPin, User, ChevronLeft, Chev
 import { supabase } from "@/integrations/supabase/client";
 import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameDay, isBefore, addMonths, subMonths, isAfter } from "date-fns";
 import type { Database } from "@/integrations/supabase/types";
+import { useAuth } from "@/context/AuthContext";
+import { CoachCalendarManager } from "./CoachCalendarManager";
 
 type SessionStatus = Database['public']['Enums']['session_status'];
 
@@ -35,6 +37,13 @@ const formatTime12Hour = (timeString: string) => {
 };
 
 export function CalendarManager() {
+  const { role } = useAuth();
+
+  // If user is a coach, show coach-specific calendar
+  if (role === 'coach') {
+    return <CoachCalendarManager />;
+  }
+
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [selectedCoach, setSelectedCoach] = useState<string>("all");
   const [selectedBranch, setSelectedBranch] = useState<string>("all");

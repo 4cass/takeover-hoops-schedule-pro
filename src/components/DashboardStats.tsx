@@ -6,6 +6,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Calendar, Users, MapPin, BookOpen, CheckCircle, AlertTriangle, Plus, Clock, TrendingUp, Activity } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { format, formatDistanceToNow } from "date-fns";
+import { useAuth } from "@/context/AuthContext";
+import { CoachDashboardStats } from "./CoachDashboardStats";
 
 type RecentActivity = {
   id: string;
@@ -22,6 +24,12 @@ type StudentAlert = {
 
 export function DashboardStats() {
   const navigate = useNavigate();
+  const { role } = useAuth();
+
+  // If user is a coach, show coach-specific dashboard
+  if (role === 'coach') {
+    return <CoachDashboardStats />;
+  }
 
   const { data: stats } = useQuery({
     queryKey: ['dashboard-stats'],

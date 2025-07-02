@@ -1,25 +1,17 @@
+
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { CheckCircle, XCircle, Clock, Calendar, MapPin, User, Users, Filter, Search } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Label } from "@/components/ui/label";
 import { useAuth } from "@/context/AuthContext";
-import { CoachAttendanceManager } from "./CoachAttendanceManager";
 
 type AttendanceStatus = "present" | "absent" | "pending";
 
-type UpdateAttendanceVariables = {
-  recordId: string;
-  status: AttendanceStatus;
-};
-
 const attendanceStatuses = ["present", "absent", "pending"] as const;
-
 type AttendanceStatusLiteral = typeof attendanceStatuses[number];
 
 const formatTime12Hour = (timeString: string) => {
@@ -49,32 +41,41 @@ const formatDateTime = (dateString: string) => {
   });
 };
 
-export function AttendanceManager() {
-  const { role } = useAuth();
-
-  // If user is a coach, show coach-specific attendance manager
-  if (role === 'coach') {
-    return <CoachAttendanceManager />;
-  }
-
+export function CoachAttendanceManager() {
   const [selectedSession, setSelectedSession] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [sessionSearchTerm, setSessionSearchTerm] = useState("");
-  const [filterPackageType, setFilterPackageType] = useState<"All" | "Camp Training" | "Personal Training">("All");
-  const [sortOrder, setSortOrder] = useState<"Newest to Oldest" | "Oldest to Newest">("Newest to Oldest");
   const queryClient = useQueryClient();
+  const { user } = useAuth();
+
+  const { data: coachId } = useQuery({
+    queryKey: ["coach-id", user?.id],
+    queryFn: async () => {
+      if (!user?.id) return null;
+      const { data: coach } = await supabase
+        .from("coaches")
+        .select("id")
+        .eq("auth_id", user.id)
+        .single();
+      return coach?.id;
+    },
+    enabled: !!user?.id,
+  });
 
   const { data: sessions } = useQuery<any[]>({
-    queryKey: ["sessions"],
+    queryKey: ["coach-sessions", coachId],
     queryFn: async () => {
+      if (!coachId) return [];
       const { data, error } = await supabase
         .from("training_sessions")
         .select("id, date, start_time, end_time, status, package_type, branches (name), coaches (name)")
+        .eq("coach_id", coachId)
         .eq("status", "scheduled")
         .order("date", { ascending: true });
       if (error) throw error;
       return data;
     },
+    enabled: !!coachId,
   });
 
   const { data: attendanceRecords } = useQuery<any[]>({
@@ -91,8 +92,8 @@ export function AttendanceManager() {
     enabled: !!selectedSession,
   });
 
-  const updateAttendance = useMutation<void, unknown, UpdateAttendanceVariables>({
-    mutationFn: async ({ recordId, status }) => {
+  const updateAttendance = useMutation({
+    mutationFn: async ({ recordId, status }: { recordId: string; status: AttendanceStatus }) => {
       const { error } = await supabase
         .from("attendance_records")
         .update({ status, marked_at: status !== "pending" ? new Date().toISOString() : null })
@@ -112,14 +113,12 @@ export function AttendanceManager() {
 
   const filteredSessions = sessions
     ?.filter((session) =>
-      (session.coaches.name.toLowerCase().includes(sessionSearchTerm.toLowerCase()) ||
-       session.branches.name.toLowerCase().includes(sessionSearchTerm.toLowerCase())) &&
-      (filterPackageType === "All" || session.package_type === filterPackageType)
+      session.branches.name.toLowerCase().includes(sessionSearchTerm.toLowerCase())
     )
     .sort((a, b) => {
       const dateA = new Date(a.date).getTime();
       const dateB = new Date(b.date).getTime();
-      return sortOrder === "Newest to Oldest" ? dateB - dateA : dateA - dateB;
+      return dateB - dateA;
     }) || [];
 
   const filteredAttendanceRecords = attendanceRecords?.filter((record) =>
@@ -153,16 +152,16 @@ export function AttendanceManager() {
   };
 
   return (
-    <div className="min-h-screen bg-white pt-4 p-6">
-      <div className="max-w-7xl mx-auto space-y-8 -mt-5">
+    <div className="min-h-screen bg-white p-6">
+      <div className="max-w-7xl mx-auto space-y-8">
         
         {/* Header */}
         <div className="mb-8">
           <h1 className="text-4xl font-bold text-black mb-2 tracking-tight">
-            Attendance Manager
+            Your Attendance Management
           </h1>
           <p className="text-lg text-gray-700">
-            Track and manage player attendance for training sessions
+            Track and manage player attendance for your training sessions
           </p>
         </div>
 
@@ -171,7 +170,7 @@ export function AttendanceManager() {
           <CardHeader className="border-b border-black bg-black">
             <CardTitle className="text-2xl font-bold text-white flex items-center">
               <Calendar className="h-6 w-6 mr-3 text-accent" />
-              Training Sessions
+              Your Training Sessions
             </CardTitle>
             <CardDescription className="text-gray-400 text-base">
               Select a training session to manage player attendance
@@ -183,54 +182,15 @@ export function AttendanceManager() {
                 <Filter className="h-5 w-5 text-accent mr-2" />
                 <h3 className="text-lg font-semibold text-black">Filter Sessions</h3>
               </div>
-              <div className="flex flex-col sm:flex-row sm:items-end gap-4">
-                <div className="relative flex-1">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
-                  <input
-                    type="text"
-                    placeholder="Search by coach or branch..."
-                    className="pl-10 pr-4 py-3 w-full border-2 border-accent/40 rounded-xl text-sm focus:border-accent focus:ring-accent/20 bg-white"
-                    value={sessionSearchTerm}
-                    onChange={(e) => setSessionSearchTerm(e.target.value)}
-                  />
-                </div>
-                <div className="flex-1">
-                  <Label htmlFor="filter-package" className="flex items-center text-sm font-medium text-gray-700 mb-2">
-                    <Users className="w-4 h-4 mr-2 text-accent" />
-                    Filter by Package Type
-                  </Label>
-                  <Select
-                    value={filterPackageType}
-                    onValueChange={(value: "All" | "Camp Training" | "Personal Training") => setFilterPackageType(value)}
-                  >
-                    <SelectTrigger className="border-2 focus:border-accent rounded-xl">
-                      <SelectValue placeholder="Select package type" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="All">All Sessions</SelectItem>
-                      <SelectItem value="Camp Training">Camp Training</SelectItem>
-                      <SelectItem value="Personal Training">Personal Training</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="flex-1">
-                  <Label htmlFor="sort-order" className="flex items-center text-sm font-medium text-gray-700 mb-2">
-                    <Calendar className="w-4 h-4 mr-2 text-accent" />
-                    Sort Order
-                  </Label>
-                  <Select
-                    value={sortOrder}
-                    onValueChange={(value: "Newest to Oldest" | "Oldest to Newest") => setSortOrder(value)}
-                  >
-                    <SelectTrigger className="border-2 focus:border-accent rounded-xl">
-                      <SelectValue placeholder="Select sort order" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="Newest to Oldest">Newest to Oldest</SelectItem>
-                      <SelectItem value="Oldest to Newest">Oldest to Newest</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
+              <div className="relative max-w-md">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+                <input
+                  type="text"
+                  placeholder="Search by branch..."
+                  className="pl-10 pr-4 py-3 w-full border-2 border-accent/40 rounded-xl text-sm focus:border-accent focus:ring-accent/20 bg-white"
+                  value={sessionSearchTerm}
+                  onChange={(e) => setSessionSearchTerm(e.target.value)}
+                />
               </div>
               <p className="text-sm text-gray-600 mt-3">
                 Showing {filteredSessions.length} session{filteredSessions.length === 1 ? '' : 's'}
@@ -265,10 +225,6 @@ export function AttendanceManager() {
                         <span className="text-gray-700">{session.branches.name}</span>
                       </div>
                       <div className="flex items-center space-x-2">
-                        <User className="w-4 h-4 text-gray-600" />
-                        <span className="text-gray-700">{session.coaches.name}</span>
-                      </div>
-                      <div className="flex items-center space-x-2">
                         <Users className="w-4 h-4 text-gray-600" />
                         <span className="text-gray-700">{session.package_type || 'N/A'}</span>
                       </div>
@@ -282,10 +238,10 @@ export function AttendanceManager() {
               <div className="py-12 text-center">
                 <Calendar className="w-16 h-16 text-gray-300 mx-auto mb-4" />
                 <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                  {sessionSearchTerm || filterPackageType !== "All" ? `No ${filterPackageType === "All" ? "" : filterPackageType} sessions found` : "No sessions"}
+                  {sessionSearchTerm ? "No sessions found" : "No sessions"}
                 </h3>
                 <p className="text-gray-600">
-                  {sessionSearchTerm || filterPackageType !== "All" ? "Try adjusting your search or filter." : "No scheduled sessions available."}
+                  {sessionSearchTerm ? "Try adjusting your search terms." : "No scheduled sessions available."}
                 </p>
               </div>
             )}

@@ -9,6 +9,7 @@ import { AttendanceManager } from "@/components/AttendanceManager";
 import { StudentsManager } from "@/components/StudentsManager";
 import { CoachesManager } from "@/components/CoachesManager";
 import { BranchesManager } from "@/components/BranchesManager";
+import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { useEffect } from "react";
 
 export default function Dashboard() {
@@ -42,12 +43,14 @@ export default function Dashboard() {
             <Routes>
               <Route path="/" element={<DashboardStats />} />
               <Route path="calendar" element={<CalendarManager />} />
-              <Route path="sessions" element={<SessionsManager />} />
+              <Route element={<ProtectedRoute allowedRoles={['admin']} restrictedForCoaches={true} />}>
+                <Route path="sessions" element={<SessionsManager />} />
+                <Route path="students" element={<StudentsManager />} />
+                <Route path="coaches" element={<CoachesManager />} />
+                <Route path="branches" element={<BranchesManager />} />
+              </Route>
               <Route path="attendance" element={<AttendanceManager />} />
               <Route path="attendance/:sessionId" element={<AttendanceManager />} />
-              <Route path="students" element={<StudentsManager />} />
-              <Route path="coaches" element={<CoachesManager />} />
-              <Route path="branches" element={<BranchesManager />} />
             </Routes>
           </main>
         </SidebarInset>
