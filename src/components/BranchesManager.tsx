@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -139,7 +140,7 @@ export function BranchesManager() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-[#faf0e8] to-[#fffefe] p-6">
+      <div className="min-h-screen bg-white p-6">
         <div className="max-w-7xl mx-auto text-center py-16">
           <Users className="w-16 h-16 text-gray-300 mx-auto mb-4" />
           <h3 className="text-2xl font-bold text-black mb-3">Loading branches...</h3>
@@ -150,7 +151,7 @@ export function BranchesManager() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#faf0e8] to-[#fffefe] pt-4 p-6">
+    <div className="min-h-screen bg-white pt-4 p-6">
       <div className="max-w-7xl mx-auto space-y-8 -mt-5">
         {/* Header */}
         <div className="mb-8">
@@ -159,12 +160,12 @@ export function BranchesManager() {
         </div>
 
         {/* Branches Card */}
-        <Card className="border-2 border-[#fc7416]/20 bg-white/90 backdrop-blur-sm shadow-xl">
-          <CardHeader className="border-b border-[#fc7416]/10 bg-gradient-to-r from-[#fc7416]/5 to-[#fe822d]/5">
+        <Card className="border-2 border-accent/20 bg-white shadow-xl">
+          <CardHeader className="border-b border-accent/10 bg-accent/5">
             <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between space-y-4 lg:space-y-0">
               <div>
                 <CardTitle className="text-2xl font-bold text-black flex items-center">
-                  <Users className="h-6 w-6 mr-3 text-[#fc7416]" />
+                  <Users className="h-6 w-6 mr-3 text-accent" />
                   Branch Management
                 </CardTitle>
                 <CardDescription className="text-gray-600 text-base">
@@ -175,13 +176,13 @@ export function BranchesManager() {
                 <DialogTrigger asChild>
                   <Button
                     onClick={() => resetForm()}
-                    className="bg-[#fc7416] hover:bg-[#fe822d] text-white transition-all duration-300 hover:scale-105"
+                    className="bg-accent hover:bg-accent/90 text-white transition-all duration-300 hover:scale-105"
                   >
                     <Plus className="w-4 h-4 mr-2" />
                     Add Branch
                   </Button>
                 </DialogTrigger>
-                <DialogContent className="border-2 border-[#fc7416]/20 bg-gradient-to-br from-[#faf0e8]/30 to-white shadow-lg">
+                <DialogContent className="border-2 border-accent/20 bg-white shadow-lg">
                   <DialogHeader>
                     <DialogTitle className="text-2xl font-bold text-black">
                       {editingBranch ? "Edit Branch" : "Add New Branch"}
@@ -198,7 +199,7 @@ export function BranchesManager() {
                         value={formData.name}
                         onChange={(e) => setFormData((prev) => ({ ...prev, name: e.target.value }))}
                         required
-                        className="mt-1 pl-4 pr-4 py-3 border-2 border-[#fc7416]/20 rounded-xl text-sm focus:border-[#fc7416] focus:ring-[#fc7416]/20 bg-white"
+                        className="mt-1 pl-4 pr-4 py-3 border-2 border-accent/20 rounded-xl text-sm focus:border-accent focus:ring-accent/20 bg-white"
                       />
                     </div>
                     <div>
@@ -208,7 +209,7 @@ export function BranchesManager() {
                         value={formData.address}
                         onChange={(e) => setFormData((prev) => ({ ...prev, address: e.target.value }))}
                         required
-                        className="mt-1 pl-4 pr-4 py-3 border-2 border-[#fc7416]/20 rounded-xl text-sm focus:border-[#fc7416] focus:ring-[#fc7416]/20 bg-white"
+                        className="mt-1 pl-4 pr-4 py-3 border-2 border-accent/20 rounded-xl text-sm focus:border-accent focus:ring-accent/20 bg-white"
                       />
                     </div>
                     <div>
@@ -218,7 +219,7 @@ export function BranchesManager() {
                         value={formData.city}
                         onChange={(e) => setFormData((prev) => ({ ...prev, city: e.target.value }))}
                         required
-                        className="mt-1 pl-4 pr-4 py-3 border-2 border-[#fc7416]/20 rounded-xl text-sm focus:border-[#fc7416] focus:ring-[#fc7416]/20 bg-white"
+                        className="mt-1 pl-4 pr-4 py-3 border-2 border-accent/20 rounded-xl text-sm focus:border-accent focus:ring-accent/20 bg-white"
                       />
                     </div>
                     <div>
@@ -228,7 +229,7 @@ export function BranchesManager() {
                         value={formData.contact_info}
                         onChange={(e) => setFormData((prev) => ({ ...prev, contact_info: e.target.value }))}
                         placeholder="Phone, email, or other contact details"
-                        className="mt-1 pl-4 pr-4 py-3 border-2 border-[#fc7416]/20 rounded-xl text-sm focus:border-[#fc7416] focus:ring-[#fc7416]/20 bg-white"
+                        className="mt-1 pl-4 pr-4 py-3 border-2 border-accent/20 rounded-xl text-sm focus:border-accent focus:ring-accent/20 bg-white"
                       />
                     </div>
                     <div className="flex justify-end space-x-3">
@@ -236,14 +237,14 @@ export function BranchesManager() {
                         type="button"
                         variant="outline"
                         onClick={resetForm}
-                        className="border-[#fc7416]/30 text-[#fc7416] hover:bg-[#fc7416] hover:text-white transition-all duration-300 hover:scale-105"
+                        className="border-accent/30 text-accent hover:bg-accent hover:text-white transition-all duration-300 hover:scale-105"
                       >
                         Cancel
                       </Button>
                       <Button
                         type="submit"
                         disabled={createMutation.isPending || updateMutation.isPending}
-                        className="bg-[#fc7416] hover:bg-[#fe822d] text-white transition-all duration-300 hover:scale-105"
+                        className="bg-accent hover:bg-accent/90 text-white transition-all duration-300 hover:scale-105"
                       >
                         {editingBranch ? "Update" : "Create"}
                       </Button>
@@ -257,7 +258,7 @@ export function BranchesManager() {
             {/* Search and Filter */}
             <div className="mb-6">
               <div className="flex items-center mb-4">
-                <Filter className="h-5 w-5 text-[#fc7416] mr-2" />
+                <Filter className="h-5 w-5 text-accent mr-2" />
                 <h3 className="text-lg font-semibold text-black">Filter Branches</h3>
               </div>
               <div className="relative max-w-md">
@@ -265,7 +266,7 @@ export function BranchesManager() {
                 <input
                   type="text"
                   placeholder="Search branches..."
-                  className="pl-10 pr-4 py-3 w-full border-2 border-[#fc7416]/20 rounded-xl text-sm focus:border-[#fc7416] focus:ring-[#fc7416]/20 bg-white"
+                  className="pl-10 pr-4 py-3 w-full border-2 border-accent/20 rounded-xl text-sm focus:border-accent focus:ring-accent/20 bg-white"
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                 />
@@ -273,10 +274,10 @@ export function BranchesManager() {
             </div>
 
             {/* Branches Table */}
-            <div className="border-2 border-[#fc7416]/20 rounded-2xl bg-gradient-to-br from-[#faf0e8]/30 to-white shadow-lg overflow-hidden">
+            <div className="border-2 border-accent/20 rounded-2xl bg-white shadow-lg overflow-hidden">
               <div className="overflow-x-auto">
                 <table className="w-full">
-                  <thead className="bg-gradient-to-r from-[#fc7416] to-[#fe822d] text-white">
+                  <thead className="bg-black text-white">
                     <tr>
                       <th className="py-4 px-6 text-left font-semibold">Branch Name</th>
                       <th className="py-4 px-6 text-left font-semibold">Address</th>
@@ -289,13 +290,13 @@ export function BranchesManager() {
                     {filteredBranches.map((branch, index) => (
                       <tr
                         key={branch.id}
-                        className={`transition-all duration-300 hover:bg-[#fc7416]/5 ${
-                          index % 2 === 0 ? "bg-white" : "bg-[#faf0e8]/20"
+                        className={`transition-all duration-300 hover:bg-accent/5 ${
+                          index % 2 === 0 ? "bg-white" : "bg-gray-50"
                         }`}
                       >
                         <td className="py-4 px-6">
                           <div className="flex items-center space-x-3">
-                            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#fc7416] to-[#fe822d] flex items-center justify-center text-white font-semibold">
+                            <div className="w-10 h-10 rounded-full bg-accent flex items-center justify-center text-white font-semibold">
                               {branch.name.split(" ").map((n) => n[0]).join("").toUpperCase()}
                             </div>
                             <span className="font-semibold text-black">{branch.name}</span>
@@ -310,7 +311,7 @@ export function BranchesManager() {
                               size="sm"
                               variant="outline"
                               onClick={() => handleEdit(branch)}
-                              className="border-[#fc7416]/30 text-[#fc7416] hover:bg-[#fc7416] hover:text-white transition-all duration-300 hover:scale-105"
+                              className="border-accent/30 text-accent hover:bg-accent hover:text-white transition-all duration-300 hover:scale-105"
                             >
                               <Edit className="w-4 h-4 mr-1" />
                               <span className="hidden sm:inline">Edit</span>
