@@ -3,9 +3,11 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { CheckCircle, XCircle, Clock, Calendar, MapPin, User, Users, Filter, Search } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { Label } from "@/components/ui/label";
 
 type AttendanceStatus = "present" | "absent" | "pending";
 
@@ -19,7 +21,7 @@ const attendanceStatuses = ["present", "absent", "pending"] as const;
 type AttendanceStatusLiteral = typeof attendanceStatuses[number];
 
 const formatTime12Hour = (timeString: string) => {
-  const [hours, minutes] = timeString.split(":" ).map(Number);
+  const [hours, minutes] = timeString.split(":").map(Number);
   const period = hours >= 12 ? "PM" : "AM";
   const displayHours = hours % 12 || 12;
   return `${displayHours}:${minutes.toString().padStart(2, "0")} ${period}`;
@@ -48,6 +50,9 @@ const formatDateTime = (dateString: string) => {
 export function AttendanceManager() {
   const [selectedSession, setSelectedSession] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
+  const [sessionSearchTerm, setSessionSearchTerm] = useState("");
+  const [filterPackageType, setFilterPackageType] = useState<"All" | "Camp Training" | "Personal Training">("All");
+  const [sortOrder, setSortOrder] = useState<"Newest to Oldest" | "Oldest to Newest">("Newest to Oldest");
   const queryClient = useQueryClient();
 
   const { data: sessions } = useQuery<any[]>({
@@ -55,7 +60,7 @@ export function AttendanceManager() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("training_sessions")
-        .select("id, date, start_time, end_time, status, branches (name), coaches (name)")
+        .select("id, date, start_time, end_time, status, package_type, branches (name), coaches (name)")
         .eq("status", "scheduled")
         .order("date", { ascending: true });
       if (error) throw error;
@@ -95,7 +100,19 @@ export function AttendanceManager() {
   });
 
   const selectedSessionDetails = sessions?.find((s) => s.id === selectedSession);
-  
+
+  const filteredSessions = sessions
+    ?.filter((session) =>
+      (session.coaches.name.toLowerCase().includes(sessionSearchTerm.toLowerCase()) ||
+       session.branches.name.toLowerCase().includes(sessionSearchTerm.toLowerCase())) &&
+      (filterPackageType === "All" || session.package_type === filterPackageType)
+    )
+    .sort((a, b) => {
+      const dateA = new Date(a.date).getTime();
+      const dateB = new Date(b.date).getTime();
+      return sortOrder === "Newest to Oldest" ? dateB - dateA : dateA - dateB;
+    }) || [];
+
   const filteredAttendanceRecords = attendanceRecords?.filter((record) =>
     record.students.name.toLowerCase().includes(searchTerm.toLowerCase())
   ) || [];
@@ -152,8 +169,67 @@ export function AttendanceManager() {
             </CardDescription>
           </CardHeader>
           <CardContent className="p-8">
+            <div className="mb-6">
+              <div className="flex items-center mb-4">
+                <Filter className="h-5 w-5 text-[#fc7416] mr-2" />
+                <h3 className="text-lg font-semibold text-black">Filter Sessions</h3>
+              </div>
+              <div className="flex flex-col sm:flex-row sm:items-end gap-4">
+                <div className="relative flex-1">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+                  <input
+                    type="text"
+                    placeholder="Search by coach or branch..."
+                    className="pl-10 pr-4 py-3 w-full border-2 border-[#fc7416]/20 rounded-xl text-sm focus:border-[#fc7416] focus:ring-[#fc7416]/20 bg-white"
+                    value={sessionSearchTerm}
+                    onChange={(e) => setSessionSearchTerm(e.target.value)}
+                  />
+                </div>
+                <div className="flex-1">
+                  <Label htmlFor="filter-package" className="flex items-center text-sm font-medium text-gray-700 mb-2">
+                    <Users className="w-4 h-4 mr-2" style={{ color: '#fc7416' }} />
+                    Filter by Package Type
+                  </Label>
+                  <Select
+                    value={filterPackageType}
+                    onValueChange={(value: "All" | "Camp Training" | "Personal Training") => setFilterPackageType(value)}
+                  >
+                    <SelectTrigger className="border-2 focus:border-[#fc7416] rounded-xl">
+                      <SelectValue placeholder="Select package type" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="All">All Sessions</SelectItem>
+                      <SelectItem value="Camp Training">Camp Training</SelectItem>
+                      <SelectItem value="Personal Training">Personal Training</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="flex-1">
+                  <Label htmlFor="sort-order" className="flex items-center text-sm font-medium text-gray-700 mb-2">
+                    <Calendar className="w-4 h-4 mr-2" style={{ color: '#fc7416' }} />
+                    Sort Order
+                  </Label>
+                  <Select
+                    value={sortOrder}
+                    onValueChange={(value: "Newest to Oldest" | "Oldest to Newest") => setSortOrder(value)}
+                  >
+                    <SelectTrigger className="border-2 focus:border-[#fc7416] rounded-xl">
+                      <SelectValue placeholder="Select sort order" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Newest to Oldest">Newest to Oldest</SelectItem>
+                      <SelectItem value="Oldest to Newest">Oldest to Newest</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+              <p className="text-sm text-gray-600 mt-3">
+                Showing {filteredSessions.length} session{filteredSessions.length === 1 ? '' : 's'}
+              </p>
+            </div>
+
             <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-              {sessions?.map((session) => (
+              {filteredSessions.map((session) => (
                 <Card
                   key={session.id}
                   className={`cursor-pointer border-2 transition-all duration-300 hover:scale-105 hover:shadow-lg ${
@@ -183,11 +259,27 @@ export function AttendanceManager() {
                         <User className="w-4 h-4 text-gray-600" />
                         <span className="text-gray-700">{session.coaches.name}</span>
                       </div>
+                      <div className="flex items-center space-x-2">
+                        <Users className="w-4 h-4 text-gray-600" />
+                        <span className="text-gray-700">{session.package_type || 'N/A'}</span>
+                      </div>
                     </div>
                   </CardContent>
                 </Card>
               ))}
             </div>
+
+            {filteredSessions.length === 0 && (
+              <div className="py-12 text-center">
+                <Calendar className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+                <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                  {sessionSearchTerm || filterPackageType !== "All" ? `No ${filterPackageType === "All" ? "" : filterPackageType} sessions found` : "No sessions"}
+                </h3>
+                <p className="text-gray-600">
+                  {sessionSearchTerm || filterPackageType !== "All" ? "Try adjusting your search or filter." : "No scheduled sessions available."}
+                </p>
+              </div>
+            )}
           </CardContent>
         </Card>
 
@@ -206,7 +298,7 @@ export function AttendanceManager() {
                   </CardDescription>
                 </div>
                 
-                {/* Stats and Search */}
+                {/* Stats */}
                 <div className="flex flex-col sm:flex-row items-start sm:items-center space-y-4 sm:space-y-0 sm:space-x-6">
                   <div className="flex items-center space-x-6 text-sm">
                     <div className="flex items-center gap-2">
@@ -227,7 +319,7 @@ export function AttendanceManager() {
             </CardHeader>
             <CardContent className="p-8">
               
-              {/* Search and Filter */}
+              {/* Search for Attendance Records */}
               <div className="mb-6">
                 <div className="flex items-center mb-4">
                   <Filter className="h-5 w-5 text-[#fc7416] mr-2" />

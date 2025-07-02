@@ -21,6 +21,7 @@ type TrainingSession = {
   branch_id: string;
   coach_id: string;
   status: SessionStatus;
+  package_type: "Camp Training" | "Personal Training" | null;
   branches: { name: string };
   coaches: { name: string };
   session_participants: Array<{ students: { name: string } }>;
@@ -37,16 +38,17 @@ export function CalendarManager() {
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [selectedCoach, setSelectedCoach] = useState<string>("all");
   const [selectedBranch, setSelectedBranch] = useState<string>("all");
+  const [filterPackageType, setFilterPackageType] = useState<"All" | "Camp Training" | "Personal Training">("All");
   const [currentMonth, setCurrentMonth] = useState<Date>(new Date());
   const navigate = useNavigate();
 
   const { data: sessions, isLoading } = useQuery({
-    queryKey: ['training-sessions', selectedCoach, selectedBranch, currentMonth],
+    queryKey: ['training-sessions', selectedCoach, selectedBranch, filterPackageType, currentMonth],
     queryFn: async () => {
       let query = supabase
         .from('training_sessions')
         .select(`
-          *,
+          id, date, start_time, end_time, branch_id, coach_id, status, package_type,
           branches (name),
           coaches (name),
           session_participants (
@@ -93,6 +95,11 @@ export function CalendarManager() {
     }
   });
 
+  const filteredSessions = sessions
+    ?.filter((session) =>
+      filterPackageType === "All" || session.package_type === filterPackageType
+    ) || [];
+
   const daysInMonth = eachDayOfInterval({
     start: startOfMonth(currentMonth),
     end: endOfMonth(currentMonth),
@@ -111,21 +118,22 @@ export function CalendarManager() {
   const handleNextMonth = () => setCurrentMonth(addMonths(currentMonth, 1));
 
   const selectedDateSessions = selectedDate
-    ? sessions?.filter(session => isSameDay(new Date(session.date), selectedDate)) || []
+    ? filteredSessions.filter(session => isSameDay(new Date(session.date), selectedDate)) || []
     : [];
 
   const today = new Date();
   const todayDateOnly = new Date(format(today, "yyyy-MM-dd") + "T00:00:00");
 
-  const upcomingSessions = sessions?.filter(session => {
-   const sessionDate = new Date(session.date + "T00:00:00");
-   return isAfter(sessionDate, todayDateOnly) || isSameDay(sessionDate, todayDateOnly);
+  const upcomingSessions = filteredSessions.filter(session => {
+    const sessionDate = new Date(session.date + "T00:00:00");
+    return (isAfter(sessionDate, todayDateOnly) || isSameDay(sessionDate, todayDateOnly)) &&
+           session.status !== 'cancelled' && session.status !== 'completed';
   }) || [];
 
-  const pastSessions = sessions?.filter(session => {
+  const pastSessions = filteredSessions.filter(session => {
     const sessionDate = new Date(session.date + "T00:00:00");
-    return isBefore(sessionDate, todayDateOnly);
-}) || [];
+    return session.status === 'completed' || isBefore(sessionDate, todayDateOnly);
+  }) || [];
 
   const handleSessionSelect = (sessionId: string) => {
     navigate(`/attendance/${sessionId}`);
@@ -164,7 +172,7 @@ export function CalendarManager() {
                 <Filter className="h-5 w-5 text-[#fc7416] mr-2" />
                 <h3 className="text-lg font-semibold text-black">Filter Sessions</h3>
               </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div className="space-y-2">
                   <label className="text-sm font-medium text-gray-700">Coach</label>
                   <Select value={selectedCoach} onValueChange={setSelectedCoach}>
@@ -193,7 +201,26 @@ export function CalendarManager() {
                     </SelectContent>
                   </Select>
                 </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-gray-700">Package Type</label>
+                  <Select
+                    value={filterPackageType}
+                    onValueChange={(value: "All" | "Camp Training" | "Personal Training") => setFilterPackageType(value)}
+                  >
+                    <SelectTrigger className="border-[#fc7416]/20 focus:border-[#fc7416] focus:ring-[#fc7416]/20">
+                      <SelectValue placeholder="Select package type" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="All">All Sessions</SelectItem>
+                      <SelectItem value="Camp Training">Camp Training</SelectItem>
+                      <SelectItem value="Personal Training">Personal Training</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
+              <p className="text-sm text-gray-600 mt-3">
+                Showing {filteredSessions.length} session{filteredSessions.length === 1 ? '' : 's'}
+              </p>
             </div>
 
             {/* Calendar Grid */}
@@ -234,7 +261,7 @@ export function CalendarManager() {
               {/* Calendar Days */}
               <div className="grid grid-cols-7 gap-2">
                 {daysInMonth.map(day => {
-                  const daySessions = sessions?.filter(session => isSameDay(new Date(session.date), day)) || [];
+                  const daySessions = filteredSessions.filter(session => isSameDay(new Date(session.date), day)) || [];
                   const hasScheduled = daySessions.some(s => s.status === 'scheduled');
                   const hasCompleted = daySessions.some(s => s.status === 'completed');
                   const hasCancelled = daySessions.some(s => s.status === 'cancelled');
@@ -342,7 +369,14 @@ export function CalendarManager() {
                               <p className="font-semibold text-black">{session.session_participants?.length || 0}</p>
                             </div>
                           </div>
-                          <div>
+                          <div className="flex items-center space-x-2">
+                            <Users className="h-4 w-4 text-[#fc7416]" />
+                            <div>
+                              <p className="text-sm font-medium text-gray-600">Package</p>
+                              <p className="font-semibold text-black">{session.package_type || 'N/A'}</p>
+                            </div>
+                          </div>
+                          <div className="flex items-center space-x-2">
                             <Badge className={`${getStatusBadgeColor(session.status)} font-medium px-3 py-1`}>
                               {session.status.charAt(0).toUpperCase() + session.status.slice(1)}
                             </Badge>
@@ -363,8 +397,12 @@ export function CalendarManager() {
               ) : (
                 <div className="text-center py-12">
                   <CalendarIcon className="h-16 w-16 text-gray-300 mx-auto mb-4" />
-                  <p className="text-xl text-gray-500 mb-2">No sessions scheduled</p>
-                  <p className="text-gray-400">Select a different date or schedule a new session</p>
+                  <p className="text-xl text-gray-500 mb-2">
+                    {filterPackageType !== "All" ? `No ${filterPackageType} sessions scheduled` : "No sessions scheduled"}
+                  </p>
+                  <p className="text-gray-400">
+                    {filterPackageType !== "All" ? "Try adjusting your package type filter or select a different date." : "Select a different date or schedule a new session."}
+                  </p>
                 </div>
               )}
             </CardContent>
@@ -381,7 +419,7 @@ export function CalendarManager() {
                 Upcoming Sessions
               </CardTitle>
               <CardDescription className="text-green-600">
-                Sessions scheduled for the future ({upcomingSessions.length} total)
+                Scheduled sessions for today or the future ({upcomingSessions.length} total)
               </CardDescription>
             </CardHeader>
             <CardContent className="p-0">
@@ -393,6 +431,7 @@ export function CalendarManager() {
                         <TableHead className="font-semibold text-green-800">Date & Time</TableHead>
                         <TableHead className="font-semibold text-green-800">Branch</TableHead>
                         <TableHead className="font-semibold text-green-800">Coach</TableHead>
+                        <TableHead className="font-semibold text-green-800">Package</TableHead>
                         <TableHead className="font-semibold text-green-800">Players</TableHead>
                         <TableHead className="font-semibold text-green-800">Status</TableHead>
                       </TableRow>
@@ -420,6 +459,7 @@ export function CalendarManager() {
                           </TableCell>
                           <TableCell className="text-gray-700 font-medium">{session.branches.name}</TableCell>
                           <TableCell className="text-gray-700 font-medium">{session.coaches.name}</TableCell>
+                          <TableCell className="text-gray-700 font-medium">{session.package_type || 'N/A'}</TableCell>
                           <TableCell>
                             <div className="flex items-center space-x-2">
                               <Users className="w-4 h-4 text-green-600" />
@@ -439,8 +479,12 @@ export function CalendarManager() {
               ) : (
                 <div className="p-12 text-center">
                   <Clock className="h-16 w-16 text-green-300 mx-auto mb-4" />
-                  <p className="text-xl text-green-600 mb-2">No upcoming sessions</p>
-                  <p className="text-green-500">Schedule new training sessions to get started</p>
+                  <p className="text-xl text-green-600 mb-2">
+                    {filterPackageType !== "All" ? `No upcoming ${filterPackageType} sessions` : "No upcoming scheduled sessions"}
+                  </p>
+                  <p className="text-green-500">
+                    {filterPackageType !== "All" ? "Try adjusting your package type filter or schedule new sessions." : "Schedule new training sessions to get started."}
+                  </p>
                 </div>
               )}
             </CardContent>
@@ -454,7 +498,7 @@ export function CalendarManager() {
                 Past Sessions
               </CardTitle>
               <CardDescription className="text-gray-600">
-                Previously completed sessions ({pastSessions.length} total)
+                Completed sessions or sessions before today ({pastSessions.length} total)
               </CardDescription>
             </CardHeader>
             <CardContent className="p-0">
@@ -466,6 +510,7 @@ export function CalendarManager() {
                         <TableHead className="font-semibold text-gray-800">Date & Time</TableHead>
                         <TableHead className="font-semibold text-gray-800">Branch</TableHead>
                         <TableHead className="font-semibold text-gray-800">Coach</TableHead>
+                        <TableHead className="font-semibold text-gray-800">Package</TableHead>
                         <TableHead className="font-semibold text-gray-800">Players</TableHead>
                         <TableHead className="font-semibold text-gray-800">Status</TableHead>
                       </TableRow>
@@ -493,6 +538,7 @@ export function CalendarManager() {
                           </TableCell>
                           <TableCell className="text-gray-700 font-medium">{session.branches.name}</TableCell>
                           <TableCell className="text-gray-700 font-medium">{session.coaches.name}</TableCell>
+                          <TableCell className="text-gray-700 font-medium">{session.package_type || 'N/A'}</TableCell>
                           <TableCell>
                             <div className="flex items-center space-x-2">
                               <Users className="w-4 h-4 text-gray-500" />
@@ -512,14 +558,17 @@ export function CalendarManager() {
               ) : (
                 <div className="p-12 text-center">
                   <CalendarIcon className="h-16 w-16 text-gray-300 mx-auto mb-4" />
-                  <p className="text-xl text-gray-500 mb-2">No past sessions</p>
-                  <p className="text-gray-400">Session history will appear here</p>
+                  <p className="text-xl text-gray-500 mb-2">
+                    {filterPackageType !== "All" ? `No past ${filterPackageType} sessions` : "No past or completed sessions"}
+                  </p>
+                  <p className="text-gray-400">
+                    {filterPackageType !== "All" ? "Try adjusting your package type filter." : "Completed sessions or sessions before today will appear here."}
+                  </p>
                 </div>
               )}
             </CardContent>
           </Card>
         </div>
-
       </div>
     </div>
   );

@@ -358,7 +358,7 @@ export function StudentsManager() {
                         <SelectContent>
                           {coaches?.map((coach) => (
                             <SelectItem key={coach.id} value={coach.id}>
-                              {coach.name} ({coach.package_type || "No package"})
+                              {coach.name} 
                             </SelectItem>
                           ))}
                         </SelectContent>
