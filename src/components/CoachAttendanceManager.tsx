@@ -9,7 +9,7 @@ import { CheckCircle, XCircle, Clock, Calendar, MapPin, User, Users, Filter, Sea
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useAuth } from "@/context/AuthContext";
-import { format, parseISO } from "date-fns";
+import { format, parseISO, addDays, subDays } from "date-fns";
 
 type AttendanceStatus = "present" | "absent" | "pending";
 
@@ -24,13 +24,27 @@ const formatTime12Hour = (timeString: string) => {
 };
 
 const formatDate = (dateString: string) => {
-  const date = parseISO(dateString);
-  return format(date, 'EEEE, MMMM dd, yyyy');
+  try {
+    console.log("Formatting date:", dateString);
+    // Handle the date string properly - parse as local date
+    const date = new Date(dateString + 'T00:00:00');
+    const formattedDate = format(date, 'EEEE, MMMM dd, yyyy');
+    console.log("Formatted date result:", formattedDate);
+    return formattedDate;
+  } catch (error) {
+    console.error("Error formatting date:", error, "Input:", dateString);
+    return dateString;
+  }
 };
 
 const formatDateTime = (dateString: string) => {
-  const date = parseISO(dateString);
-  return format(date, 'MMM dd, h:mm a');
+  try {
+    const date = parseISO(dateString);
+    return format(date, 'MMM dd, h:mm a');
+  } catch (error) {
+    console.error("Error formatting datetime:", error, "Input:", dateString);
+    return new Date(dateString).toLocaleDateString();
+  }
 };
 
 export function CoachAttendanceManager() {
@@ -45,11 +59,18 @@ export function CoachAttendanceManager() {
     queryKey: ["coach-id", user?.id],
     queryFn: async () => {
       if (!user?.id) return null;
-      const { data: coach } = await supabase
+      console.log("Fetching coach ID for user:", user.email);
+      const { data: coach, error } = await supabase
         .from("coaches")
         .select("id")
         .eq("auth_id", user.id)
         .single();
+      
+      if (error) {
+        console.error("Error fetching coach ID:", error);
+        return null;
+      }
+      console.log("Found coach ID:", coach?.id);
       return coach?.id;
     },
     enabled: !!user?.id,
@@ -59,14 +80,29 @@ export function CoachAttendanceManager() {
     queryKey: ["coach-sessions", coachId],
     queryFn: async () => {
       if (!coachId) return [];
+      console.log("Fetching sessions for coach:", coachId);
+      
+      // Get sessions from a wider date range to ensure we don't miss any
+      const today = new Date();
+      const pastDate = subDays(today, 30);
+      const futureDate = addDays(today, 30);
+      
       const { data, error } = await supabase
         .from("training_sessions")
         .select("id, date, start_time, end_time, status, package_type, branches (name), coaches (name)")
         .eq("coach_id", coachId)
         .eq("status", "scheduled")
-        .order("date", { ascending: true });
-      if (error) throw error;
-      return data;
+        .gte("date", format(pastDate, 'yyyy-MM-dd'))
+        .lte("date", format(futureDate, 'yyyy-MM-dd'))
+        .order("date", { ascending: false });
+      
+      if (error) {
+        console.error("Error fetching sessions:", error);
+        throw error;
+      }
+      
+      console.log("Fetched sessions:", data);
+      return data || [];
     },
     enabled: !!coachId,
   });
@@ -75,29 +111,42 @@ export function CoachAttendanceManager() {
     queryKey: ["attendance", selectedSession],
     queryFn: async () => {
       if (!selectedSession) return [];
+      console.log("Fetching attendance for session:", selectedSession);
       const { data, error } = await supabase
         .from("attendance_records")
         .select("id, session_id, student_id, status, marked_at, students (name)")
-        .eq("session_id", selectedSession);
-      if (error) throw error;
-      return data;
+        .eq("session_id", selectedSession)
+        .order("created_at", { ascending: true });
+      
+      if (error) {
+        console.error("Error fetching attendance:", error);
+        throw error;
+      }
+      
+      console.log("Fetched attendance records:", data);
+      return data || [];
     },
     enabled: !!selectedSession,
   });
 
   const updateAttendance = useMutation({
     mutationFn: async ({ recordId, status }: { recordId: string; status: AttendanceStatus }) => {
+      console.log("Updating attendance:", recordId, status);
       const { error } = await supabase
         .from("attendance_records")
         .update({ status, marked_at: status !== "pending" ? new Date().toISOString() : null })
         .eq("id", recordId);
-      if (error) throw error;
+      if (error) {
+        console.error("Error updating attendance:", error);
+        throw error;
+      }
     },
     onSuccess: () => {
       toast.success("Attendance updated");
       queryClient.invalidateQueries({ queryKey: ["attendance", selectedSession] });
     },
-    onError: () => {
+    onError: (error) => {
+      console.error("Attendance update failed:", error);
       toast.error("Failed to update attendance");
     },
   });
@@ -109,8 +158,9 @@ export function CoachAttendanceManager() {
       session.branches.name.toLowerCase().includes(sessionSearchTerm.toLowerCase())
     )
     .sort((a, b) => {
-      const dateA = parseISO(a.date).getTime();
-      const dateB = parseISO(b.date).getTime();
+      // Sort by date (newest first)
+      const dateA = new Date(a.date).getTime();
+      const dateB = new Date(b.date).getTime();
       return dateB - dateA;
     }) || [];
 
@@ -209,7 +259,7 @@ export function CoachAttendanceManager() {
                     <div className="flex items-center space-x-2">
                       <Calendar className="w-4 h-4 text-accent" />
                       <span className="font-semibold text-black text-sm">
-                        {format(parseISO(session.date), 'MMM dd, yyyy')}
+                        {format(new Date(session.date + 'T00:00:00'), 'MMM dd, yyyy')}
                       </span>
                     </div>
                     <div className="space-y-3 text-sm">

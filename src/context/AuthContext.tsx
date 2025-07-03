@@ -9,13 +9,15 @@ type AuthContextType = {
   role: 'admin' | 'coach' | null;
   coachData: any | null;
   loading: boolean;
+  logout: () => Promise<void>;
 };
 
 const AuthContext = createContext<AuthContextType>({ 
   user: null, 
   role: null, 
   coachData: null,
-  loading: true 
+  loading: true,
+  logout: async () => {},
 });
 
 // Helper function to validate role
@@ -23,11 +25,65 @@ const isValidRole = (role: string): role is 'admin' | 'coach' => {
   return role === 'admin' || role === 'coach';
 };
 
+// Clean up auth state utility
+const cleanupAuthState = () => {
+  // Remove all Supabase auth keys from localStorage
+  Object.keys(localStorage).forEach((key) => {
+    if (key.startsWith('supabase.auth.') || key.includes('sb-')) {
+      localStorage.removeItem(key);
+    }
+  });
+  // Remove from sessionStorage if in use
+  Object.keys(sessionStorage || {}).forEach((key) => {
+    if (key.startsWith('supabase.auth.') || key.includes('sb-')) {
+      sessionStorage.removeItem(key);
+    }
+  });
+};
+
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [role, setRole] = useState<'admin' | 'coach' | null>(null);
   const [coachData, setCoachData] = useState<any | null>(null);
   const [loading, setLoading] = useState(true);
+
+  const logout = async () => {
+    try {
+      console.log("Starting logout process...");
+      
+      // Clean up auth state first
+      cleanupAuthState();
+      
+      // Clear local state
+      setUser(null);
+      setRole(null);
+      setCoachData(null);
+      
+      // Attempt global sign out with error handling
+      try {
+        const { error } = await supabase.auth.signOut({ scope: 'global' });
+        if (error) {
+          console.log("Logout error (continuing anyway):", error.message);
+        }
+      } catch (signOutError) {
+        console.log("Sign out attempt failed (continuing anyway):", signOutError);
+      }
+      
+      toast.success("Logged out successfully");
+      
+      // Force page reload for clean state
+      window.location.href = "/";
+    } catch (error: any) {
+      console.error("Logout process error:", error);
+      // Even if there's an error, still redirect to clean state
+      cleanupAuthState();
+      setUser(null);
+      setRole(null);
+      setCoachData(null);
+      toast.success("Logged out");
+      window.location.href = "/";
+    }
+  };
 
   const fetchUserRole = async (currentUser: User) => {
     try {
@@ -239,7 +295,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   return (
-    <AuthContext.Provider value={{ user, role, coachData, loading }}>
+    <AuthContext.Provider value={{ user, role, coachData, loading, logout }}>
       {children}
     </AuthContext.Provider>
   );

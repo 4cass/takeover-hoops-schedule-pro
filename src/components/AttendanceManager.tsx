@@ -11,6 +11,7 @@ import { toast } from "sonner";
 import { Label } from "@/components/ui/label";
 import { useAuth } from "@/context/AuthContext";
 import { CoachAttendanceManager } from "./CoachAttendanceManager";
+import { format, addDays, subDays } from "date-fns";
 
 type AttendanceStatus = "present" | "absent" | "pending";
 
@@ -31,23 +32,34 @@ const formatTime12Hour = (timeString: string) => {
 };
 
 const formatDate = (dateString: string) => {
-  const date = new Date(dateString);
-  return date.toLocaleDateString("en-US", {
-    weekday: "short",
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-  });
+  try {
+    // Handle the date string properly - parse as local date
+    const date = new Date(dateString + 'T00:00:00');
+    return date.toLocaleDateString("en-US", {
+      weekday: "short",
+      month: "short",
+      day: "numeric",
+      year: "numeric",
+    });
+  } catch (error) {
+    console.error("Error formatting date:", error);
+    return dateString;
+  }
 };
 
 const formatDateTime = (dateString: string) => {
-  const date = new Date(dateString);
-  return date.toLocaleDateString("en-US", {
-    month: "short",
-    day: "numeric",
-    hour: "numeric",
-    minute: "2-digit",
-  });
+  try {
+    const date = new Date(dateString);
+    return date.toLocaleDateString("en-US", {
+      month: "short",
+      day: "numeric",
+      hour: "numeric",
+      minute: "2-digit",
+    });
+  } catch (error) {
+    console.error("Error formatting datetime:", error);
+    return new Date(dateString).toLocaleDateString();
+  }
 };
 
 export function AttendanceManager() {
@@ -68,13 +80,28 @@ export function AttendanceManager() {
   const { data: sessions } = useQuery<any[]>({
     queryKey: ["sessions"],
     queryFn: async () => {
+      console.log("Fetching all sessions for admin");
+      
+      // Get sessions from a wider date range
+      const today = new Date();
+      const pastDate = subDays(today, 30);
+      const futureDate = addDays(today, 30);
+      
       const { data, error } = await supabase
         .from("training_sessions")
         .select("id, date, start_time, end_time, status, package_type, branches (name), coaches (name)")
         .eq("status", "scheduled")
-        .order("date", { ascending: true });
-      if (error) throw error;
-      return data;
+        .gte("date", format(pastDate, 'yyyy-MM-dd'))
+        .lte("date", format(futureDate, 'yyyy-MM-dd'))
+        .order("date", { ascending: false });
+      
+      if (error) {
+        console.error("Error fetching sessions:", error);
+        throw error;
+      }
+      
+      console.log("Fetched sessions:", data);
+      return data || [];
     },
   });
 
@@ -82,29 +109,42 @@ export function AttendanceManager() {
     queryKey: ["attendance", selectedSession],
     queryFn: async () => {
       if (!selectedSession) return [];
+      console.log("Fetching attendance for session:", selectedSession);
       const { data, error } = await supabase
         .from("attendance_records")
         .select("id, session_id, student_id, status, marked_at, students (name)")
-        .eq("session_id", selectedSession);
-      if (error) throw error;
-      return data;
+        .eq("session_id", selectedSession)
+        .order("created_at", { ascending: true });
+      
+      if (error) {
+        console.error("Error fetching attendance:", error);
+        throw error;
+      }
+      
+      console.log("Fetched attendance records:", data);
+      return data || [];
     },
     enabled: !!selectedSession,
   });
 
   const updateAttendance = useMutation<void, unknown, UpdateAttendanceVariables>({
     mutationFn: async ({ recordId, status }) => {
+      console.log("Updating attendance:", recordId, status);
       const { error } = await supabase
         .from("attendance_records")
         .update({ status, marked_at: status !== "pending" ? new Date().toISOString() : null })
         .eq("id", recordId);
-      if (error) throw error;
+      if (error) {
+        console.error("Error updating attendance:", error);
+        throw error;
+      }
     },
     onSuccess: () => {
       toast.success("Attendance updated");
       queryClient.invalidateQueries({ queryKey: ["attendance", selectedSession] });
     },
-    onError: () => {
+    onError: (error) => {
+      console.error("Attendance update failed:", error);
       toast.error("Failed to update attendance");
     },
   });
@@ -252,7 +292,9 @@ export function AttendanceManager() {
                   <CardContent className="p-4 sm:p-5 space-y-4">
                     <div className="flex items-center space-x-2">
                       <Calendar className="w-4 h-4 text-accent" />
-                      <span className="font-semibold text-black text-sm">{formatDate(session.date)}</span>
+                      <span className="font-semibold text-black text-sm">
+                        {format(new Date(session.date + 'T00:00:00'), 'MMM dd, yyyy')}
+                      </span>
                     </div>
                     <div className="space-y-3 text-sm">
                       <div className="flex items-center space-x-2">

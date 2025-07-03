@@ -14,8 +14,6 @@ import {
   SidebarFooter,
 } from "@/components/ui/sidebar";
 import { useAuth } from "@/context/AuthContext";
-import { supabase } from "@/integrations/supabase/client";
-import { toast } from "sonner";
 
 const menuItems = [
   { title: "Dashboard", icon: Home, value: "overview", allowedRoles: ['admin', 'coach'] },
@@ -34,7 +32,7 @@ interface AppSidebarProps {
 
 export function AppSidebar({ activeTab, onTabChange }: AppSidebarProps) {
   const { setOpen, isMobile } = useSidebar();
-  const { role, user } = useAuth();
+  const { role, user, logout } = useAuth();
 
   const handleTabChange = (value: string) => {
     onTabChange(value);
@@ -44,22 +42,7 @@ export function AppSidebar({ activeTab, onTabChange }: AppSidebarProps) {
   };
 
   const handleLogout = async () => {
-    try {
-      const { error } = await supabase.auth.signOut();
-      if (error) throw error;
-      
-      // Clear local storage to ensure clean logout
-      localStorage.clear();
-      sessionStorage.clear();
-      
-      toast.success("Logged out successfully");
-      
-      // Force page reload to ensure clean state
-      window.location.href = "/";
-    } catch (error: any) {
-      console.error("Logout error:", error);
-      toast.error("Error logging out: " + error.message);
-    }
+    await logout();
   };
 
   // Filter menu items based on user role
