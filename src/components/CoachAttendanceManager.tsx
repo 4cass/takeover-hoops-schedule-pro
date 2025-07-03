@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useParams } from "react-router-dom";
@@ -52,6 +51,7 @@ export function CoachAttendanceManager() {
   const { sessionId } = useParams();
   const [selectedSession, setSelectedSession] = useState<string | null>(sessionId || null);
   const [selectedSessionModal, setSelectedSessionModal] = useState<any | null>(null);
+  const [showAttendanceModal, setShowAttendanceModal] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [sessionSearchTerm, setSessionSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
@@ -212,6 +212,12 @@ export function CoachAttendanceManager() {
 
   const handleBackToCalendar = () => {
     navigate('/dashboard/calendar');
+  };
+
+  const handleManageAttendance = (sessionId: string) => {
+    setSelectedSession(sessionId);
+    setShowAttendanceModal(true);
+    setSelectedSessionModal(null);
   };
 
   return (
@@ -395,10 +401,7 @@ export function CoachAttendanceManager() {
                     Close
                   </Button>
                   <Button
-                    onClick={() => {
-                      setSelectedSession(selectedSessionModal.id);
-                      setSelectedSessionModal(null);
-                    }}
+                    onClick={() => handleManageAttendance(selectedSessionModal.id)}
                     className="bg-gradient-to-r from-accent to-accent/80 hover:from-accent/80 hover:to-accent text-white font-medium transition-all duration-300 hover:scale-105 hover:shadow-lg"
                   >
                     Manage Attendance
@@ -409,24 +412,24 @@ export function CoachAttendanceManager() {
           </DialogContent>
         </Dialog>
 
-        {/* Attendance Management Card */}
-        {selectedSessionDetails && attendanceRecords && (
-          <Card className="border-2 border-black bg-white shadow-xl">
-            <CardHeader className="border-b border-accent/10 bg-accent/5">
+        {/* Attendance Management Modal */}
+        <Dialog open={showAttendanceModal} onOpenChange={setShowAttendanceModal}>
+          <DialogContent className="max-w-6xl max-h-[90vh] border-2 border-black bg-white shadow-xl">
+            <DialogHeader className="border-b border-accent/10 bg-accent/5 p-4 sm:p-6">
               <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between space-y-4 lg:space-y-0">
                 <div>
-                  <CardTitle className="text-2xl font-bold text-black flex items-center">
-                    <Users className="h-6 w-6 mr-3 text-accent" />
+                  <DialogTitle className="text-lg sm:text-xl lg:text-2xl font-bold text-black flex items-center">
+                    <Users className="h-5 w-5 sm:h-6 sm:w-6 mr-3 text-accent" />
                     Attendance Management
-                  </CardTitle>
-                  <CardDescription className="text-gray-600 text-base">
-                    {formatDate(selectedSessionDetails.date)} • {selectedSessionDetails.branches.name}
-                  </CardDescription>
+                  </DialogTitle>
+                  <DialogDescription className="text-gray-600 text-sm sm:text-base">
+                    {selectedSessionDetails ? `${formatDate(selectedSessionDetails.date)} • ${selectedSessionDetails.branches.name}` : 'Manage player attendance for this session'}
+                  </DialogDescription>
                 </div>
                 
                 {/* Stats */}
                 <div className="flex flex-col sm:flex-row items-start sm:items-center space-y-4 sm:space-y-0 sm:space-x-6">
-                  <div className="flex items-center space-x-6 text-sm">
+                  <div className="flex flex-wrap items-center gap-4 sm:gap-6 text-sm">
                     <div className="flex items-center gap-2">
                       <div className="w-3 h-3 bg-green-500 rounded-full"></div>
                       <span className="text-gray-700 font-medium">Present: {presentCount}</span>
@@ -442,14 +445,14 @@ export function CoachAttendanceManager() {
                   </div>
                 </div>
               </div>
-            </CardHeader>
-            <CardContent className="p-8">
-              
+            </DialogHeader>
+            
+            <div className="p-4 sm:p-6 max-h-[60vh] overflow-y-auto">
               {/* Search for Attendance Records */}
               <div className="mb-6">
                 <div className="flex items-center mb-4">
-                  <Filter className="h-5 w-5 text-accent mr-2" />
-                  <h3 className="text-lg font-semibold text-black">Filter Players</h3>
+                  <Filter className="h-4 w-4 sm:h-5 sm:w-5 text-accent mr-2" />
+                  <h3 className="text-base sm:text-lg font-semibold text-black">Filter Players</h3>
                 </div>
                 <div className="relative max-w-md">
                   <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
@@ -469,10 +472,10 @@ export function CoachAttendanceManager() {
                   <table className="w-full">
                     <thead className="bg-black text-white">
                       <tr>
-                        <th className="py-4 px-6 text-left font-semibold">Player Name</th>
-                        <th className="py-4 px-6 text-left font-semibold">Status</th>
-                        <th className="py-4 px-6 text-left font-semibold">Marked At</th>
-                        <th className="py-4 px-6 text-left font-semibold">Actions</th>
+                        <th className="py-3 sm:py-4 px-4 sm:px-6 text-left font-semibold text-sm sm:text-base">Player Name</th>
+                        <th className="py-3 sm:py-4 px-4 sm:px-6 text-left font-semibold text-sm sm:text-base">Status</th>
+                        <th className="py-3 sm:py-4 px-4 sm:px-6 text-left font-semibold text-sm sm:text-base">Marked At</th>
+                        <th className="py-3 sm:py-4 px-4 sm:px-6 text-left font-semibold text-sm sm:text-base">Actions</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -483,38 +486,38 @@ export function CoachAttendanceManager() {
                             index % 2 === 0 ? 'bg-white' : 'bg-gray-50'
                           }`}
                         >
-                          <td className="py-4 px-6">
+                          <td className="py-3 sm:py-4 px-4 sm:px-6">
                             <div className="flex items-center space-x-3">
-                              <div className="w-10 h-10 rounded-full bg-accent flex items-center justify-center text-white font-semibold">
+                              <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-accent flex items-center justify-center text-white font-semibold text-sm">
                                 {record.students.name.split(' ').map(n => n[0]).join('').toUpperCase()}
                               </div>
-                              <span className="font-semibold text-black">{record.students.name}</span>
+                              <span className="font-semibold text-black text-sm sm:text-base">{record.students.name}</span>
                             </div>
                           </td>
-                          <td className="py-4 px-6">
+                          <td className="py-3 sm:py-4 px-4 sm:px-6">
                             <div className="flex items-center space-x-2">
                               {getAttendanceIcon(record.status)}
-                              <Badge className={`${getAttendanceBadgeColor(record.status)} border capitalize font-medium`}>
+                              <Badge className={`${getAttendanceBadgeColor(record.status)} border capitalize font-medium text-xs sm:text-sm`}>
                                 {record.status}
                               </Badge>
                             </div>
                           </td>
-                          <td className="py-4 px-6 text-gray-600">
+                          <td className="py-3 sm:py-4 px-4 sm:px-6 text-gray-600 text-sm">
                             {record.marked_at ? (
                               <span className="font-medium">{formatDateTime(record.marked_at)}</span>
                             ) : (
                               <span className="italic text-gray-400">Not marked</span>
                             )}
                           </td>
-                          <td className="py-4 px-6">
-                            <div className="flex items-center space-x-2">
+                          <td className="py-3 sm:py-4 px-4 sm:px-6">
+                            <div className="flex flex-col sm:flex-row items-start sm:items-center space-y-2 sm:space-y-0 sm:space-x-2">
                               {attendanceStatuses.map((status) => (
                                 <Button
                                   key={status}
                                   size="sm"
                                   variant={record.status === status ? "default" : "outline"}
                                   onClick={() => handleAttendanceChange(record.id, status)}
-                                  className={`transition-all duration-300 hover:scale-105 ${
+                                  className={`transition-all duration-300 hover:scale-105 text-xs sm:text-sm ${
                                     record.status === status
                                       ? status === "present"
                                         ? "bg-green-600 hover:bg-green-700 text-white"
@@ -537,12 +540,12 @@ export function CoachAttendanceManager() {
                 </div>
                 
                 {filteredAttendanceRecords.length === 0 && (
-                  <div className="py-12 text-center">
-                    <Users className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-                    <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                  <div className="py-8 sm:py-12 text-center">
+                    <Users className="w-12 h-12 sm:w-16 sm:h-16 text-gray-300 mx-auto mb-4" />
+                    <h3 className="text-base sm:text-lg font-semibold text-gray-900 mb-2">
                       {searchTerm ? 'No players found' : 'No attendance records'}
                     </h3>
-                    <p className="text-gray-600">
+                    <p className="text-gray-600 text-sm sm:text-base">
                       {searchTerm 
                         ? 'Try adjusting your search terms.' 
                         : 'No attendance records found for this session.'
@@ -551,9 +554,9 @@ export function CoachAttendanceManager() {
                   </div>
                 )}
               </div>
-            </CardContent>
-          </Card>
-        )}
+            </div>
+          </DialogContent>
+        </Dialog>
         
         {!selectedSession && !sessionId && (
           <div className="text-center py-16">

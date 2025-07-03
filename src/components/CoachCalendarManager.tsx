@@ -258,7 +258,7 @@ export function CoachCalendarManager() {
 
   return (
     <div className="min-h-screen bg-white p-6">
-      <div className="max-w-7xl mx-auto space-y-8">
+      <div className="max-w-5xl mx-auto space-y-8">
         {/* Header */}
         <div className="mb-8">
           <h1 className="text-4xl font-bold text-black mb-2 tracking-tight">
@@ -269,322 +269,207 @@ export function CoachCalendarManager() {
           </p>
         </div>
 
-        <div className="grid gap-6 lg:grid-cols-2">
-          {/* Calendar - Left Side */}
-          <Card className="border-2 border-black bg-white shadow-xl">
-            <CardHeader className="border-b border-black bg-black">
-              <CardTitle className="text-2xl font-bold text-white flex items-center">
-                <CalendarIcon className="h-6 w-6 mr-3 text-accent" />
-                Session Calendar
-              </CardTitle>
-              <CardDescription className="text-gray-400 text-base">
-                Click on any date to view session details for {format(currentMonth, 'MMMM yyyy')}
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="p-8">
-              <div className="border-2 border-black rounded-2xl p-6 bg-white shadow-lg">
-                {/* Calendar Navigation */}
-                <div className="flex justify-between items-center mb-6">
-                  <Button
-                    onClick={handlePrevMonth}
-                    variant="outline"
-                    size="sm"
-                    className="border-accent/30 text-accent hover:bg-accent hover:text-white transition-all duration-300"
-                  >
-                    <ChevronLeft className="h-4 w-4" />
-                  </Button>
-                  <h3 className="text-2xl font-bold text-black">
-                    {format(currentMonth, 'MMMM yyyy')}
-                  </h3>
-                  <Button
-                    onClick={handleNextMonth}
-                    variant="outline"
-                    size="sm"
-                    className="border-accent/30 text-accent hover:bg-accent hover:text-white transition-all duration-300"
-                  >
-                    <ChevronRight className="h-4 w-4" />
-                  </Button>
-                </div>
-                
-                {/* Days of Week Header */}
-                <div className="grid grid-cols-7 gap-2 mb-4">
-                  {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(day => (
-                    <div key={day} className="text-center py-3 bg-black text-white font-semibold rounded-lg text-sm">
-                      {day}
-                    </div>
-                  ))}
-                </div>
-                
-                {/* Calendar Days */}
-                <div className="grid grid-cols-7 gap-2">
-                  {daysInMonth.map(day => {
-                    const daySessions = sessions.filter(session => isSameDay(parseISO(session.date), day)) || [];
-                    const hasScheduled = daySessions.some(s => s.status === 'scheduled');
-                    const hasCompleted = daySessions.some(s => s.status === 'completed');
-                    const hasCancelled = daySessions.some(s => s.status === 'cancelled');
-                    const isSelected = selectedDate && isSameDay(day, selectedDate);
-                    const isToday = isSameDay(day, new Date());
-                    
-                    return (
-                      <button
-                        key={day.toString()}
-                        onClick={() => handleDateSelect(day)}
-                        className={`
-                          relative p-3 h-20 rounded-xl text-left transition-all duration-300 hover:scale-105 hover:shadow-lg
-                          ${isSelected 
-                            ? 'bg-gradient-to-br from-accent to-accent/80 text-white shadow-lg scale-105' 
-                            : isToday
-                              ? 'bg-gradient-to-br from-accent/20 to-accent/10 border-2 border-accent text-black'
-                              : daySessions.length > 0
-                                ? 'bg-gradient-to-br from-gray-50 to-white border border-accent/30 text-black hover:border-accent'
-                                : 'bg-white border border-gray-200 text-gray-700 hover:bg-gray-50'
-                          }
-                        `}
-                      >
-                        <div className="font-semibold text-lg mb-1">
-                          {format(day, 'd')}
-                        </div>
-                        {daySessions.length > 0 && (
-                          <div className="space-y-1">
-                            <div className="text-xs opacity-90">
-                              {daySessions.length} session{daySessions.length !== 1 ? 's' : ''}
-                            </div>
-                            <div className="flex space-x-1">
-                              {hasScheduled && <div className="w-2 h-2 bg-blue-500 rounded-full"></div>}
-                              {hasCompleted && <div className="w-2 h-2 bg-green-500 rounded-full"></div>}
-                              {hasCancelled && <div className="w-2 h-2 bg-red-500 rounded-full"></div>}
-                            </div>
-                          </div>
-                        )}
-                      </button>
-                    );
-                  })}
-                </div>
-                
-                {/* Legend */}
-                <div className="mt-6 flex flex-wrap gap-4 justify-center text-sm">
-                  <div className="flex items-center gap-2">
-                    <div className="w-3 h-3 bg-blue-500 rounded-full"></div>
-                    <span className="text-gray-600">Scheduled</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <div className="w-3 h-3 bg-green-500 rounded-full"></div>
-                    <span className="text-gray-600">Completed</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <div className="w-3 h-3 bg-red-500 rounded-full"></div>
-                    <span className="text-gray-600">Cancelled</span>
-                  </div>
-                </div>
-              </div>
-
-              {/* Session Action Buttons */}
-              <div className="mt-8 grid gap-4 md:grid-cols-2">
-                {/* Upcoming Sessions Button */}
-                <Card className="border-2 border-green-200 bg-gradient-to-br from-green-50 to-white shadow-lg">
-                  <CardHeader className="border-b border-green-200 bg-gradient-to-r from-green-100/50 to-green-50 p-4">
-                    <CardTitle className="text-lg font-bold text-green-800 flex items-center">
-                      <Clock className="h-5 w-5 mr-2 text-green-600" />
-                      Upcoming Sessions
-                    </CardTitle>
-                    <CardDescription className="text-green-600 text-sm">
-                      {upcomingSessions.length} upcoming session{upcomingSessions.length !== 1 ? 's' : ''}
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent className="p-4 text-center">
-                    <Button
-                      onClick={() => setShowUpcomingSessions(true)}
-                      className="bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white font-semibold py-3 px-6 rounded-xl transition-all duration-300 hover:scale-105 hover:shadow-lg w-full"
-                    >
-                      View {upcomingSessions.length} Upcoming
-                    </Button>
-                  </CardContent>
-                </Card>
-
-                {/* Past Sessions Button */}
-                <Card className="border-2 border-gray-200 bg-gradient-to-br from-gray-50 to-white shadow-lg">
-                  <CardHeader className="border-b border-gray-200 bg-gradient-to-r from-gray-100/50 to-gray-50 p-4">
-                    <CardTitle className="text-lg font-bold text-gray-800 flex items-center">
-                      <CalendarIcon className="h-5 w-5 mr-2 text-gray-600" />
-                      Past Sessions
-                    </CardTitle>
-                    <CardDescription className="text-gray-600 text-sm">
-                      {pastSessions.length} past session{pastSessions.length !== 1 ? 's' : ''}
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent className="p-4 text-center">
-                    <Button
-                      onClick={() => setShowPastSessions(true)}
-                      className="bg-gradient-to-r from-gray-600 to-gray-700 hover:from-gray-700 hover:to-gray-800 text-white font-semibold py-3 px-6 rounded-xl transition-all duration-300 hover:scale-105 hover:shadow-lg w-full"
-                    >
-                      View {pastSessions.length} Past
-                    </Button>
-                  </CardContent>
-                </Card>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Selected Date Sessions - Right Side */}
-          <Card className="border-2 border-black bg-white shadow-xl">
-            <CardHeader className="border-b border-accent/10 bg-accent/5">
-              <CardTitle className="text-2xl font-bold text-black flex items-center">
-                <Eye className="h-6 w-6 mr-3 text-accent" />
-                {selectedDate ? `Sessions on ${format(selectedDate, 'EEEE, MMMM dd, yyyy')}` : 'Select a Date'}
-              </CardTitle>
-              <CardDescription className="text-gray-600 text-base">
-                {selectedDate ? 'View session details for the selected date' : 'Click on a date in the calendar to view sessions'}
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="p-8">
-              {selectedDateSessions.length > 0 ? (
-                <div className="space-y-4">
-                  {selectedDateSessions.map(session => (
-                    <Card key={session.id} className="border border-accent/20 bg-gradient-to-r from-accent/5 to-white hover:shadow-lg transition-all duration-300">
-                      <CardContent className="p-6">
-                        <div className="grid grid-cols-1 gap-4">
-                          <div className="grid md:grid-cols-3 gap-4 items-center">
-                            <div className="flex items-center space-x-2">
-                              <Clock className="h-4 w-4 text-accent" />
-                              <div>
-                                <p className="text-sm font-medium text-gray-600">Time</p>
-                                <p className="font-semibold text-black">
-                                  {formatTime12Hour(session.start_time)} - {formatTime12Hour(session.end_time)}
-                                </p>
-                              </div>
-                            </div>
-                            <div className="flex items-center space-x-2">
-                              <MapPin className="h-4 w-4 text-accent" />
-                              <div>
-                                <p className="text-sm font-medium text-gray-600">Branch</p>
-                                <p className="font-semibold text-black">{session.branches.name}</p>
-                              </div>
-                            </div>
-                            <div className="flex items-center space-x-2">
-                              <Badge className={`${getStatusColor(session.status)} font-medium px-3 py-1`}>
-                                {session.status.charAt(0).toUpperCase() + session.status.slice(1)}
-                              </Badge>
-                            </div>
-                          </div>
-                          <div className="flex items-center space-x-2">
-                            <Users className="h-4 w-4 text-accent" />
-                            <div>
-                              <p className="text-sm font-medium text-gray-600 mb-2">Players ({session.session_participants?.length || 0}):</p>
-                              <div className="space-y-1">
-                                {session.session_participants?.length > 0 ? (
-                                  session.session_participants.map((participant, idx) => (
-                                    <div key={idx} className="text-sm text-black font-medium">
-                                      {participant.students.name}
-                                    </div>
-                                  ))
-                                ) : (
-                                  <span className="text-sm text-gray-500">No players assigned</span>
-                                )}
-                              </div>
-                            </div>
-                          </div>
-                          <div className="flex justify-end">
-                            <Button
-                              onClick={() => handleAttendanceRedirect(session.id)}
-                              className="bg-gradient-to-r from-accent to-accent/80 hover:from-accent/80 hover:to-accent text-white font-medium transition-all duration-300 hover:scale-105 hover:shadow-lg"
-                            >
-                              Manage Attendance
-                            </Button>
-                          </div>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  ))}
-                </div>
-              ) : selectedDate ? (
-                <div className="text-center py-12">
-                  <CalendarIcon className="h-16 w-16 text-gray-300 mx-auto mb-4" />
-                  <p className="text-xl text-gray-500 mb-2">
-                    No sessions on this day
-                  </p>
-                  <p className="text-gray-400">
-                    No sessions scheduled for this date.
-                  </p>
-                </div>
-              ) : (
-                <div className="text-center py-12">
-                  <CalendarIcon className="h-16 w-16 text-gray-300 mx-auto mb-4" />
-                  <p className="text-xl text-gray-500 mb-2">
-                    Select a date
-                  </p>
-                  <p className="text-gray-400">
-                    Click on a date in the calendar to view sessions.
-                  </p>
-                </div>
-              )}
-            </CardContent>
-          </Card>
+        {/* Session Action Buttons */}
+        <div className="flex gap-4 justify-center mb-6">
+          <Button
+            onClick={() => setShowUpcomingSessions(true)}
+            className="bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white font-semibold py-3 px-6 rounded-xl transition-all duration-300 hover:scale-105 hover:shadow-lg"
+          >
+            <Clock className="h-5 w-5 mr-2" />
+            Upcoming Sessions ({upcomingSessions.length})
+          </Button>
+          <Button
+            onClick={() => setShowPastSessions(true)}
+            className="bg-gradient-to-r from-gray-600 to-gray-700 hover:from-gray-700 hover:to-gray-800 text-white font-semibold py-3 px-6 rounded-xl transition-all duration-300 hover:scale-105 hover:shadow-lg"
+          >
+            <CalendarIcon className="h-5 w-5 mr-2" />
+            Past Sessions ({pastSessions.length})
+          </Button>
         </div>
+
+        {/* Calendar */}
+        <Card className="border-2 border-black bg-white shadow-xl">
+          <CardHeader className="border-b border-black bg-black">
+            <CardTitle className="text-2xl font-bold text-white flex items-center">
+              <CalendarIcon className="h-6 w-6 mr-3 text-accent" />
+              Session Calendar
+            </CardTitle>
+            <CardDescription className="text-gray-400 text-base">
+              Click on any date to view session details for {format(currentMonth, 'MMMM yyyy')}
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="p-8">
+            <div className="border-2 border-black rounded-2xl p-6 bg-white shadow-lg">
+              {/* Calendar Navigation */}
+              <div className="flex justify-between items-center mb-6">
+                <Button
+                  onClick={handlePrevMonth}
+                  variant="outline"
+                  size="sm"
+                  className="border-accent/30 text-accent hover:bg-accent hover:text-white transition-all duration-300"
+                >
+                  <ChevronLeft className="h-4 w-4" />
+                </Button>
+                <h3 className="text-2xl font-bold text-black">
+                  {format(currentMonth, 'MMMM yyyy')}
+                </h3>
+                <Button
+                  onClick={handleNextMonth}
+                  variant="outline"
+                  size="sm"
+                  className="border-accent/30 text-accent hover:bg-accent hover:text-white transition-all duration-300"
+                >
+                  <ChevronRight className="h-4 w-4" />
+                </Button>
+              </div>
+              
+              {/* Days of Week Header */}
+              <div className="grid grid-cols-7 gap-2 mb-4">
+                {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(day => (
+                  <div key={day} className="text-center py-3 bg-black text-white font-semibold rounded-lg text-sm">
+                    {day}
+                  </div>
+                ))}
+              </div>
+              
+              {/* Calendar Days */}
+              <div className="grid grid-cols-7 gap-2">
+                {daysInMonth.map(day => {
+                  const daySessions = sessions.filter(session => isSameDay(parseISO(session.date), day)) || [];
+                  const hasScheduled = daySessions.some(s => s.status === 'scheduled');
+                  const hasCompleted = daySessions.some(s => s.status === 'completed');
+                  const hasCancelled = daySessions.some(s => s.status === 'cancelled');
+                  const isToday = isSameDay(day, new Date());
+                  
+                  return (
+                    <button
+                      key={day.toString()}
+                      onClick={() => handleDateSelect(day)}
+                      className={`
+                        relative p-3 h-20 rounded-xl text-left transition-all duration-300 hover:scale-105 hover:shadow-lg
+                        ${isToday
+                          ? 'bg-gradient-to-br from-accent/20 to-accent/10 border-2 border-accent text-black'
+                          : daySessions.length > 0
+                            ? 'bg-gradient-to-br from-gray-50 to-white border border-accent/30 text-black hover:border-accent'
+                            : 'bg-white border border-gray-200 text-gray-700 hover:bg-gray-50'
+                        }
+                      `}
+                    >
+                      <div className="font-semibold text-lg mb-1">
+                        {format(day, 'd')}
+                      </div>
+                      {daySessions.length > 0 && (
+                        <div className="space-y-1">
+                          <div className="text-xs opacity-90">
+                            {daySessions.length} session{daySessions.length !== 1 ? 's' : ''}
+                          </div>
+                          <div className="flex space-x-1">
+                            {hasScheduled && <div className="w-2 h-2 bg-blue-500 rounded-full"></div>}
+                            {hasCompleted && <div className="w-2 h-2 bg-green-500 rounded-full"></div>}
+                            {hasCancelled && <div className="w-2 h-2 bg-red-500 rounded-full"></div>}
+                          </div>
+                        </div>
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
+              
+              {/* Legend */}
+              <div className="mt-6 flex flex-wrap gap-4 justify-center text-sm">
+                <div className="flex items-center gap-2">
+                  <div className="w-3 h-3 bg-blue-500 rounded-full"></div>
+                  <span className="text-gray-600">Scheduled</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="w-3 h-3 bg-green-500 rounded-full"></div>
+                  <span className="text-gray-600">Completed</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="w-3 h-3 bg-red-500 rounded-full"></div>
+                  <span className="text-gray-600">Cancelled</span>
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
 
         {/* Date Selection Modal */}
         <Dialog open={!!selectedDate} onOpenChange={() => setSelectedDate(null)}>
-          <DialogContent className="max-w-5xl max-h-[80vh] border-2 border-accent/20 bg-gradient-to-br from-accent/5 to-white shadow-xl">
-            <DialogHeader>
+          <DialogContent className="max-w-4xl max-h-[85vh] border-2 border-accent/20 bg-gradient-to-br from-accent/5 to-white shadow-xl">
+            <DialogHeader className="border-b border-accent/10 pb-6">
               <DialogTitle className="text-2xl font-bold text-black flex items-center">
-                <Eye className="h-6 w-6 mr-3 text-accent" />
-                Sessions on {selectedDate ? format(selectedDate, 'EEEE, MMMM dd, yyyy') : ''}
+                <CalendarIcon className="h-6 w-6 mr-3 text-accent" />
+                {selectedDate ? format(selectedDate, 'EEEE, MMMM dd, yyyy') : ''}
               </DialogTitle>
               <DialogDescription className="text-gray-600 text-base">
-                View and manage session details for the selected date
+                {selectedDateSessions.length > 0 
+                  ? `${selectedDateSessions.length} session${selectedDateSessions.length !== 1 ? 's' : ''} scheduled for this date`
+                  : 'No sessions scheduled for this date'
+                }
               </DialogDescription>
             </DialogHeader>
             <ScrollArea className="max-h-[60vh] pr-4">
               {selectedDateSessions.length > 0 ? (
-                <div className="space-y-4">
+                <div className="space-y-4 pt-4">
                   {selectedDateSessions.map(session => (
-                    <Card key={session.id} className="border border-accent/20 bg-gradient-to-r from-accent/5 to-white hover:shadow-lg transition-all duration-300">
+                    <Card key={session.id} className="border-2 border-accent/20 bg-gradient-to-r from-accent/10 to-white hover:shadow-lg transition-all duration-300 hover:scale-[1.02]">
                       <CardContent className="p-6">
                         <div className="grid grid-cols-1 gap-4">
                           <div className="grid md:grid-cols-3 gap-4 items-center">
-                            <div className="flex items-center space-x-2">
-                              <Clock className="h-4 w-4 text-accent" />
+                            <div className="flex items-center space-x-3">
+                              <Clock className="h-5 w-5 text-accent" />
                               <div>
                                 <p className="text-sm font-medium text-gray-600">Time</p>
-                                <p className="font-semibold text-black">
+                                <p className="font-bold text-black text-lg">
                                   {formatTime12Hour(session.start_time)} - {formatTime12Hour(session.end_time)}
                                 </p>
                               </div>
                             </div>
-                            <div className="flex items-center space-x-2">
-                              <MapPin className="h-4 w-4 text-accent" />
+                            <div className="flex items-center space-x-3">
+                              <MapPin className="h-5 w-5 text-accent" />
                               <div>
                                 <p className="text-sm font-medium text-gray-600">Branch</p>
-                                <p className="font-semibold text-black">{session.branches.name}</p>
+                                <p className="font-bold text-black text-lg">{session.branches.name}</p>
                               </div>
                             </div>
-                            <div className="flex items-center space-x-2">
-                              <Badge className={`${getStatusColor(session.status)} font-medium px-3 py-1`}>
+                            <div className="flex items-center justify-center">
+                              <Badge className={`${getStatusColor(session.status)} font-semibold px-4 py-2 text-sm`}>
                                 {session.status.charAt(0).toUpperCase() + session.status.slice(1)}
                               </Badge>
                             </div>
                           </div>
-                          <div className="flex items-center space-x-2">
-                            <Users className="h-4 w-4 text-accent" />
-                            <div>
-                              <p className="text-sm font-medium text-gray-600 mb-2">Players ({session.session_participants?.length || 0}):</p>
-                              <div className="space-y-1">
+                          <div className="flex items-start space-x-3 bg-gray-50 rounded-lg p-4">
+                            <Users className="h-5 w-5 text-accent mt-1" />
+                            <div className="flex-1">
+                              <p className="text-sm font-medium text-gray-600 mb-3">
+                                Players ({session.session_participants?.length || 0}):
+                              </p>
+                              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
                                 {session.session_participants?.length > 0 ? (
                                   session.session_participants.map((participant, idx) => (
-                                    <div key={idx} className="text-sm text-black font-medium">
-                                      {participant.students.name}
+                                    <div key={idx} className="flex items-center space-x-2 bg-white rounded-lg px-3 py-2 shadow-sm">
+                                      <div className="w-8 h-8 rounded-full bg-accent flex items-center justify-center text-white font-semibold text-sm">
+                                        {participant.students.name.split(' ').map(n => n[0]).join('').toUpperCase()}
+                                      </div>
+                                      <span className="text-sm font-medium text-black">{participant.students.name}</span>
                                     </div>
                                   ))
                                 ) : (
-                                  <span className="text-sm text-gray-500">No players assigned</span>
+                                  <span className="text-sm text-gray-500 italic">No players assigned</span>
                                 )}
                               </div>
                             </div>
                           </div>
-                          <div className="flex justify-end">
+                          <div className="flex justify-end pt-2">
                             <Button
-                              onClick={() => handleAttendanceRedirect(session.id)}
-                              className="bg-gradient-to-r from-accent to-accent/80 hover:from-accent/80 hover:to-accent text-white font-medium transition-all duration-300 hover:scale-105 hover:shadow-lg"
+                              onClick={() => {
+                                handleAttendanceRedirect(session.id);
+                                setSelectedDate(null);
+                              }}
+                              className="bg-gradient-to-r from-accent to-accent/80 hover:from-accent/80 hover:to-accent text-white font-semibold px-6 py-2 transition-all duration-300 hover:scale-105 hover:shadow-lg"
                             >
+                              <Users className="h-4 w-4 mr-2" />
                               Manage Attendance
                             </Button>
                           </div>
@@ -594,13 +479,15 @@ export function CoachCalendarManager() {
                   ))}
                 </div>
               ) : (
-                <div className="text-center py-12">
-                  <CalendarIcon className="h-16 w-16 text-gray-300 mx-auto mb-4" />
-                  <p className="text-xl text-gray-500 mb-2">
-                    No sessions on this day
-                  </p>
-                  <p className="text-gray-400">
-                    No sessions scheduled for this date.
+                <div className="text-center py-16">
+                  <div className="w-20 h-20 rounded-full bg-gray-100 flex items-center justify-center mx-auto mb-6">
+                    <CalendarIcon className="h-10 w-10 text-gray-300" />
+                  </div>
+                  <h3 className="text-xl font-semibold text-gray-700 mb-2">
+                    No sessions scheduled
+                  </h3>
+                  <p className="text-gray-500">
+                    There are no training sessions scheduled for this date.
                   </p>
                 </div>
               )}
