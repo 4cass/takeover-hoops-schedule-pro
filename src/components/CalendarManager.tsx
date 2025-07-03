@@ -234,9 +234,32 @@ export function CalendarManager() {
                   </Select>
                 </div>
               </div>
-              <p className="text-sm text-gray-600 mt-3">
-                Showing {filteredSessions.length} session{filteredSessions.length === 1 ? '' : 's'}
-              </p>
+              <div className="flex justify-between items-center mt-4">
+                <p className="text-sm text-gray-600">
+                  Showing {filteredSessions.length} session{filteredSessions.length === 1 ? '' : 's'}
+                </p>
+                {/* Quick Access Buttons */}
+                <div className="flex gap-3">
+                  <Button
+                    onClick={() => setShowUpcomingSessions(true)}
+                    variant="outline"
+                    size="sm"
+                    className="border-green-500/30 text-green-600 hover:bg-green-500 hover:text-white transition-all duration-300"
+                  >
+                    <Clock className="h-4 w-4 mr-2" />
+                    Upcoming ({upcomingSessions.length})
+                  </Button>
+                  <Button
+                    onClick={() => setShowPastSessions(true)}
+                    variant="outline"
+                    size="sm"
+                    className="border-gray-500/30 text-gray-600 hover:bg-gray-500 hover:text-white transition-all duration-300"
+                  >
+                    <CalendarIcon className="h-4 w-4 mr-2" />
+                    Past ({pastSessions.length})
+                  </Button>
+                </div>
+              </div>
             </div>
 
             {/* Calendar Grid */}
@@ -436,51 +459,6 @@ export function CalendarManager() {
             </div>
           </DialogContent>
         </Dialog>
-
-        <div className="grid gap-8 lg:grid-cols-2">
-          
-          {/* Upcoming Sessions Button */}
-          <Card className="border-2 border-black bg-gradient-to-br from-green-50 to-white shadow-lg">
-            <CardHeader className="border-b border-black bg-gradient-to-r from-green-100/50 to-green-50">
-              <CardTitle className="text-xl font-bold text-green-800 flex items-center">
-                <Clock className="h-5 w-5 mr-3 text-green-600" />
-                Upcoming Sessions
-              </CardTitle>
-              <CardDescription className="text-green-600">
-                Scheduled sessions for today or the future ({upcomingSessions.length} total)
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="p-8 text-center">
-              <Button
-                onClick={() => setShowUpcomingSessions(true)}
-                className="bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white font-semibold py-4 px-8 rounded-xl transition-all duration-300 hover:scale-105 hover:shadow-lg"
-              >
-                View {upcomingSessions.length} Upcoming Session{upcomingSessions.length !== 1 ? 's' : ''}
-              </Button>
-            </CardContent>
-          </Card>
-
-          {/* Past Sessions Button */}
-          <Card className="border-2 border-black bg-gradient-to-br from-gray-50 to-white shadow-lg">
-            <CardHeader className="border-b border-black bg-gradient-to-r from-gray-100/50 to-gray-50">
-              <CardTitle className="text-xl font-bold text-gray-800 flex items-center">
-                <CalendarIcon className="h-5 w-5 mr-3 text-gray-600" />
-                Past Sessions
-              </CardTitle>
-              <CardDescription className="text-gray-600">
-                Completed sessions or sessions before today ({pastSessions.length} total)
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="p-8 text-center">
-              <Button
-                onClick={() => setShowPastSessions(true)}
-                className="bg-gradient-to-r from-gray-600 to-gray-700 hover:from-gray-700 hover:to-gray-800 text-white font-semibold py-4 px-8 rounded-xl transition-all duration-300 hover:scale-105 hover:shadow-lg"
-              >
-                View {pastSessions.length} Past Session{pastSessions.length !== 1 ? 's' : ''}
-              </Button>
-            </CardContent>
-          </Card>
-        </div>
 
         {/* Upcoming Sessions Modal */}
         <Dialog open={showUpcomingSessions} onOpenChange={setShowUpcomingSessions}>
