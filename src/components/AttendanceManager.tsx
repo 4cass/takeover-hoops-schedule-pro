@@ -216,50 +216,62 @@ export function AttendanceManager() {
     }
   };
 
+  if (!sessions) {
+    return (
+      <div className="min-h-screen bg-background p-6">
+        <div className="max-w-7xl mx-auto text-center py-16">
+          <Users className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
+          <h3 className="text-2xl font-bold text-foreground mb-3">Loading attendance...</h3>
+          <p className="text-lg text-muted-foreground">Please wait while we fetch the session data.</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className="min-h-screen bg-white pt-4 p-4 sm:p-6">
-      <div className="max-w-7xl mx-auto space-y-6 sm:space-y-8 -mt-5">
+    <div className="min-h-screen bg-background pt-4 p-6">
+      <div className="max-w-7xl mx-auto space-y-8 -mt-5">
         
         {/* Header */}
-        <div className="mb-6 sm:mb-8">
-          <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-black mb-2 tracking-tight">
-            Attendance Manager
-          </h1>
-          <p className="text-base sm:text-lg text-gray-700">
-            Track and manage player attendance for training sessions
-          </p>
+        <div className="mb-8">
+          <h1 className="text-4xl font-bold text-foreground mb-2 tracking-tight">Attendance Manager</h1>
+          <p className="text-lg text-muted-foreground">Track and manage player attendance for training sessions</p>
         </div>
 
         {/* Session Selection Card */}
-        <Card className="border-2 border-black bg-white shadow-xl">
-          <CardHeader className="border-b border-black bg-black p-4 sm:p-6 lg:p-8">
-            <CardTitle className="text-lg sm:text-xl lg:text-2xl font-bold text-white flex items-center">
-              <Calendar className="h-5 w-5 sm:h-6 sm:w-6 mr-3 text-accent" />
-              Training Sessions
-            </CardTitle>
-            <CardDescription className="text-gray-400 text-sm sm:text-base">
-              Select a training session to manage player attendance
-            </CardDescription>
+        <Card className="border-2 border-foreground bg-card shadow-xl">
+          <CardHeader className="border-b border-foreground bg-foreground">
+            <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between space-y-4 lg:space-y-0">
+              <div>
+                <CardTitle className="text-2xl font-bold text-primary-foreground flex items-center">
+                  <Calendar className="h-6 w-6 mr-3 text-accent" />
+                  Training Sessions
+                </CardTitle>
+                <CardDescription className="text-muted text-base">
+                  Select a training session to manage player attendance
+                </CardDescription>
+              </div>
+            </div>
           </CardHeader>
-          <CardContent className="p-4 sm:p-6 lg:p-8">
+          <CardContent className="p-8">
             <div className="mb-6">
               <div className="flex items-center mb-4">
-                <Filter className="h-4 w-4 sm:h-5 sm:w-5 text-accent mr-2" />
-                <h3 className="text-base sm:text-lg font-semibold text-black">Filter Sessions</h3>
+                <Filter className="h-5 w-5 text-accent mr-2" />
+                <h3 className="text-lg font-semibold text-foreground">Filter Sessions</h3>
               </div>
               <div className="flex flex-col space-y-4 lg:flex-row lg:items-end lg:gap-4 lg:space-y-0">
                 <div className="relative flex-1">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                   <input
                     type="text"
                     placeholder="Search by coach or branch..."
-                    className="pl-10 pr-4 py-3 w-full border-2 border-accent/40 rounded-xl text-sm focus:border-accent focus:ring-accent/20 bg-white"
+                    className="pl-10 pr-4 py-3 w-full border-2 border-accent/40 rounded-xl text-sm focus:border-accent focus:ring-accent/20 bg-background"
                     value={sessionSearchTerm}
                     onChange={(e) => setSessionSearchTerm(e.target.value)}
                   />
                 </div>
                 <div className="flex-1">
-                  <Label htmlFor="filter-package" className="flex items-center text-sm font-medium text-gray-700 mb-2">
+                  <Label htmlFor="filter-package" className="flex items-center text-sm font-medium text-muted-foreground mb-2">
                     <Users className="w-4 h-4 mr-2 text-accent" />
                     Package Type
                   </Label>
@@ -278,7 +290,7 @@ export function AttendanceManager() {
                   </Select>
                 </div>
                 <div className="flex-1">
-                  <Label htmlFor="filter-status" className="flex items-center text-sm font-medium text-gray-700 mb-2">
+                  <Label htmlFor="filter-status" className="flex items-center text-sm font-medium text-muted-foreground mb-2">
                     <Calendar className="w-4 h-4 mr-2 text-accent" />
                     Session Status
                   </Label>
@@ -298,7 +310,7 @@ export function AttendanceManager() {
                   </Select>
                 </div>
                 <div className="flex-1">
-                  <Label htmlFor="sort-order" className="flex items-center text-sm font-medium text-gray-700 mb-2">
+                  <Label htmlFor="sort-order" className="flex items-center text-sm font-medium text-muted-foreground mb-2">
                     <Calendar className="w-4 h-4 mr-2 text-accent" />
                     Sort Order
                   </Label>
@@ -316,30 +328,30 @@ export function AttendanceManager() {
                   </Select>
                 </div>
               </div>
-              <p className="text-sm text-gray-600 mt-3">
+              <p className="text-sm text-muted-foreground mt-3">
                 Showing {filteredSessions.length} session{filteredSessions.length === 1 ? '' : 's'}
               </p>
             </div>
 
-            <div className="grid gap-4 sm:gap-6 md:grid-cols-2 lg:grid-cols-3">
+            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
               {filteredSessions.map((session) => (
                 <Card
                   key={session.id}
                   className={`cursor-pointer border-2 transition-all duration-300 hover:scale-105 hover:shadow-lg ${
                     selectedSession === session.id
                       ? "border-accent bg-accent/10 shadow-lg scale-105"
-                      : "border-accent/20 bg-white hover:border-accent/50"
+                      : "border-accent/20 bg-card hover:border-accent/50"
                   }`}
                   onClick={() => {
                     setSelectedSession(session.id);
                     setShowAttendanceModal(true);
                   }}
                 >
-                  <CardContent className="p-4 sm:p-5 space-y-4">
+                  <CardContent className="p-5 space-y-4">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center space-x-2">
                         <Calendar className="w-4 h-4 text-accent" />
-                        <span className="font-semibold text-black text-sm">
+                        <span className="font-semibold text-foreground text-sm">
                           {format(new Date(session.date + 'T00:00:00'), 'MMM dd, yyyy')}
                         </span>
                       </div>
@@ -349,22 +361,22 @@ export function AttendanceManager() {
                     </div>
                     <div className="space-y-3 text-sm">
                       <div className="flex items-center space-x-2">
-                        <Clock className="w-4 h-4 text-gray-600" />
-                        <span className="text-gray-700 font-medium">
+                        <Clock className="w-4 h-4 text-muted-foreground" />
+                        <span className="text-muted-foreground font-medium">
                           {formatTime12Hour(session.start_time)} - {formatTime12Hour(session.end_time)}
                         </span>
                       </div>
                       <div className="flex items-center space-x-2">
-                        <MapPin className="w-4 h-4 text-gray-600" />
-                        <span className="text-gray-700">{session.branches.name}</span>
+                        <MapPin className="w-4 h-4 text-muted-foreground" />
+                        <span className="text-muted-foreground">{session.branches.name}</span>
                       </div>
                       <div className="flex items-center space-x-2">
-                        <User className="w-4 h-4 text-gray-600" />
-                        <span className="text-gray-700">{session.coaches.name}</span>
+                        <User className="w-4 h-4 text-muted-foreground" />
+                        <span className="text-muted-foreground">{session.coaches.name}</span>
                       </div>
                       <div className="flex items-center space-x-2">
-                        <Users className="w-4 h-4 text-gray-600" />
-                        <span className="text-gray-700">{session.package_type || 'N/A'}</span>
+                        <Users className="w-4 h-4 text-muted-foreground" />
+                        <span className="text-muted-foreground">{session.package_type || 'N/A'}</span>
                       </div>
                     </div>
                   </CardContent>
@@ -373,12 +385,12 @@ export function AttendanceManager() {
             </div>
 
             {filteredSessions.length === 0 && (
-              <div className="py-8 sm:py-12 text-center">
-                <Calendar className="w-12 h-12 sm:w-16 sm:h-16 text-gray-300 mx-auto mb-4" />
-                <h3 className="text-base sm:text-lg font-semibold text-gray-900 mb-2">
+              <div className="py-12 text-center">
+                <Calendar className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
+                <h3 className="text-lg font-semibold text-foreground mb-2">
                   No sessions found
                 </h3>
-                <p className="text-gray-600 text-sm sm:text-base">
+                <p className="text-muted-foreground">
                   Try adjusting your search or filter criteria.
                 </p>
               </div>
@@ -388,16 +400,16 @@ export function AttendanceManager() {
 
         {/* Attendance Management Modal */}
         <Dialog open={showAttendanceModal} onOpenChange={setShowAttendanceModal}>
-          <DialogContent className="max-w-6xl max-h-[90vh] border-2 border-black bg-white shadow-xl">
-            <DialogHeader className="border-b border-accent/10 bg-accent/5 p-4 sm:p-6">
+          <DialogContent className="max-w-6xl max-h-[90vh] border-2 border-foreground bg-card shadow-xl">
+            <DialogHeader className="border-b border-accent/10 bg-accent/5 p-6">
               <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between space-y-4 lg:space-y-0">
                 <div>
-                  <DialogTitle className="text-lg sm:text-xl lg:text-2xl font-bold text-black flex items-center">
-                    <Users className="h-5 w-5 sm:h-6 sm:w-6 mr-3 text-accent" />
+                  <DialogTitle className="text-2xl font-bold text-foreground flex items-center">
+                    <Users className="h-6 w-6 mr-3 text-accent" />
                     Attendance Management
                   </DialogTitle>
                   {selectedSessionDetails && (
-                    <DialogDescription className="text-gray-600 text-sm sm:text-base">
+                    <DialogDescription className="text-muted-foreground text-base">
                       {formatDate(selectedSessionDetails.date)} • {selectedSessionDetails.branches.name}
                     </DialogDescription>
                   )}
@@ -405,37 +417,37 @@ export function AttendanceManager() {
                 
                 {/* Stats */}
                 <div className="flex flex-col sm:flex-row items-start sm:items-center space-y-4 sm:space-y-0 sm:space-x-6">
-                  <div className="flex flex-wrap items-center gap-4 sm:gap-6 text-sm">
+                  <div className="flex flex-wrap items-center gap-6 text-sm">
                     <div className="flex items-center gap-2">
                       <div className="w-3 h-3 bg-green-500 rounded-full"></div>
-                      <span className="text-gray-700 font-medium">Present: {presentCount}</span>
+                      <span className="text-muted-foreground font-medium">Present: {presentCount}</span>
                     </div>
                     <div className="flex items-center gap-2">
                       <div className="w-3 h-3 bg-red-500 rounded-full"></div>
-                      <span className="text-gray-700 font-medium">Absent: {absentCount}</span>
+                      <span className="text-muted-foreground font-medium">Absent: {absentCount}</span>
                     </div>
                     <div className="flex items-center gap-2">
                       <div className="w-3 h-3 bg-amber-500 rounded-full"></div>
-                      <span className="text-gray-700 font-medium">Pending: {pendingCount}</span>
+                      <span className="text-muted-foreground font-medium">Pending: {pendingCount}</span>
                     </div>
                   </div>
                 </div>
               </div>
             </DialogHeader>
             
-            <div className="p-4 sm:p-6 max-h-[60vh] overflow-y-auto">
+            <div className="p-6 max-h-[60vh] overflow-y-auto">
               {/* Search for Attendance Records */}
               <div className="mb-6">
                 <div className="flex items-center mb-4">
-                  <Filter className="h-4 w-4 sm:h-5 sm:w-5 text-accent mr-2" />
-                  <h3 className="text-base sm:text-lg font-semibold text-black">Filter Players</h3>
+                  <Filter className="h-5 w-5 text-accent mr-2" />
+                  <h3 className="text-lg font-semibold text-foreground">Filter Players</h3>
                 </div>
                 <div className="relative max-w-md">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                   <input
                     type="text"
                     placeholder="Search players..."
-                    className="pl-10 pr-4 py-3 w-full border-2 border-accent/40 rounded-xl text-sm focus:border-accent focus:ring-accent/20 bg-white"
+                    className="pl-10 pr-4 py-3 w-full border-2 border-accent/40 rounded-xl text-sm focus:border-accent focus:ring-accent/20 bg-background"
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
                   />
@@ -443,15 +455,15 @@ export function AttendanceManager() {
               </div>
 
               {/* Attendance Table */}
-              <div className="border-2 border-black rounded-2xl bg-white shadow-lg overflow-hidden">
+              <div className="border-2 border-foreground rounded-2xl bg-card shadow-lg overflow-hidden">
                 <div className="overflow-x-auto">
                   <table className="w-full">
-                    <thead className="bg-black text-white">
+                    <thead className="bg-foreground text-primary-foreground">
                       <tr>
-                        <th className="py-3 sm:py-4 px-4 sm:px-6 text-left font-semibold text-sm sm:text-base">Player Name</th>
-                        <th className="py-3 sm:py-4 px-4 sm:px-6 text-left font-semibold text-sm sm:text-base">Status</th>
-                        <th className="py-3 sm:py-4 px-4 sm:px-6 text-left font-semibold text-sm sm:text-base">Marked At</th>
-                        <th className="py-3 sm:py-4 px-4 sm:px-6 text-left font-semibold text-sm sm:text-base">Actions</th>
+                        <th className="py-4 px-6 text-left font-semibold">Player Name</th>
+                        <th className="py-4 px-6 text-left font-semibold">Status</th>
+                        <th className="py-4 px-6 text-left font-semibold">Marked At</th>
+                        <th className="py-4 px-6 text-left font-semibold">Actions</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -459,48 +471,48 @@ export function AttendanceManager() {
                         <tr 
                           key={record.id} 
                           className={`transition-all duration-300 hover:bg-accent/5 ${
-                            index % 2 === 0 ? 'bg-white' : 'bg-gray-50'
+                            index % 2 === 0 ? 'bg-card' : 'bg-muted/20'
                           }`}
                         >
-                          <td className="py-3 sm:py-4 px-4 sm:px-6">
+                          <td className="py-4 px-6">
                             <div className="flex items-center space-x-3">
-                              <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-accent flex items-center justify-center text-white font-semibold text-sm">
+                              <div className="w-10 h-10 rounded-full bg-accent flex items-center justify-center text-accent-foreground font-semibold">
                                 {record.students.name.split(' ').map(n => n[0]).join('').toUpperCase()}
                               </div>
-                              <span className="font-semibold text-black text-sm sm:text-base">{record.students.name}</span>
+                              <span className="font-semibold text-foreground">{record.students.name}</span>
                             </div>
                           </td>
-                          <td className="py-3 sm:py-4 px-4 sm:px-6">
+                          <td className="py-4 px-6">
                             <div className="flex items-center space-x-2">
                               {getAttendanceIcon(record.status)}
-                              <Badge className={`${getAttendanceBadgeColor(record.status)} border capitalize font-medium text-xs sm:text-sm`}>
+                              <Badge className={`${getAttendanceBadgeColor(record.status)} border capitalize font-medium`}>
                                 {record.status}
                               </Badge>
                             </div>
                           </td>
-                          <td className="py-3 sm:py-4 px-4 sm:px-6 text-gray-600 text-sm">
+                          <td className="py-4 px-6 text-muted-foreground">
                             {record.marked_at ? (
                               <span className="font-medium">{formatDateTime(record.marked_at)}</span>
                             ) : (
-                              <span className="italic text-gray-400">Not marked</span>
+                              <span className="italic text-muted-foreground">Not marked</span>
                             )}
                           </td>
-                          <td className="py-3 sm:py-4 px-4 sm:px-6">
-                            <div className="flex flex-col sm:flex-row items-start sm:items-center space-y-2 sm:space-y-0 sm:space-x-2">
+                          <td className="py-4 px-6">
+                            <div className="flex items-center space-x-2">
                               {attendanceStatuses.map((status) => (
                                 <Button
                                   key={status}
                                   size="sm"
                                   variant={record.status === status ? "default" : "outline"}
                                   onClick={() => handleAttendanceChange(record.id, status)}
-                                  className={`transition-all duration-300 hover:scale-105 text-xs sm:text-sm ${
+                                  className={`transition-all duration-300 hover:scale-105 ${
                                     record.status === status
                                       ? status === "present"
                                         ? "bg-green-600 hover:bg-green-700 text-white"
                                         : status === "absent"
                                         ? "bg-red-600 hover:bg-red-700 text-white"
                                         : "bg-amber-600 hover:bg-amber-700 text-white"
-                                      : "border-accent/30 text-accent hover:bg-accent hover:text-white"
+                                      : "border-accent/30 text-accent hover:bg-accent hover:text-accent-foreground"
                                   }`}
                                 >
                                   {getAttendanceIcon(status)}
@@ -516,12 +528,12 @@ export function AttendanceManager() {
                 </div>
                 
                 {filteredAttendanceRecords.length === 0 && (
-                  <div className="py-8 sm:py-12 text-center">
-                    <Users className="w-12 h-12 sm:w-16 sm:h-16 text-gray-300 mx-auto mb-4" />
-                    <h3 className="text-base sm:text-lg font-semibold text-gray-900 mb-2">
+                  <div className="py-12 text-center">
+                    <Users className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
+                    <h3 className="text-lg font-semibold text-foreground mb-2">
                       {searchTerm ? 'No players found' : 'No attendance records'}
                     </h3>
-                    <p className="text-gray-600 text-sm sm:text-base">
+                    <p className="text-muted-foreground">
                       {searchTerm 
                         ? 'Try adjusting your search terms.' 
                         : 'No attendance records found for this session.'
@@ -535,12 +547,12 @@ export function AttendanceManager() {
         </Dialog>
         
         {!selectedSession && !showAttendanceModal && (
-          <div className="text-center py-12 sm:py-16">
-            <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-full bg-accent flex items-center justify-center mx-auto mb-6">
-              <Calendar className="w-10 h-10 sm:w-12 sm:h-12 text-white" />
+          <div className="text-center py-16">
+            <div className="w-24 h-24 rounded-full bg-accent flex items-center justify-center mx-auto mb-6">
+              <Calendar className="w-12 h-12 text-accent-foreground" />
             </div>
-            <h3 className="text-xl sm:text-2xl font-bold text-black mb-3">Select a Training Session</h3>
-            <p className="text-base sm:text-lg text-gray-600">Choose a session from above to start managing attendance.</p>
+            <h3 className="text-2xl font-bold text-foreground mb-3">Select a Training Session</h3>
+            <p className="text-lg text-muted-foreground">Choose a session from above to start managing attendance.</p>
           </div>
         )}
       </div>
