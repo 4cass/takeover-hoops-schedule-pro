@@ -72,20 +72,20 @@ export function AppSidebar({ activeTab, onTabChange }: AppSidebarProps) {
   }
 
   return (
-    <Sidebar className="border-r bg-black">
-      <SidebarHeader className="p-6 border-b border-gray-800">
+    <Sidebar className="border-r bg-[#181A18]">
+      <SidebarHeader className="p-6 border-b bg-[#181A18] border-[#181A18]">
         <div className="flex items-center gap-3">
-          <div className="w-30 h-30 rounded-lg flex items-center justify-center">
+          <div className="w-30 h-30 bg-[#181A18] rounded-lg flex items-center justify-center">
             <img src="/1.png" alt="Logo" className="h-20 w-20 object-contain" />
           </div>
-          <div className="flex flex-col">
+          <div className="flex bg-[#181A18] flex-col">
             <h2 className="text-xl font-bold tracking-tight text-white">Takeover Basketball</h2>
             <p className="text-sm text-white/80">Management System</p>
           </div>
         </div>
       </SidebarHeader>
 
-      <SidebarContent className="pt-4 bg-black">
+      <SidebarContent className="pt-4 bg-[#181A18]">
         <SidebarGroup>
           <SidebarGroupLabel className="px-6 text-xs font-bold uppercase tracking-wider text-white/60">
             Navigation
@@ -114,7 +114,7 @@ export function AppSidebar({ activeTab, onTabChange }: AppSidebarProps) {
         </SidebarGroup>
       </SidebarContent>
 
-      <SidebarFooter className="p-4 border-t border-gray-800">
+      <SidebarFooter className="p-4 border-t bg-[#181A18]">
         <div className="flex flex-col space-y-3">
           {user && (
             <div className="px-2 py-1">

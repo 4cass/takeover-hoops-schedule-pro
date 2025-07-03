@@ -246,7 +246,7 @@ export function StudentsManager() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-[#faf0e8] to-[#fffefe] p-6">
+      <div className="min-h-screen bg-white p-6">
         <div className="max-w-7xl mx-auto text-center py-16">
           <h3 className="text-2xl font-bold text-black mb-3">Loading players...</h3>
           <p className="text-lg text-gray-600">Please wait while we fetch the player data.</p>
@@ -256,7 +256,7 @@ export function StudentsManager() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#faf0e8] to-[#fffefe] pt-4 p-6">
+    <div className="min-h-screen bg-white pt-4 p-6">
       <div className="max-w-7xl mx-auto space-y-8 -mt-5">
         <div className="mb-8">
           <h1 className="text-4xl font-bold text-black mb-2 tracking-tight">Players Manager</h1>

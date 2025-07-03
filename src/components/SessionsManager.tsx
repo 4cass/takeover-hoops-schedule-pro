@@ -414,7 +414,7 @@ export function SessionsManager() {
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center py-12" style={{ backgroundColor: '#faf0e8' }}>
+      <div className="flex items-center justify-center py-12" style={{ backgroundColor: 'white' }}>
         <div className="animate-spin rounded-full h-8 w-8 border-b-2" style={{ borderColor: '#fc7416' }}></div>
         <span className="ml-3 text-gray-600">Loading sessions...</span>
       </div>
@@ -422,7 +422,7 @@ export function SessionsManager() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#faf0e8] to-[#fffefe] pt-4 p-6">
+    <div className="min-h-screen bg-white pt-4 p-6">
       <div className="max-w-7xl mx-auto space-y-8 -mt-5">
         <div className="mb-8">
           <h1 className="text-4xl font-bold text-black mb-2 tracking-tight">Sessions Manager</h1>

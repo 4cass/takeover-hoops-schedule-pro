@@ -6,6 +6,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Calendar as CalendarIcon, Users, Clock, MapPin, User, ChevronLeft, ChevronRight, Filter, Eye } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameDay, isBefore, addMonths, subMonths, isAfter } from "date-fns";
@@ -149,7 +150,7 @@ export function CalendarManager() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#faf0e8] to-[#fffefe] pt-4 p-6">
+    <div className="min-h-screen bg-white pt-4 p-6">
       <div className="max-w-7xl mx-auto space-y-8 -mt-5">
         
         {/* Header */}
@@ -332,16 +333,19 @@ export function CalendarManager() {
           </CardContent>
         </Card>
 
-        {/* Selected Date Sessions */}
-        {selectedDate && (
-          <Card className="border-2 border-black bg-white/90 backdrop-blur-sm shadow-xl">
-            <CardHeader className="border-b border-black bg-gradient-to-r from-[#fc7416]/5 to-[#fe822d]/5">
-              <CardTitle className="text-xl font-bold text-black flex items-center">
+        {/* Sessions Modal */}
+        <Dialog open={!!selectedDate} onOpenChange={() => setSelectedDate(null)}>
+          <DialogContent className="max-w-5xl border-2 border-[#fc7416]/20 bg-gradient-to-br from-[#faf0e8]/30 to-white shadow-lg">
+            <DialogHeader>
+              <DialogTitle className="text-2xl font-bold text-black flex items-center">
                 <Eye className="h-5 w-5 mr-3 text-[#fc7416]" />
-                Sessions on {format(selectedDate, 'EEEE, MMMM dd, yyyy')}
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="p-6">
+                Sessions on {selectedDate ? format(selectedDate, 'EEEE, MMMM dd, yyyy') : ''}
+              </DialogTitle>
+              <DialogDescription className="text-gray-600 text-base">
+                View session details for the selected date
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4">
               {selectedDateSessions.length > 0 ? (
                 <div className="space-y-4">
                   {selectedDateSessions.map(session => (
@@ -390,12 +394,12 @@ export function CalendarManager() {
                               {session.status.charAt(0).toUpperCase() + session.status.slice(1)}
                             </Badge>
                           </div>
-                          <div className="flex justify-end ">
+                          <div className="flex justify-end">
                             <Button
                               onClick={() => navigate(`/dashboard/attendance/${session.id}`)}
                               className="bg-gradient-to-r from-[#fc7416] to-[#fe822d] hover:from-[#fe822d] hover:to-[#fc7416] text-white font-medium transition-all duration-300 hover:scale-105 hover:shadow-lg"
                             >
-                              Manage Attendance
+                              Attendance
                             </Button>
                           </div>
                         </div>
@@ -407,16 +411,25 @@ export function CalendarManager() {
                 <div className="text-center py-12">
                   <CalendarIcon className="h-16 w-16 text-gray-300 mx-auto mb-4" />
                   <p className="text-xl text-gray-500 mb-2">
-                    {filterPackageType !== "All" ? `No ${filterPackageType} sessions scheduled` : "No sessions scheduled"}
+                    No sessions on this day
                   </p>
                   <p className="text-gray-400">
-                    {filterPackageType !== "All" ? "Try adjusting your package type filter or select a different date." : "Select a different date or schedule a new session."}
+                    {filterPackageType !== "All" ? `Try adjusting your package type filter or select a different date.` : `No sessions scheduled for this date.`}
                   </p>
                 </div>
               )}
-            </CardContent>
-          </Card>
-        )}
+              <div className="flex justify-end">
+                <Button
+                  variant="outline"
+                  onClick={() => setSelectedDate(null)}
+                  className="border-[#fc7416]/30 text-[#fc7416] hover:bg-[#fc7416] hover:text-white transition-all duration-300 hover:scale-105"
+                >
+                  Close
+                </Button>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
 
         <div className="grid gap-8 lg:grid-cols-2">
           
@@ -442,7 +455,6 @@ export function CalendarManager() {
                         <TableHead className="font-semibold text-green-800">Coach</TableHead>
                         <TableHead className="font-semibold text-green-800">Package</TableHead>
                         <TableHead className="font-semibold text-green-800">Players</TableHead>
-                        <TableHead className="font-semibold text-green-800">Status</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -474,11 +486,6 @@ export function CalendarManager() {
                               <Users className="w-4 h-4 text-green-600" />
                               <span className="font-medium">{session.session_participants?.length || 0}</span>
                             </div>
-                          </TableCell>
-                          <TableCell>
-                            <Badge className={getStatusBadgeColor(session.status)}>
-                              {session.status.charAt(0).toUpperCase() + session.status.slice(1)}
-                            </Badge>
                           </TableCell>
                         </TableRow>
                       ))}
@@ -521,7 +528,6 @@ export function CalendarManager() {
                         <TableHead className="font-semibold text-gray-800">Coach</TableHead>
                         <TableHead className="font-semibold text-gray-800">Package</TableHead>
                         <TableHead className="font-semibold text-gray-800">Players</TableHead>
-                        <TableHead className="font-semibold text-gray-800">Status</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -553,11 +559,6 @@ export function CalendarManager() {
                               <Users className="w-4 h-4 text-gray-500" />
                               <span className="font-medium">{session.session_participants?.length || 0}</span>
                             </div>
-                          </TableCell>
-                          <TableCell>
-                            <Badge className={getStatusBadgeColor(session.status)}>
-                              {session.status.charAt(0).toUpperCase() + session.status.slice(1)}
-                            </Badge>
                           </TableCell>
                         </TableRow>
                       ))}

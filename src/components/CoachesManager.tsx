@@ -180,7 +180,7 @@ export function CoachesManager() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-[#faf0e8] to-[#fffefe] p-6">
+      <div className="min-h-screen bg-white p-6">
         <div className="max-w-7xl mx-auto text-center py-16">
           <Users className="w-16 h-16 text-gray-300 mx-auto mb-4" />
           <h3 className="text-2xl font-bold text-black mb-3">Loading coaches...</h3>
@@ -191,7 +191,7 @@ export function CoachesManager() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#faf0e8] to-[#fffefe] pt-4 p-6">
+    <div className="min-h-screen bg-white pt-4 p-6">
       <div className="max-w-7xl mx-auto space-y-8 -mt-5">
         {/* Header */}
         <div className="mb-8">

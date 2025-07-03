@@ -150,32 +150,32 @@ export function DashboardStats() {
       title: "Total Players",
       value: stats?.students || 0,
       icon: Users,
-      color: "text-[#fc7416]",
-      bgGradient: "from-[#fc7416]/10 to-[#fe822d]/10",
+      color: "text-[#181A18]",
+      bgColor: "bg-[#181A18]",
       borderColor: "border-black"
     },
     {
       title: "Active Coaches",
       value: stats?.coaches || 0,
       icon: BookOpen,
-      color: "text-[#fe822d]",
-      bgGradient: "from-[#fe822d]/10 to-[#fc7416]/10",
+      color: "text-[#181A18]",
+      bgColor: "bg-[#181A18]",
       borderColor: "border-black"
     },
     {
       title: "Branch Locations",
       value: stats?.branches || 0,
       icon: MapPin,
-      color: "text-[#fc7416]",
-      bgGradient: "from-[#fc7416]/10 to-[#fe822d]/10",
+      color: "text-[#181A18]",
+      bgColor: "bg-[#181A18]",
       borderColor: "border-black"
     },
     {
       title: "Scheduled Sessions",
       value: stats?.sessions || 0,
       icon: Calendar,
-      color: "text-[#fe822d]",
-      bgGradient: "from-[#fe822d]/10 to-[#fc7416]/10",
+      color: "text-[#181A18]",
+      bgColor: "bg-[#181A18]",
       borderColor: "border-black"
     }
   ];
@@ -201,9 +201,9 @@ export function DashboardStats() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#faf0e8] to-[#fffefe] pt-4 p-6">
+    <div className="min-h-screen bg-white pt-4 p-6">
       <div className="max-w-7xl mx-auto space-y-8 -mt-5">
-        
+          
         {/* Header */}
         <div className="mb-8">
           <h1 className="text-4xl font-bold text-black mb-2 tracking-tight">
@@ -215,39 +215,39 @@ export function DashboardStats() {
         </div>
 
         {/* Stat Cards */}
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
-          {statCards.map((stat, index) => {
-            const IconComponent = stat.icon;
-            return (
-              <Card 
-                key={index} 
-                className={`
-                  relative overflow-hidden border-2 ${stat.borderColor} bg-gradient-to-br ${stat.bgGradient} 
-                  backdrop-blur-sm shadow-lg hover:shadow-xl transition-all duration-300 
-                  hover:-translate-y-1 hover:scale-105 cursor-pointer group
-                `}
-              >
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-semibold text-black uppercase tracking-wider">
-                    {stat.title}
-                  </CardTitle>
-                  <div className={`
-                    p-2 rounded-lg bg-white/80 shadow-sm group-hover:scale-110 transition-transform duration-300
-                  `}>
-                    <IconComponent className={`h-5 w-5 ${stat.color}`} />
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  <div className="text-3xl font-bold text-black mb-1">{stat.value}</div>
-                  <div className="flex items-center text-xs text-gray-600">
-                    <TrendingUp className="h-3 w-3 mr-1" />
-                    Active
-                  </div>
-                </CardContent>
-              </Card>
-            );
-          })}
-        </div>
+       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+  {statCards.map((stat, index) => {
+    const IconComponent = stat.icon;
+    return (
+      <Card 
+        key={index} 
+        className={`
+          relative overflow-hidden border-2 ${stat.borderColor} ${stat.bgColor}
+          backdrop-blur-sm shadow-lg hover:shadow-xl transition-all duration-300 
+          hover:-translate-y-1 hover:scale-105 cursor-pointer group
+        `}
+      >
+        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+          <CardTitle className="text-sm font-semibold text-white uppercase tracking-wider">
+            {stat.title}
+          </CardTitle>
+          <div className={`
+            p-2 rounded-lg bg-white shadow-sm group-hover:scale-110 transition-transform duration-300
+          `}>
+            <IconComponent className={`h-5 w-5 ${stat.color}`} />
+          </div>
+        </CardHeader>
+        <CardContent>
+          <div className="text-3xl font-bold text-white mb-1">{stat.value}</div>
+          <div className="flex items-center text-xs text-gray-400">
+            <TrendingUp className="h-3 w-3 mr-1" />
+            Active
+          </div>
+        </CardContent>
+      </Card>
+    );
+  })}
+</div>
 
         {/* Quick Actions */}
         <Card className="border-2 border-black bg-white/80 backdrop-blur-sm shadow-lg">
@@ -275,7 +275,7 @@ export function DashboardStats() {
                     key={index}
                     onClick={() => navigate(action.route)}
                     className="
-                      h-auto p-4 bg-gradient-to-r from-[#fc7416] to-[#fe822d] 
+                      h-auto p-4 bg-[#181A18] to-[#fe822d] 
                       hover:from-[#fe822d] hover:to-[#fc7416] text-white font-semibold
                       transition-all duration-300 hover:scale-105 hover:shadow-lg
                       flex flex-col items-center gap-2 border-none
