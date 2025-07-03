@@ -37,13 +37,12 @@ const handler = async (req: Request): Promise<Response> => {
 
     console.log("Creating coach account for:", { name, email, phone, package_type });
 
-    // Create the user account with proper metadata structure
+    // Create the user account - the trigger will automatically create the coach record
     const { data: authData, error: authError } = await supabaseAdmin.auth.admin.createUser({
       email: email,
       password: "TOcoachAccount!1",
       email_confirm: true,
       user_metadata: {
-        display_name: name,
         name: name,
         role: 'coach'
       }
@@ -57,75 +56,44 @@ const handler = async (req: Request): Promise<Response> => {
     console.log("Auth user created successfully:", authData.user?.id);
 
     // Wait a moment for the trigger to complete
-    await new Promise(resolve => setTimeout(resolve, 1000));
+    await new Promise(resolve => setTimeout(resolve, 2000));
 
-    // Check if coach record was automatically created by trigger
-    const { data: existingCoach } = await supabaseAdmin
+    // Get the coach record that was automatically created by the trigger
+    const { data: coachRecord, error: coachError } = await supabaseAdmin
       .from("coaches")
       .select("*")
       .eq("auth_id", authData.user?.id)
       .single();
 
-    let coachData;
-
-    if (existingCoach) {
-      // Update the existing coach record created by trigger with complete information
-      const { data: updatedCoach, error: updateError } = await supabaseAdmin
-        .from("coaches")
-        .update({
-          name: name,
-          email: email,
-          phone: phone || null,
-          package_type: package_type || null,
-          role: 'coach'
-        })
-        .eq("auth_id", authData.user?.id)
-        .select()
-        .single();
-
-      if (updateError) {
-        console.error("Coach update error:", updateError);
-        throw new Error(`Failed to update coach record: ${updateError.message}`);
-      }
-
-      coachData = updatedCoach;
-      console.log("Coach record updated successfully:", coachData);
-    } else {
-      // Create new coach record if trigger didn't create one
-      const { data: newCoach, error: coachError } = await supabaseAdmin
-        .from("coaches")
-        .insert({
-          name: name,
-          email: email,
-          phone: phone || null,
-          package_type: package_type || null,
-          auth_id: authData.user?.id,
-          role: 'coach'
-        })
-        .select()
-        .single();
-
-      if (coachError) {
-        console.error("Coach creation error:", coachError);
-        
-        // If coach creation fails, clean up the auth user
-        try {
-          await supabaseAdmin.auth.admin.deleteUser(authData.user?.id || "");
-        } catch (cleanupError) {
-          console.error("Failed to cleanup auth user:", cleanupError);
-        }
-        
-        throw new Error(`Failed to create coach record: ${coachError.message}`);
-      }
-
-      coachData = newCoach;
-      console.log("Coach record created successfully:", coachData);
+    if (coachError) {
+      console.error("Error fetching coach record:", coachError);
+      throw new Error(`Failed to retrieve coach record: ${coachError.message}`);
     }
+
+    // Update the coach record with additional information
+    const { data: updatedCoach, error: updateError } = await supabaseAdmin
+      .from("coaches")
+      .update({
+        name: name,
+        email: email,
+        phone: phone || null,
+        package_type: package_type || null
+      })
+      .eq("id", coachRecord.id)
+      .select()
+      .single();
+
+    if (updateError) {
+      console.error("Coach update error:", updateError);
+      throw new Error(`Failed to update coach record: ${updateError.message}`);
+    }
+
+    console.log("Coach record updated successfully:", updatedCoach);
 
     return new Response(
       JSON.stringify({ 
         success: true, 
-        coach: coachData,
+        coach: updatedCoach,
         message: "Coach account created successfully. Default password: TOcoachAccount!1"
       }),
       {
