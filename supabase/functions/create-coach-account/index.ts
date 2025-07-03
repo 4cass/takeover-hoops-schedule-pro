@@ -35,14 +35,17 @@ const handler = async (req: Request): Promise<Response> => {
 
     const { name, email, phone, package_type }: CreateCoachRequest = await req.json();
 
-    // Create the user account with default password
+    console.log("Creating coach account for:", { name, email, phone, package_type });
+
+    // Create the user account with default password and proper metadata
     const { data: authData, error: authError } = await supabaseAdmin.auth.admin.createUser({
       email: email,
       password: "TOcoachAccount!1",
       email_confirm: true, // Skip email confirmation
       user_metadata: {
         name: name,
-        role: 'coach'
+        role: 'coach',
+        display_name: name // Add display_name to prevent trigger error
       }
     });
 
@@ -51,36 +54,70 @@ const handler = async (req: Request): Promise<Response> => {
       throw new Error(`Failed to create user account: ${authError.message}`);
     }
 
-    console.log("Auth user created:", authData.user?.id);
+    console.log("Auth user created successfully:", authData.user?.id);
 
-    // Create the coach record in the coaches table
-    const { data: coachData, error: coachError } = await supabaseAdmin
+    // Check if coach record was automatically created by trigger
+    const { data: existingCoach } = await supabaseAdmin
       .from("coaches")
-      .insert({
-        name: name,
-        email: email,
-        phone: phone || null,
-        package_type: package_type || null,
-        auth_id: authData.user?.id,
-        role: 'coach'
-      })
-      .select()
+      .select("id")
+      .eq("auth_id", authData.user?.id)
       .single();
 
-    if (coachError) {
-      console.error("Coach creation error:", coachError);
-      
-      // If coach creation fails, clean up the auth user
-      try {
-        await supabaseAdmin.auth.admin.deleteUser(authData.user?.id || "");
-      } catch (cleanupError) {
-        console.error("Failed to cleanup auth user:", cleanupError);
-      }
-      
-      throw new Error(`Failed to create coach record: ${coachError.message}`);
-    }
+    let coachData;
 
-    console.log("Coach created successfully:", coachData);
+    if (existingCoach) {
+      // Update the existing coach record created by trigger
+      const { data: updatedCoach, error: updateError } = await supabaseAdmin
+        .from("coaches")
+        .update({
+          name: name,
+          email: email,
+          phone: phone || null,
+          package_type: package_type || null,
+          role: 'coach'
+        })
+        .eq("auth_id", authData.user?.id)
+        .select()
+        .single();
+
+      if (updateError) {
+        console.error("Coach update error:", updateError);
+        throw new Error(`Failed to update coach record: ${updateError.message}`);
+      }
+
+      coachData = updatedCoach;
+      console.log("Coach record updated successfully:", coachData);
+    } else {
+      // Create new coach record if trigger didn't create one
+      const { data: newCoach, error: coachError } = await supabaseAdmin
+        .from("coaches")
+        .insert({
+          name: name,
+          email: email,
+          phone: phone || null,
+          package_type: package_type || null,
+          auth_id: authData.user?.id,
+          role: 'coach'
+        })
+        .select()
+        .single();
+
+      if (coachError) {
+        console.error("Coach creation error:", coachError);
+        
+        // If coach creation fails, clean up the auth user
+        try {
+          await supabaseAdmin.auth.admin.deleteUser(authData.user?.id || "");
+        } catch (cleanupError) {
+          console.error("Failed to cleanup auth user:", cleanupError);
+        }
+        
+        throw new Error(`Failed to create coach record: ${coachError.message}`);
+      }
+
+      coachData = newCoach;
+      console.log("Coach record created successfully:", coachData);
+    }
 
     return new Response(
       JSON.stringify({ 
