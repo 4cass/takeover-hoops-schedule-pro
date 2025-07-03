@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -14,7 +15,7 @@ import { format } from "date-fns";
 import { Database } from "@/integrations/supabase/types";
 
 type Student = Database["public"]["Tables"]["students"]["Row"];
-type Coach = Database["public"]["Tables"]["coaches"]["Row"];
+type Branch = Database["public"]["Tables"]["branches"]["Row"];
 type AttendanceRecord = Database["public"]["Tables"]["attendance_records"]["Row"] & {
   training_sessions: Database["public"]["Tables"]["training_sessions"]["Row"] & {
     branches: { name: string };
@@ -28,15 +29,13 @@ export function StudentsManager() {
   const [editingStudent, setEditingStudent] = useState<Student | null>(null);
   const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
-  const [filterPackageType, setFilterPackageType] = useState<"All" | "Personal Training" | "Camp Training">("All");
   const [formData, setFormData] = useState({
     name: "",
     email: "",
     phone: "",
     sessions: 0,
     remaining_sessions: 0,
-    package_type: null as "Camp Training" | "Personal Training" | null,
-    coach_id: null as string | null,
+    branch_id: null as string | null,
   });
 
   const queryClient = useQueryClient();
@@ -46,47 +45,30 @@ export function StudentsManager() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("students")
-        .select("id, name, email, phone, sessions, remaining_sessions, package_type, coach_id, created_at, updated_at")
+        .select("*")
         .order("created_at", { ascending: false });
       if (error) {
         console.error("students query error:", error);
         throw error;
       }
-      console.log("Fetched students:", data); // Debug: Log students data
+      console.log("Fetched students:", data);
       return data as Student[];
     },
   });
 
-  const fetchCoaches = async (packageType: "Camp Training" | "Personal Training" | null): Promise<Coach[]> => {
-    console.log("fetchCoaches called with packageType:", packageType); // Debug: Log packageType
-    const query = supabase
-      .from("coaches")
-      .select("id, name, package_type")
-      .order("name");
-
-    let data, error;
-
-    if (packageType === "Camp Training") {
-      ({ data, error } = await query.or("package_type.eq.Camp Training, package_type.eq.Personal Training, package_type.is.null"));
-    } else if (packageType === "Personal Training") {
-      ({ data, error } = await query.eq("package_type", "Personal Training"));
-    } else {
-      ({ data, error } = await query);
-    }
-
-    if (error) {
-      console.error("coaches query error:", error);
-      throw error;
-    }
-
-    console.log(`Fetched coaches for ${packageType || "all"}:`, data); // Debug: Log fetched coaches
-    return data as Coach[];
-  };
-
-  const { data: coaches, isLoading: coachesLoading, error: coachesError } = useQuery({
-    queryKey: ["coaches", formData.package_type],
-    queryFn: () => fetchCoaches(formData.package_type),
-    enabled: !!formData.package_type, // Only fetch when package_type is selected
+  const { data: branches } = useQuery({
+    queryKey: ["branches"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("branches")
+        .select("*")
+        .order("name");
+      if (error) {
+        console.error("branches query error:", error);
+        throw error;
+      }
+      return data as Branch[];
+    },
   });
 
   const { data: attendanceRecords, isLoading: recordsLoading, error: recordsError } = useQuery({
@@ -121,8 +103,7 @@ export function StudentsManager() {
   });
 
   const filteredStudents = students?.filter((student) =>
-    student.name.toLowerCase().includes(searchTerm.toLowerCase()) &&
-    (filterPackageType === "All" || student.package_type === filterPackageType)
+    student.name.toLowerCase().includes(searchTerm.toLowerCase())
   ) || [];
 
   const createMutation = useMutation({
@@ -135,8 +116,7 @@ export function StudentsManager() {
           phone: student.phone || null,
           sessions: student.sessions,
           remaining_sessions: student.remaining_sessions,
-          package_type: student.package_type,
-          coach_id: student.coach_id,
+          branch_id: student.branch_id,
         }])
         .select()
         .single();
@@ -164,8 +144,7 @@ export function StudentsManager() {
           phone: student.phone || null,
           sessions: student.sessions,
           remaining_sessions: student.remaining_sessions,
-          package_type: student.package_type,
-          coach_id: student.coach_id,
+          branch_id: student.branch_id,
         })
         .eq("id", id)
         .select()
@@ -205,8 +184,7 @@ export function StudentsManager() {
       phone: "",
       sessions: 0,
       remaining_sessions: 0,
-      package_type: null,
-      coach_id: null,
+      branch_id: null,
     });
     setEditingStudent(null);
     setIsDialogOpen(false);
@@ -214,10 +192,6 @@ export function StudentsManager() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!formData.package_type) {
-      toast.error("Please select a package type");
-      return;
-    }
     if (editingStudent) {
       updateMutation.mutate({ ...formData, id: editingStudent.id });
     } else {
@@ -233,8 +207,7 @@ export function StudentsManager() {
       phone: student.phone || "",
       sessions: student.sessions || 0,
       remaining_sessions: student.remaining_sessions,
-      package_type: student.package_type as "Camp Training" | "Personal Training" | null,
-      coach_id: student.coach_id || null,
+      branch_id: student.branch_id || null,
     });
     setIsDialogOpen(true);
   };
@@ -325,52 +298,22 @@ export function StudentsManager() {
                       />
                     </div>
                     <div>
-                      <Label htmlFor="package_type" className="text-gray-700 font-medium">Package Type</Label>
+                      <Label htmlFor="branch_id" className="text-gray-700 font-medium">Branch</Label>
                       <Select
-                        value={formData.package_type ?? undefined}
-                        onValueChange={(value) =>
-                          setFormData((prev) => ({
-                            ...prev,
-                            package_type: value as "Camp Training" | "Personal Training",
-                            coach_id: null, // Reset coach_id when package_type changes
-                          }))
-                        }
+                        value={formData.branch_id ?? undefined}
+                        onValueChange={(value) => setFormData((prev) => ({ ...prev, branch_id: value }))}
                       >
                         <SelectTrigger className="mt-1 border-2 border-[#fc7416]/20 rounded-xl focus:border-[#fc7416] focus:ring-[#fc7416]/20">
-                          <SelectValue placeholder="Select Package" />
+                          <SelectValue placeholder="Select Branch" />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="Camp Training">Camp Training</SelectItem>
-                          <SelectItem value="Personal Training">Personal Training</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div>
-                      <Label htmlFor="coach_id" className="text-gray-700 font-medium">Assigned Coach</Label>
-                      <Select
-                        value={formData.coach_id ?? undefined}
-                        onValueChange={(value) => setFormData((prev) => ({ ...prev, coach_id: value }))}
-                        disabled={!formData.package_type || coachesLoading}
-                      >
-                        <SelectTrigger className="mt-1 border-2 border-[#fc7416]/20 rounded-xl focus:border-[#fc7416] focus:ring-[#fc7416]/20">
-                          <SelectValue placeholder={coachesLoading ? "Loading coaches..." : coachesError ? "Error loading coaches" : coaches?.length === 0 ? "No coaches available" : "Select Coach"} />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {coaches?.map((coach) => (
-                            <SelectItem key={coach.id} value={coach.id}>
-                              {coach.name} 
+                          {branches?.map((branch) => (
+                            <SelectItem key={branch.id} value={branch.id}>
+                              {branch.name}
                             </SelectItem>
                           ))}
                         </SelectContent>
                       </Select>
-                      {coachesError && (
-                        <p className="text-red-600 text-sm mt-1">Error loading coaches: {(coachesError as Error).message}</p>
-                      )}
-                      {!coachesLoading && coaches?.length === 0 && (
-                        <p className="text-gray-600 text-sm mt-1">
-                          No coaches available for {formData.package_type}.
-                        </p>
-                      )}
                     </div>
                     <div>
                       <Label htmlFor="sessions" className="text-gray-700 font-medium">Total Sessions</Label>
@@ -407,7 +350,7 @@ export function StudentsManager() {
                       </Button>
                       <Button
                         type="submit"
-                        disabled={createMutation.isPending || updateMutation.isPending || !formData.package_type}
+                        disabled={createMutation.isPending || updateMutation.isPending}
                         className="bg-[#fc7416] hover:bg-[#fe822d] text-white transition-all duration-300 hover:scale-105"
                       >
                         {editingStudent ? "Update" : "Create"}
@@ -435,25 +378,6 @@ export function StudentsManager() {
                     onChange={(e) => setSearchTerm(e.target.value)}
                   />
                 </div>
-                <div className="flex-1">
-                  <Label htmlFor="filter-package" className="flex items-center text-sm font-medium text-gray-700 mb-2">
-                    <Users className="w-4 h-4 mr-2" style={{ color: '#fc7416' }} />
-                    Filter by Package Type
-                  </Label>
-                  <Select
-                    value={filterPackageType}
-                    onValueChange={(value: "All" | "Personal Training" | "Camp Training") => setFilterPackageType(value)}
-                  >
-                    <SelectTrigger className="border-2 focus:border-[#fc7416] rounded-xl">
-                      <SelectValue placeholder="Select package type" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="All">All Players</SelectItem>
-                      <SelectItem value="Personal Training">Personal Training</SelectItem>
-                      <SelectItem value="Camp Training">Camp Training</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
               </div>
               <p className="text-sm text-gray-600 mt-3">
                 Showing {filteredStudents.length} player{filteredStudents.length === 1 ? '' : 's'}
@@ -467,7 +391,7 @@ export function StudentsManager() {
                       <th className="py-4 px-6 text-left font-semibold">Player Name</th>
                       <th className="py-4 px-6 text-left font-semibold">Email</th>
                       <th className="py-4 px-6 text-left font-semibold">Phone</th>
-                      <th className="py-4 px-6 text-left font-semibold">Package</th>
+                      <th className="py-4 px-6 text-left font-semibold">Branch</th>
                       <th className="py-4 px-6 text-left font-semibold">Session Progress</th>
                       <th className="py-4 px-6 text-left font-semibold">Actions</th>
                     </tr>
@@ -477,6 +401,7 @@ export function StudentsManager() {
                       const attended = (student.sessions || 0) - student.remaining_sessions;
                       const total = student.sessions || 0;
                       const progressPercentage = total > 0 ? (attended / total) * 100 : 0;
+                      const branch = branches?.find(b => b.id === student.branch_id);
                       return (
                         <tr
                           key={student.id}
@@ -496,7 +421,7 @@ export function StudentsManager() {
                           <td className="py-4 px-6 text-gray-700 font-medium">{student.email}</td>
                           <td className="py-4 px-6 text-gray-700 font-medium">{student.phone || "N/A"}</td>
                           <td className="py-4 px-6 text-gray-700 font-medium">
-                            {student.package_type || "N/A"}
+                            {branch?.name || "N/A"}
                           </td>
                           <td className="py-4 px-6">
                             <div className="space-y-2">
@@ -536,10 +461,10 @@ export function StudentsManager() {
                 <div className="py-12 text-center">
                   <Users className="w-16 h-16 text-gray-300 mx-auto mb-4" />
                   <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                    {searchTerm || filterPackageType !== "All" ? `No ${filterPackageType === "All" ? "" : filterPackageType} players found` : "No players"}
+                    {searchTerm ? "No players found" : "No players"}
                   </h3>
                   <p className="text-gray-600">
-                    {searchTerm || filterPackageType !== "All" ? "Try adjusting your search or filter." : "Add a new player to get started."}
+                    {searchTerm ? "Try adjusting your search." : "Add a new player to get started."}
                   </p>
                 </div>
               )}
@@ -566,7 +491,7 @@ export function StudentsManager() {
                     <p className="text-sm text-gray-700"><span className="font-medium">Phone:</span> {selectedStudent?.phone || "N/A"}</p>
                   </div>
                   <div>
-                    <p className="text-sm text-gray-700"><span className="font-medium">Package Type:</span> {selectedStudent?.package_type || "N/A"}</p>
+                    <p className="text-sm text-gray-700"><span className="font-medium">Branch:</span> {branches?.find(b => b.id === selectedStudent?.branch_id)?.name || "N/A"}</p>
                     <p className="text-sm text-gray-700"><span className="font-medium">Total Sessions:</span> {selectedStudent?.sessions || 0}</p>
                     <p className="text-sm text-gray-700"><span className="font-medium">Remaining Sessions:</span> {selectedStudent?.remaining_sessions}</p>
                   </div>

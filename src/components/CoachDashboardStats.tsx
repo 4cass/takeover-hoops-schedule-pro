@@ -25,25 +25,17 @@ export function CoachDashboardStats() {
     queryKey: ['coach-dashboard-stats', coachData?.id],
     queryFn: async () => {
       console.log("Fetching coach stats for ID:", coachData?.id);
-      if (!coachData?.id) return { students: 0, sessions: 0 };
+      if (!coachData?.id) return { sessions: 0 };
 
-      const [studentsRes, sessionsRes] = await Promise.all([
-        supabase
-          .from('students')
-          .select('id')
-          .eq('coach_id', coachData.id),
-        supabase
-          .from('training_sessions')
-          .select('id')
-          .eq('coach_id', coachData.id)
-          .eq('status', 'scheduled')
-      ]);
+      const sessionsRes = await supabase
+        .from('training_sessions')
+        .select('id')
+        .eq('coach_id', coachData.id)
+        .eq('status', 'scheduled');
 
-      console.log("Students result:", studentsRes);
       console.log("Sessions result:", sessionsRes);
 
       return {
-        students: studentsRes.data?.length || 0,
         sessions: sessionsRes.data?.length || 0
       };
     },
@@ -147,14 +139,6 @@ export function CoachDashboardStats() {
   }
 
   const statCards = [
-    {
-      title: "My Players",
-      value: stats?.students || 0,
-      icon: Users,
-      color: "text-[#fc7416]",
-      bgGradient: "from-[#fc7416]/10 to-[#fe822d]/10",
-      borderColor: "border-black"
-    },
     {
       title: "My Scheduled Sessions",
       value: stats?.sessions || 0,
