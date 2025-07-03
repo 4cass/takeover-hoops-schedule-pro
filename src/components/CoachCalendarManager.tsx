@@ -114,11 +114,26 @@ export function CoachCalendarManager() {
     console.log("Date selected:", date);
     setSelectedDate(date);
     if (date) {
+      const today = new Date();
+      const todayDateOnly = new Date(format(today, "yyyy-MM-dd") + "T00:00:00");
+      const selectedDateOnly = new Date(format(date, "yyyy-MM-dd") + "T00:00:00");
+      
       const dateSessions = sessions.filter(
         (session) => session.date === format(date, "yyyy-MM-dd")
       );
+      
       console.log("Sessions for selected date:", dateSessions);
-      setIsModalOpen(true);
+      
+      // Determine which modal to show based on the date
+      if (isAfter(selectedDateOnly, todayDateOnly) || isSameDay(selectedDateOnly, todayDateOnly)) {
+        // Future or today - show upcoming sessions modal
+        console.log("Selected date is future/today - showing upcoming sessions modal");
+        setIsUpcomingModalOpen(true);
+      } else {
+        // Past date - show past sessions modal
+        console.log("Selected date is past - showing past sessions modal");
+        setIsPastModalOpen(true);
+      }
     }
   };
 
@@ -287,117 +302,6 @@ export function CoachCalendarManager() {
               </div>
             </CardContent>
           </Card>
-
-          {/* Sessions Modal for Selected Date */}
-          <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
-            <DialogContent className="bg-white border border-gray-200 shadow-xl max-w-[95vw] sm:max-w-4xl mx-auto p-0 rounded-lg max-h-[90vh] overflow-y-auto">
-              
-              {/* Clean Header */}
-              <DialogHeader className="bg-black text-white px-4 sm:px-8 py-4 sm:py-6 border-b">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <DialogTitle className="text-lg sm:text-xl lg:text-2xl font-bold mb-2">
-                      Sessions - {selectedDate ? format(selectedDate, "MMMM dd, yyyy") : "Select a date"}
-                    </DialogTitle>
-                    <p className="text-gray-300 text-sm sm:text-base">
-                      {selectedDateSessions.length} session{selectedDateSessions.length !== 1 ? 's' : ''} scheduled
-                    </p>
-                  </div>
-                  
-                  {/* Close Button (X) */}
-                  <button 
-                    onClick={() => setIsModalOpen(false)} 
-                    className="w-10 h-10 sm:w-12 sm:h-12 bg-[#fc7416] rounded-lg flex items-center justify-center text-white text-xl sm:text-2xl font-bold hover:bg-[#e5661a] transition-colors"
-                  >
-                    ×
-                  </button>
-                </div>
-              </DialogHeader>
-
-              {/* Content */}
-              <div className="p-4 sm:p-8">
-                {selectedDateSessions.length > 0 ? (
-                  <div className="space-y-4 sm:space-y-6">
-                    {selectedDateSessions.map((session, index) => (
-                      <div 
-                        key={session.id} 
-                        className="border border-gray-200 rounded-lg p-4 sm:p-6 hover:border-[#fc7416] hover:shadow-md transition-all duration-200"
-                      >
-                        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-4 space-y-4 sm:space-y-0">
-                          <div className="flex flex-col sm:flex-row sm:items-center sm:gap-6">
-                            <div className="flex items-center gap-4 mb-2 sm:mb-0">
-                              <div className="w-8 h-8 bg-[#fc7416] rounded-full flex items-center justify-center text-white font-bold">
-                                {index + 1}
-                              </div>
-                              <div>
-                                <h3 className="text-lg sm:text-xl font-bold text-black">
-                                  {formatTime12Hour(session.start_time)} - {formatTime12Hour(session.end_time)}
-                                </h3>
-                                <p className="text-gray-600 text-sm sm:text-base">Training Session</p>
-                              </div>
-                            </div>
-
-                            <div className="flex items-center gap-2">
-                              <MapPin className="h-4 w-4 sm:h-5 sm:w-5 text-[#fc7416]" />
-                              <p className="font-bold text-black text-sm sm:text-base">{session.branches.name}</p>
-                            </div>
-                          </div>
-
-                          <Badge className={`${getStatusColor(session.status)} font-semibold px-4 py-2 capitalize rounded-full text-sm`}>
-                            {session.status}
-                          </Badge>
-                        </div>
-
-                        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between border-t border-gray-100 pt-4">
-                          <div className="flex items-center gap-4 mb-4 sm:mb-0">
-                            <div className="w-8 h-8 sm:w-10 sm:h-10 bg-gray-100 rounded-lg flex items-center justify-center">
-                              <Users className="h-4 w-4 sm:h-5 sm:w-5 text-[#fc7416]" />
-                            </div>
-                            <div>
-                              <p className="text-sm text-gray-600 font-medium">
-                                Players ({session.session_participants.length})
-                              </p>
-                              <div className="font-semibold text-black text-sm sm:text-base">
-                                {session.session_participants.length > 0 ? (
-                                  <div className="space-y-1">
-                                    {session.session_participants.slice(0, 2).map((participant, idx) => (
-                                      <div key={idx}>{participant.students.name}</div>
-                                    ))}
-                                    {session.session_participants.length > 2 && (
-                                      <div className="text-gray-600 text-sm">
-                                        +{session.session_participants.length - 2} more
-                                      </div>
-                                    )}
-                                  </div>
-                                ) : (
-                                  <span className="text-gray-500">No players assigned</span>
-                                )}
-                              </div>
-                            </div>
-                          </div>
-
-                          <Button
-                            onClick={() => handleAttendanceClick(session.id)}
-                            className="bg-[#fc7416] hover:bg-[#e5661a] text-white font-semibold px-4 sm:px-6 py-2 sm:py-3 rounded-lg transition-colors duration-200 text-sm sm:text-base w-full sm:w-auto"
-                          >
-                            Manage Attendance
-                          </Button>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <div className="text-center py-12 sm:py-16">
-                    <div className="w-16 h-16 sm:w-20 sm:h-20 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-6">
-                      <CalendarIcon className="h-8 w-8 sm:h-10 sm:w-10 text-gray-400" />
-                    </div>
-                    <h3 className="text-lg sm:text-xl font-bold text-black mb-2">No sessions scheduled</h3>
-                    <p className="text-gray-600 text-sm sm:text-base">No training sessions are scheduled for this date.</p>
-                  </div>
-                )}
-              </div>
-            </DialogContent>
-          </Dialog>
 
           {/* Upcoming Sessions Modal */}
           <Dialog open={isUpcomingModalOpen} onOpenChange={setIsUpcomingModalOpen}>
