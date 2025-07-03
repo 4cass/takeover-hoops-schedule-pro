@@ -2,6 +2,7 @@
 import { createContext, useContext, useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { User } from "@supabase/supabase-js";
+import { toast } from "sonner";
 
 type AuthContextType = {
   user: User | null;
@@ -39,8 +40,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         .eq("auth_id", currentUser.id)
         .maybeSingle();
 
+      console.log("Coach record by auth_id:", coachRecord, "Error:", coachError);
+
       // If not found by auth_id, try by email
       if (!coachRecord && !coachError) {
+        console.log("Trying to find coach by email...");
         const { data: emailRecord, error: emailError } = await supabase
           .from("coaches")
           .select("*")
@@ -49,10 +53,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         
         coachRecord = emailRecord;
         coachError = emailError;
+        console.log("Coach record by email:", coachRecord, "Error:", coachError);
       }
 
       if (coachError) {
         console.error("Error fetching coach record:", coachError);
+        toast.error("Failed to fetch user profile");
         setRole(null);
         setCoachData(null);
         return;
@@ -82,49 +88,79 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           setCoachData(coachRecord);
           console.log("Set role to:", dbRole, "Coach data:", coachRecord);
         } else {
-          console.log("Invalid role in database:", dbRole);
-          setRole(null);
-          setCoachData(null);
+          console.log("Invalid or missing role in database:", dbRole, "Setting default role to 'coach'");
+          // Set default role to 'coach' if role is invalid or missing
+          setRole('coach');
+          setCoachData(coachRecord);
+          
+          // Update the database with the default role
+          const { error: updateRoleError } = await supabase
+            .from("coaches")
+            .update({ role: 'coach' })
+            .eq("id", coachRecord.id);
+          
+          if (updateRoleError) {
+            console.error("Error updating role to default:", updateRoleError);
+          }
         }
       } else {
-        console.log("No coach record found for user");
+        console.log("No coach record found for user - this might be a new user");
+        toast.error("No coach profile found. Please contact administrator.");
         setRole(null);
         setCoachData(null);
       }
     } catch (error) {
       console.error("Exception while fetching role:", error);
+      toast.error("An error occurred while loading user profile");
       setRole(null);
       setCoachData(null);
     }
   };
 
   useEffect(() => {
+    let mounted = true;
+
     // Check current session
     const fetchSession = async () => {
       try {
+        console.log("Fetching current session...");
         const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+        
         if (sessionError) {
           console.error("Error fetching session:", sessionError.message);
-          setLoading(false);
+          if (mounted) {
+            setUser(null);
+            setRole(null);
+            setCoachData(null);
+            setLoading(false);
+          }
           return;
         }
 
-        if (session?.user) {
+        if (session?.user && mounted) {
+          console.log("Found existing session for user:", session.user.email);
           setUser(session.user);
           await fetchUserRole(session.user);
         } else {
+          console.log("No existing session found");
+          if (mounted) {
+            setUser(null);
+            setRole(null);
+            setCoachData(null);
+          }
+        }
+
+        if (mounted) {
+          setLoading(false);
+        }
+      } catch (error) {
+        console.error("Error in fetchSession:", error);
+        if (mounted) {
           setUser(null);
           setRole(null);
           setCoachData(null);
+          setLoading(false);
         }
-
-        setLoading(false);
-      } catch (error) {
-        console.error("Error in fetchSession:", error);
-        setUser(null);
-        setRole(null);
-        setCoachData(null);
-        setLoading(false);
       }
     };
 
@@ -134,18 +170,29 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const { data: authListener } = supabase.auth.onAuthStateChange(async (event, session) => {
       console.log("Auth state changed:", event, session?.user?.email);
       
+      if (!mounted) return;
+
       if (session?.user) {
         setUser(session.user);
-        await fetchUserRole(session.user);
+        // Use setTimeout to prevent potential deadlocks
+        setTimeout(() => {
+          if (mounted) {
+            fetchUserRole(session.user);
+          }
+        }, 100);
       } else {
         setUser(null);
         setRole(null);
         setCoachData(null);
       }
-      setLoading(false);
+      
+      if (mounted) {
+        setLoading(false);
+      }
     });
 
     return () => {
+      mounted = false;
       authListener.subscription.unsubscribe();
     };
   }, []);

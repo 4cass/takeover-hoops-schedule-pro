@@ -17,9 +17,9 @@ import { useAuth } from "@/context/AuthContext";
 export default function Dashboard() {
   const location = useLocation();
   const navigate = useNavigate();
-  const { role, loading } = useAuth();
+  const { user, role, loading } = useAuth();
 
-  console.log("Dashboard - Role:", role, "Loading:", loading, "Path:", location.pathname);
+  console.log("Dashboard - User:", user?.email, "Role:", role, "Loading:", loading, "Path:", location.pathname);
 
   useEffect(() => {
     window.scrollTo(0, 0);
@@ -37,10 +37,34 @@ export default function Dashboard() {
     );
   }
 
-  // Redirect to login if no role is found
-  if (!role) {
-    console.log("No role found, redirecting to login");
+  // Redirect to login if no user is found
+  if (!user) {
+    console.log("No user found, redirecting to login");
     return <Navigate to="/login" replace />;
+  }
+
+  // Show error message if role is still null after loading is complete
+  if (!role) {
+    console.log("No role found for authenticated user, showing error message");
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-white">
+        <div className="text-center">
+          <div className="text-2xl font-bold text-red-600 mb-2">Access Error</div>
+          <div className="text-lg text-gray-600 mb-4">
+            Your account doesn't have the proper permissions to access this dashboard.
+          </div>
+          <div className="text-sm text-gray-500 mb-4">
+            Please contact your administrator to resolve this issue.
+          </div>
+          <button 
+            onClick={() => window.location.href = "/login"}
+            className="px-4 py-2 bg-[#fc7416] text-white rounded hover:bg-[#fe822d]"
+          >
+            Back to Login
+          </button>
+        </div>
+      </div>
+    );
   }
 
   // Derive active tab from current URL
