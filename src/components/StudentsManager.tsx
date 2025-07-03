@@ -228,31 +228,31 @@ export function StudentsManager() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-white p-6">
+      <div className="min-h-screen bg-background p-6">
         <div className="max-w-7xl mx-auto text-center py-16">
-          <h3 className="text-2xl font-bold text-black mb-3">Loading players...</h3>
-          <p className="text-lg text-gray-600">Please wait while we fetch the player data.</p>
+          <h3 className="text-2xl font-bold text-foreground mb-3">Loading players...</h3>
+          <p className="text-lg text-muted-foreground">Please wait while we fetch the player data.</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-white pt-4 p-6">
+    <div className="min-h-screen bg-background pt-4 p-6">
       <div className="max-w-7xl mx-auto space-y-8 -mt-5">
         <div className="mb-8">
-          <h1 className="text-4xl font-bold text-black mb-2 tracking-tight">Players Manager</h1>
-          <p className="text-lg text-gray-700">Manage player information and session quotas</p>
+          <h1 className="text-4xl font-bold text-foreground mb-2 tracking-tight">Players Manager</h1>
+          <p className="text-lg text-muted-foreground">Manage player information and session quotas</p>
         </div>
-        <Card className="border-2 border-black bg-white/90 backdrop-blur-sm shadow-xl">
-          <CardHeader className="border-b border-black bg-black">
+        <Card className="border-2 border-primary bg-card shadow-xl">
+          <CardHeader className="border-b border-primary bg-primary">
             <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between space-y-4 lg:space-y-0">
               <div>
-                <CardTitle className="text-2xl font-bold text-white flex items-center">
-                  <Users className="h-6 w-6 mr-3 text-[#fc7416]" />
+                <CardTitle className="text-2xl font-bold text-primary-foreground flex items-center">
+                  <Users className="h-6 w-6 mr-3 text-accent" />
                   Player profiles
                 </CardTitle>
-                <CardDescription className="text-gray-400 text-base">
+                <CardDescription className="text-primary-foreground/80 text-base">
                   View and manage player profiles
                 </CardDescription>
               </div>
@@ -260,63 +260,63 @@ export function StudentsManager() {
                 <DialogTrigger asChild>
                   <Button
                     onClick={() => resetForm()}
-                    className="bg-[#fc7416] hover:bg-[#fe822d] text-white transition-all duration-300 hover:scale-105"
+                    className="bg-green-600 hover:bg-green-700 text-white transition-all duration-300 hover:scale-105"
                   >
                     <Plus className="w-4 h-4 mr-2" />
                     Add Player
                   </Button>
                 </DialogTrigger>
-                <DialogContent className="border-2 border-[#fc7416]/20 bg-gradient-to-br from-[#faf0e8]/30 to-white shadow-lg max-w-2xl">
+                <DialogContent className="border-2 border-border bg-card shadow-lg max-w-2xl">
                   <DialogHeader>
-                    <DialogTitle className="text-2xl font-bold text-black">
+                    <DialogTitle className="text-2xl font-bold text-foreground">
                       {editingStudent ? "Edit Player" : "Add New Player"}
                     </DialogTitle>
-                    <DialogDescription className="text-gray-600 text-base">
+                    <DialogDescription className="text-muted-foreground text-base">
                       {editingStudent ? "Update player information" : "Add a new player to the system"}
                     </DialogDescription>
                   </DialogHeader>
                   <form onSubmit={handleSubmit} className="space-y-4">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div>
-                        <Label htmlFor="name" className="text-gray-700 font-medium">Name</Label>
+                        <Label htmlFor="name" className="text-foreground font-medium">Name</Label>
                         <Input
                           id="name"
                           value={formData.name}
                           onChange={(e) => setFormData((prev) => ({ ...prev, name: e.target.value }))}
                           required
-                          className="mt-1 border-2 border-[#fc7416]/20 rounded-xl focus:border-[#fc7416] focus:ring-[#fc7416]/20"
+                          className="mt-1 border-2 border-border rounded-xl focus:border-accent focus:ring-accent/20"
                         />
                       </div>
                       <div>
-                        <Label htmlFor="email" className="text-gray-700 font-medium">Email</Label>
+                        <Label htmlFor="email" className="text-foreground font-medium">Email</Label>
                         <Input
                           id="email"
                           type="email"
                           value={formData.email}
                           onChange={(e) => setFormData((prev) => ({ ...prev, email: e.target.value }))}
                           required
-                          className="mt-1 border-2 border-[#fc7416]/20 rounded-xl focus:border-[#fc7416] focus:ring-[#fc7416]/20"
+                          className="mt-1 border-2 border-border rounded-xl focus:border-accent focus:ring-accent/20"
                         />
                       </div>
                     </div>
                     
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div>
-                        <Label htmlFor="phone" className="text-gray-700 font-medium">Phone</Label>
+                        <Label htmlFor="phone" className="text-foreground font-medium">Phone</Label>
                         <Input
                           id="phone"
                           value={formData.phone}
                           onChange={(e) => setFormData((prev) => ({ ...prev, phone: e.target.value }))}
-                          className="mt-1 border-2 border-[#fc7416]/20 rounded-xl focus:border-[#fc7416] focus:ring-[#fc7416]/20"
+                          className="mt-1 border-2 border-border rounded-xl focus:border-accent focus:ring-accent/20"
                         />
                       </div>
                       <div>
-                        <Label htmlFor="branch_id" className="text-gray-700 font-medium">Branch</Label>
+                        <Label htmlFor="branch_id" className="text-foreground font-medium">Branch</Label>
                         <Select
                           value={formData.branch_id ?? undefined}
                           onValueChange={(value) => setFormData((prev) => ({ ...prev, branch_id: value }))}
                         >
-                          <SelectTrigger className="mt-1 border-2 border-[#fc7416]/20 rounded-xl focus:border-[#fc7416] focus:ring-[#fc7416]/20">
+                          <SelectTrigger className="mt-1 border-2 border-border rounded-xl focus:border-accent focus:ring-accent/20">
                             <SelectValue placeholder="Select Branch" />
                           </SelectTrigger>
                           <SelectContent>
@@ -331,12 +331,12 @@ export function StudentsManager() {
                     </div>
 
                     <div>
-                      <Label htmlFor="package_type" className="text-gray-700 font-medium">Package Type</Label>
+                      <Label htmlFor="package_type" className="text-foreground font-medium">Package Type</Label>
                       <Select
                         value={formData.package_type ?? undefined}
                         onValueChange={(value) => setFormData((prev) => ({ ...prev, package_type: value }))}
                       >
-                        <SelectTrigger className="mt-1 border-2 border-[#fc7416]/20 rounded-xl focus:border-[#fc7416] focus:ring-[#fc7416]/20">
+                        <SelectTrigger className="mt-1 border-2 border-border rounded-xl focus:border-accent focus:ring-accent/20">
                           <SelectValue placeholder="Select Package Type" />
                         </SelectTrigger>
                         <SelectContent>
@@ -351,18 +351,18 @@ export function StudentsManager() {
                     
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div>
-                        <Label htmlFor="sessions" className="text-gray-700 font-medium">Total Sessions</Label>
+                        <Label htmlFor="sessions" className="text-foreground font-medium">Total Sessions</Label>
                         <Input
                           id="sessions"
                           type="number"
                           min="0"
                           value={formData.sessions}
                           onChange={(e) => setFormData((prev) => ({ ...prev, sessions: parseInt(e.target.value) || 0 }))}
-                          className="mt-1 border-2 border-[#fc7416]/20 rounded-xl focus:border-[#fc7416] focus:ring-[#fc7416]/20"
+                          className="mt-1 border-2 border-border rounded-xl focus:border-accent focus:ring-accent/20"
                         />
                       </div>
                       <div>
-                        <Label htmlFor="remaining_sessions" className="text-gray-700 font-medium">Remaining Sessions</Label>
+                        <Label htmlFor="remaining_sessions" className="text-foreground font-medium">Remaining Sessions</Label>
                         <Input
                           id="remaining_sessions"
                           type="number"
@@ -371,7 +371,7 @@ export function StudentsManager() {
                           onChange={(e) =>
                             setFormData((prev) => ({ ...prev, remaining_sessions: parseInt(e.target.value) || 0 }))
                           }
-                          className="mt-1 border-2 border-[#fc7416]/20 rounded-xl focus:border-[#fc7416] focus:ring-[#fc7416]/20"
+                          className="mt-1 border-2 border-border rounded-xl focus:border-accent focus:ring-accent/20"
                         />
                       </div>
                     </div>
@@ -381,14 +381,14 @@ export function StudentsManager() {
                         type="button"
                         variant="outline"
                         onClick={resetForm}
-                        className="border-[#fc7416]/30 text-[#fc7416] hover:bg-[#fc7416] hover:text-white transition-all duration-300 hover:scale-105"
+                        className="border-border text-muted-foreground hover:bg-muted hover:text-foreground transition-all duration-300 hover:scale-105"
                       >
                         Cancel
                       </Button>
                       <Button
                         type="submit"
                         disabled={createMutation.isPending || updateMutation.isPending}
-                        className="bg-[#fc7416] hover:bg-[#fe822d] text-white transition-all duration-300 hover:scale-105"
+                        className="bg-green-600 hover:bg-green-700 text-white transition-all duration-300 hover:scale-105"
                       >
                         {editingStudent ? "Update" : "Create"}
                       </Button>
@@ -401,29 +401,29 @@ export function StudentsManager() {
           <CardContent className="p-8">
             <div className="mb-6">
               <div className="flex items-center mb-4">
-                <Filter className="h-5 w-5 text-[#fc7416] mr-2" />
-                <h3 className="text-lg font-semibold text-black">Filter Players</h3>
+                <Filter className="h-5 w-5 text-accent mr-2" />
+                <h3 className="text-lg font-semibold text-foreground">Filter Players</h3>
               </div>
               <div className="flex flex-col sm:flex-row sm:items-end gap-4">
                 <div className="relative flex-1">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                   <input
                     type="text"
                     placeholder="Search players..."
-                    className="pl-10 pr-4 py-3 w-full border-2 border-accent/40 rounded-xl text-sm focus:border-[#fc7416] focus:ring-[#fc7416]/20 bg-white"
+                    className="pl-10 pr-4 py-3 w-full border-2 border-border rounded-xl text-sm focus:border-accent focus:ring-accent/20 bg-background text-foreground"
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
                   />
                 </div>
               </div>
-              <p className="text-sm text-gray-600 mt-3">
+              <p className="text-sm text-muted-foreground mt-3">
                 Showing {filteredStudents.length} player{filteredStudents.length === 1 ? '' : 's'}
               </p>
             </div>
-            <div className="border-2 border-black rounded-2xl bg-gradient-to-br from-[#faf0e8]/30 to-white shadow-lg overflow-hidden">
+            <div className="border-2 border-primary rounded-2xl bg-card shadow-lg overflow-hidden">
               <div className="overflow-x-auto">
                 <table className="w-full">
-                  <thead className="bg-black text-white">
+                  <thead className="bg-primary text-primary-foreground">
                     <tr>
                       <th className="py-4 px-6 text-left font-semibold">Player Name</th>
                       <th className="py-4 px-6 text-left font-semibold">Email</th>
@@ -444,29 +444,29 @@ export function StudentsManager() {
                         <tr
                           key={student.id}
                           onClick={() => handleShowRecords(student)}
-                          className={`transition-all duration-300 hover:bg-[#fc7416]/5 cursor-pointer ${
-                            index % 2 === 0 ? "bg-white" : "bg-[#faf0e8]/20"
+                          className={`transition-all duration-300 hover:bg-accent/10 cursor-pointer ${
+                            index % 2 === 0 ? "bg-card" : "bg-muted/20"
                           }`}
                         >
                           <td className="py-4 px-6">
                             <div className="flex items-center space-x-3">
-                              <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#fc7416] to-[#fe822d] flex items-center justify-center text-white font-semibold">
+                              <div className="w-10 h-10 rounded-full bg-gradient-to-br from-secondary to-accent flex items-center justify-center text-white font-semibold">
                                 {student.name.split(" ").map((n) => n[0]).join("").toUpperCase()}
                               </div>
-                              <span className="font-semibold text-black">{student.name}</span>
+                              <span className="font-semibold text-foreground">{student.name}</span>
                             </div>
                           </td>
-                          <td className="py-4 px-6 text-gray-700 font-medium">{student.email}</td>
-                          <td className="py-4 px-6 text-gray-700 font-medium">{student.phone || "N/A"}</td>
-                          <td className="py-4 px-6 text-gray-700 font-medium">
+                          <td className="py-4 px-6 text-muted-foreground font-medium">{student.email}</td>
+                          <td className="py-4 px-6 text-muted-foreground font-medium">{student.phone || "N/A"}</td>
+                          <td className="py-4 px-6 text-muted-foreground font-medium">
                             {branch?.name || "N/A"}
                           </td>
-                          <td className="py-4 px-6 text-gray-700 font-medium">
+                          <td className="py-4 px-6 text-muted-foreground font-medium">
                             {student.package_type || "N/A"}
                           </td>
                           <td className="py-4 px-6">
                             <div className="space-y-2">
-                              <p className="text-gray-700 font-medium">{attended} of {total} sessions attended</p>
+                              <p className="text-muted-foreground font-medium">{attended} of {total} sessions attended</p>
                               <Progress value={progressPercentage} className="h-2 mt-1" />
                             </div>
                           </td>
@@ -476,7 +476,7 @@ export function StudentsManager() {
                                 size="sm"
                                 variant="outline"
                                 onClick={() => handleEdit(student)}
-                                className="border-[#fc7416]/30 text-[#fc7416] hover:bg-[#fc7416] hover:text-white transition-all duration-300 hover:scale-105"
+                                className="border-orange-300 text-orange-600 hover:bg-orange-600 hover:text-white transition-all duration-300 hover:scale-105"
                               >
                                 <Edit className="w-4 h-4 mr-1" />
                                 <span className="hidden sm:inline">Edit</span>
@@ -500,11 +500,11 @@ export function StudentsManager() {
               </div>
               {filteredStudents.length === 0 && (
                 <div className="py-12 text-center">
-                  <Users className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-                  <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                  <Users className="w-16 h-16 text-muted-foreground/50 mx-auto mb-4" />
+                  <h3 className="text-lg font-semibold text-foreground mb-2">
                     {searchTerm ? "No players found" : "No players"}
                   </h3>
-                  <p className="text-gray-600">
+                  <p className="text-muted-foreground">
                     {searchTerm ? "Try adjusting your search." : "Add a new player to get started."}
                   </p>
                 </div>
@@ -513,47 +513,47 @@ export function StudentsManager() {
           </CardContent>
         </Card>
         <Dialog open={isRecordsDialogOpen} onOpenChange={setIsRecordsDialogOpen}>
-          <DialogContent className="max-w-4xl border-2 border-black bg-gradient-to-br from-[#faf0e8]/30 to-white shadow-lg">
+          <DialogContent className="max-w-4xl border-2 border-primary bg-card shadow-lg">
             <DialogHeader>
-              <DialogTitle className="text-2xl font-bold text-black">
+              <DialogTitle className="text-2xl font-bold text-foreground">
                 History Records for {selectedStudent?.name}
               </DialogTitle>
-              <DialogDescription className="text-gray-600 text-base">
+              <DialogDescription className="text-muted-foreground text-base">
                 View session attendance and details for this player
               </DialogDescription>
             </DialogHeader>
             <div className="space-y-6">
-              <div className="border-b border-black pb-4">
-                <h3 className="text-lg font-semibold text-black mb-3">Player Details</h3>
+              <div className="border-b border-border pb-4">
+                <h3 className="text-lg font-semibold text-foreground mb-3">Player Details</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <p className="text-sm text-gray-700"><span className="font-medium">Name:</span> {selectedStudent?.name}</p>
-                    <p className="text-sm text-gray-700"><span className="font-medium">Email:</span> {selectedStudent?.email}</p>
-                    <p className="text-sm text-gray-700"><span className="font-medium">Phone:</span> {selectedStudent?.phone || "N/A"}</p>
+                    <p className="text-sm text-muted-foreground"><span className="font-medium text-foreground">Name:</span> {selectedStudent?.name}</p>
+                    <p className="text-sm text-muted-foreground"><span className="font-medium text-foreground">Email:</span> {selectedStudent?.email}</p>
+                    <p className="text-sm text-muted-foreground"><span className="font-medium text-foreground">Phone:</span> {selectedStudent?.phone || "N/A"}</p>
                   </div>
                   <div>
-                    <p className="text-sm text-gray-700"><span className="font-medium">Branch:</span> {branches?.find(b => b.id === selectedStudent?.branch_id)?.name || "N/A"}</p>
-                    <p className="text-sm text-gray-700"><span className="font-medium">Package Type:</span> {selectedStudent?.package_type || "N/A"}</p>
-                    <p className="text-sm text-gray-700"><span className="font-medium">Total Sessions:</span> {selectedStudent?.sessions || 0}</p>
-                    <p className="text-sm text-gray-700"><span className="font-medium">Remaining Sessions:</span> {selectedStudent?.remaining_sessions}</p>
+                    <p className="text-sm text-muted-foreground"><span className="font-medium text-foreground">Branch:</span> {branches?.find(b => b.id === selectedStudent?.branch_id)?.name || "N/A"}</p>
+                    <p className="text-sm text-muted-foreground"><span className="font-medium text-foreground">Package Type:</span> {selectedStudent?.package_type || "N/A"}</p>
+                    <p className="text-sm text-muted-foreground"><span className="font-medium text-foreground">Total Sessions:</span> {selectedStudent?.sessions || 0}</p>
+                    <p className="text-sm text-muted-foreground"><span className="font-medium text-foreground">Remaining Sessions:</span> {selectedStudent?.remaining_sessions}</p>
                   </div>
                 </div>
               </div>
               <div>
-                <h3 className="text-lg font-semibold text-black mb-3">Session Records</h3>
+                <h3 className="text-lg font-semibold text-foreground mb-3">Session Records</h3>
                 {recordsLoading ? (
                   <div className="text-center py-4">
-                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 mx-auto" style={{ borderColor: "#fc7416" }}></div>
-                    <p className="text-gray-600 mt-2">Loading attendance records...</p>
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-accent mx-auto"></div>
+                    <p className="text-muted-foreground mt-2">Loading attendance records...</p>
                   </div>
                 ) : recordsError ? (
                   <p className="text-red-600 text-sm">Error loading records: {(recordsError as Error).message}</p>
                 ) : attendanceRecords?.length === 0 ? (
-                  <p className="text-gray-600 text-sm">No attendance records found for this player.</p>
+                  <p className="text-muted-foreground text-sm">No attendance records found for this player.</p>
                 ) : (
                   <div className="overflow-x-auto">
-                    <table className="w-full border-2 border-black rounded-xl">
-                      <thead className="bg-black text-white">
+                    <table className="w-full border-2 border-primary rounded-xl">
+                      <thead className="bg-primary text-primary-foreground">
                         <tr>
                           <th className="py-3 px-4 text-left font-semibold"><Calendar className="w-4 h-4 inline mr-2" />Date</th>
                           <th className="py-3 px-4 text-left font-semibold"><Clock className="w-4 h-4 inline mr-2" />Time</th>
@@ -566,17 +566,17 @@ export function StudentsManager() {
                         {attendanceRecords?.map((record, index) => (
                           <tr
                             key={record.session_id}
-                            className={`transition-all duration-300 ${index % 2 === 0 ? "bg-white" : "bg-[#faf0e8]/20"}`}
+                            className={`transition-all duration-300 ${index % 2 === 0 ? "bg-card" : "bg-muted/20"}`}
                           >
-                            <td className="py-3 px-4 text-gray-700">
+                            <td className="py-3 px-4 text-muted-foreground">
                               {format(new Date(record.training_sessions.date), "MMM dd, yyyy")}
                             </td>
-                            <td className="py-3 px-4 text-gray-700">
+                            <td className="py-3 px-4 text-muted-foreground">
                               {format(new Date(`1970-01-01T${record.training_sessions.start_time}`), "hh:mm a")} - 
                               {format(new Date(`1970-01-01T${record.training_sessions.end_time}`), "hh:mm a")}
                             </td>
-                            <td className="py-3 px-4 text-gray-700">{record.training_sessions.branches.name}</td>
-                            <td className="py-3 px-4 text-gray-700">{record.training_sessions.coaches.name}</td>
+                            <td className="py-3 px-4 text-muted-foreground">{record.training_sessions.branches.name}</td>
+                            <td className="py-3 px-4 text-muted-foreground">{record.training_sessions.coaches.name}</td>
                             <td className="py-3 px-4">
                               <span
                                 className={`px-2 py-1 rounded-full text-xs font-medium ${
@@ -584,7 +584,7 @@ export function StudentsManager() {
                                     ? "bg-green-100 text-green-800"
                                     : record.status === "absent"
                                     ? "bg-red-100 text-red-800"
-                                    : "bg-gray-100 text-gray-800"
+                                    : "bg-yellow-100 text-yellow-800"
                                 }`}
                               >
                                 {record.status}
@@ -601,7 +601,7 @@ export function StudentsManager() {
                 <Button
                   variant="outline"
                   onClick={() => setIsRecordsDialogOpen(false)}
-                  className="border-[#fc7416]/30 text-[#fc7416] hover:bg-[#fc7416] hover:text-white transition-all duration-300 hover:scale-105"
+                  className="border-border text-muted-foreground hover:bg-muted hover:text-foreground transition-all duration-300 hover:scale-105"
                 >
                   Close
                 </Button>
