@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
@@ -10,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Calendar as CalendarIcon, Clock, MapPin, Users, Eye, ChevronLeft, ChevronRight } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/context/AuthContext";
-import { format, isSameDay, isBefore, isAfter, startOfMonth, endOfMonth, eachDayOfInterval, addMonths, subMonths } from "date-fns";
+import { format, isSameDay, isBefore, isAfter, startOfMonth, endOfMonth, eachDayOfInterval, addMonths, subMonths, parseISO } from "date-fns";
 
 type Session = {
   id: string;
@@ -65,7 +64,12 @@ export function CoachCalendarManager() {
   });
 
   const selectedDateSessions = selectedDate
-    ? sessions.filter((session) => session.date === format(selectedDate, "yyyy-MM-dd"))
+    ? sessions.filter((session) => {
+        const sessionDate = parseISO(session.date);
+        const isMatch = isSameDay(sessionDate, selectedDate);
+        console.log("Comparing session date:", session.date, "with selected date:", format(selectedDate, "yyyy-MM-dd"), "Match:", isMatch);
+        return isMatch;
+      })
     : [];
 
   console.log("Selected date:", selectedDate);
@@ -91,13 +95,13 @@ export function CoachCalendarManager() {
   const todayDateOnly = new Date(format(today, "yyyy-MM-dd") + "T00:00:00");
 
   const upcomingSessions = sessions.filter(session => {
-    const sessionDate = new Date(session.date + "T00:00:00");
+    const sessionDate = parseISO(session.date);
     return (isAfter(sessionDate, todayDateOnly) || isSameDay(sessionDate, todayDateOnly)) &&
            session.status !== 'cancelled' && session.status !== 'completed';
   }) || [];
 
   const pastSessions = sessions.filter(session => {
-    const sessionDate = new Date(session.date + "T00:00:00");
+    const sessionDate = parseISO(session.date);
     return session.status === 'completed' || isBefore(sessionDate, todayDateOnly);
   }) || [];
 
@@ -200,7 +204,7 @@ export function CoachCalendarManager() {
                 {/* Calendar Days */}
                 <div className="grid grid-cols-7 gap-1 sm:gap-2">
                   {daysInMonth.map(day => {
-                    const daySessions = sessions.filter(session => isSameDay(new Date(session.date), day)) || [];
+                    const daySessions = sessions.filter(session => isSameDay(parseISO(session.date), day)) || [];
                     const hasScheduled = daySessions.some(s => s.status === 'scheduled');
                     const hasCompleted = daySessions.some(s => s.status === 'completed');
                     const hasCancelled = daySessions.some(s => s.status === 'cancelled');
@@ -286,7 +290,7 @@ export function CoachCalendarManager() {
                         <div className="flex flex-col space-y-2">
                           <div className="flex items-center justify-between">
                             <div className="font-semibold text-black text-sm">
-                              {format(new Date(session.date), 'MMM dd, yyyy')}
+                              {format(parseISO(session.date), 'MMM dd, yyyy')}
                             </div>
                             <Badge className={`${getStatusColor(session.status)} text-xs`}>
                               {session.status.charAt(0).toUpperCase() + session.status.slice(1)}
@@ -344,7 +348,7 @@ export function CoachCalendarManager() {
                         <div className="flex flex-col space-y-2">
                           <div className="flex items-center justify-between">
                             <div className="font-semibold text-black text-sm">
-                              {format(new Date(session.date), 'MMM dd, yyyy')}
+                              {format(parseISO(session.date), 'MMM dd, yyyy')}
                             </div>
                             <Badge className={`${getStatusColor(session.status)} text-xs`}>
                               {session.status.charAt(0).toUpperCase() + session.status.slice(1)}
