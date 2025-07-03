@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
@@ -28,6 +27,8 @@ export function CoachCalendarManager() {
   const [currentMonth, setCurrentMonth] = useState<Date>(new Date());
   const [selectedSessionId, setSelectedSessionId] = useState<string | null>(null);
   const [isAttendanceModalOpen, setIsAttendanceModalOpen] = useState(false);
+  const [isUpcomingModalOpen, setIsUpcomingModalOpen] = useState(false);
+  const [isPastModalOpen, setIsPastModalOpen] = useState(false);
   const { coachData, loading } = useAuth();
   const navigate = useNavigate();
 
@@ -127,6 +128,14 @@ export function CoachCalendarManager() {
   const handleAttendanceClick = (sessionId: string) => {
     setSelectedSessionId(sessionId);
     setIsAttendanceModalOpen(true);
+  };
+
+  const handleUpcomingSessionClick = () => {
+    setIsUpcomingModalOpen(true);
+  };
+
+  const handlePastSessionClick = () => {
+    setIsPastModalOpen(true);
   };
 
   if (loading || sessionsLoading) {
@@ -312,14 +321,8 @@ export function CoachCalendarManager() {
                         key={session.id} 
                         className="border border-gray-200 rounded-lg p-4 sm:p-6 hover:border-[#fc7416] hover:shadow-md transition-all duration-200"
                       >
-
-                        {/* Session First Row: Training, Location, Status */}
                         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-4 space-y-4 sm:space-y-0">
-                          
-                          {/* Left Side: Session Info and Location */}
                           <div className="flex flex-col sm:flex-row sm:items-center sm:gap-6">
-                            
-                            {/* Session Number and Time */}
                             <div className="flex items-center gap-4 mb-2 sm:mb-0">
                               <div className="w-8 h-8 bg-[#fc7416] rounded-full flex items-center justify-center text-white font-bold">
                                 {index + 1}
@@ -332,23 +335,18 @@ export function CoachCalendarManager() {
                               </div>
                             </div>
 
-                            {/* Location */}
                             <div className="flex items-center gap-2">
                               <MapPin className="h-4 w-4 sm:h-5 sm:w-5 text-[#fc7416]" />
                               <p className="font-bold text-black text-sm sm:text-base">{session.branches.name}</p>
                             </div>
                           </div>
 
-                          {/* Status Badge */}
                           <Badge className={`${getStatusColor(session.status)} font-semibold px-4 py-2 capitalize rounded-full text-sm`}>
                             {session.status}
                           </Badge>
                         </div>
 
-                        {/* Second Row: Players and Manage Attendance */}
                         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between border-t border-gray-100 pt-4">
-                          
-                          {/* Players */}
                           <div className="flex items-center gap-4 mb-4 sm:mb-0">
                             <div className="w-8 h-8 sm:w-10 sm:h-10 bg-gray-100 rounded-lg flex items-center justify-center">
                               <Users className="h-4 w-4 sm:h-5 sm:w-5 text-[#fc7416]" />
@@ -376,7 +374,6 @@ export function CoachCalendarManager() {
                             </div>
                           </div>
 
-                          {/* Manage Attendance Button */}
                           <Button
                             onClick={() => handleAttendanceClick(session.id)}
                             className="bg-[#fc7416] hover:bg-[#e5661a] text-white font-semibold px-4 sm:px-6 py-2 sm:py-3 rounded-lg transition-colors duration-200 text-sm sm:text-base w-full sm:w-auto"
@@ -388,13 +385,223 @@ export function CoachCalendarManager() {
                     ))}
                   </div>
                 ) : (
-                  /* Simple Empty State */
                   <div className="text-center py-12 sm:py-16">
                     <div className="w-16 h-16 sm:w-20 sm:h-20 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-6">
                       <CalendarIcon className="h-8 w-8 sm:h-10 sm:w-10 text-gray-400" />
                     </div>
                     <h3 className="text-lg sm:text-xl font-bold text-black mb-2">No sessions scheduled</h3>
                     <p className="text-gray-600 text-sm sm:text-base">No training sessions are scheduled for this date.</p>
+                  </div>
+                )}
+              </div>
+            </DialogContent>
+          </Dialog>
+
+          {/* Upcoming Sessions Modal */}
+          <Dialog open={isUpcomingModalOpen} onOpenChange={setIsUpcomingModalOpen}>
+            <DialogContent className="bg-white border border-gray-200 shadow-xl max-w-[95vw] sm:max-w-4xl mx-auto p-0 rounded-lg max-h-[90vh] overflow-y-auto">
+              <DialogHeader className="bg-black text-white px-4 sm:px-8 py-4 sm:py-6 border-b">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <DialogTitle className="text-lg sm:text-xl lg:text-2xl font-bold mb-2">
+                      Upcoming Sessions
+                    </DialogTitle>
+                    <p className="text-gray-300 text-sm sm:text-base">
+                      {upcomingSessions.length} upcoming session{upcomingSessions.length !== 1 ? 's' : ''}
+                    </p>
+                  </div>
+                  
+                  <button 
+                    onClick={() => setIsUpcomingModalOpen(false)} 
+                    className="w-10 h-10 sm:w-12 sm:h-12 bg-[#fc7416] rounded-lg flex items-center justify-center text-white text-xl sm:text-2xl font-bold hover:bg-[#e5661a] transition-colors"
+                  >
+                    ×
+                  </button>
+                </div>
+              </DialogHeader>
+              
+              <div className="p-4 sm:p-8">
+                {upcomingSessions.length > 0 ? (
+                  <div className="space-y-4 sm:space-y-6">
+                    {upcomingSessions.map((session, index) => (
+                      <div 
+                        key={session.id} 
+                        className="border border-gray-200 rounded-lg p-4 sm:p-6 hover:border-[#fc7416] hover:shadow-md transition-all duration-200"
+                      >
+                        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-4 space-y-4 sm:space-y-0">
+                          <div className="flex flex-col sm:flex-row sm:items-center sm:gap-6">
+                            <div className="flex items-center gap-4 mb-2 sm:mb-0">
+                              <div className="w-8 h-8 bg-[#fc7416] rounded-full flex items-center justify-center text-white font-bold">
+                                {index + 1}
+                              </div>
+                              <div>
+                                <h3 className="text-lg sm:text-xl font-bold text-black">
+                                  {formatTime12Hour(session.start_time)} - {formatTime12Hour(session.end_time)}
+                                </h3>
+                                <p className="text-gray-600 text-sm sm:text-base">
+                                  {format(new Date(session.date), 'MMMM dd, yyyy')}
+                                </p>
+                              </div>
+                            </div>
+
+                            <div className="flex items-center gap-2">
+                              <MapPin className="h-4 w-4 sm:h-5 sm:w-5 text-[#fc7416]" />
+                              <p className="font-bold text-black text-sm sm:text-base">{session.branches.name}</p>
+                            </div>
+                          </div>
+
+                          <Badge className={`${getStatusColor(session.status)} font-semibold px-4 py-2 capitalize rounded-full text-sm`}>
+                            {session.status}
+                          </Badge>
+                        </div>
+
+                        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between border-t border-gray-100 pt-4">
+                          <div className="flex items-center gap-4 mb-4 sm:mb-0">
+                            <div className="w-8 h-8 sm:w-10 sm:h-10 bg-gray-100 rounded-lg flex items-center justify-center">
+                              <Users className="h-4 w-4 sm:h-5 sm:w-5 text-[#fc7416]" />
+                            </div>
+                            <div>
+                              <p className="text-sm text-gray-600 font-medium">
+                                Players ({session.session_participants.length})
+                              </p>
+                              <div className="font-semibold text-black text-sm sm:text-base">
+                                {session.session_participants.length > 0 ? (
+                                  <div className="space-y-1">
+                                    {session.session_participants.slice(0, 2).map((participant, idx) => (
+                                      <div key={idx}>{participant.students.name}</div>
+                                    ))}
+                                    {session.session_participants.length > 2 && (
+                                      <div className="text-gray-600 text-sm">
+                                        +{session.session_participants.length - 2} more
+                                      </div>
+                                    )}
+                                  </div>
+                                ) : (
+                                  <span className="text-gray-500">No players assigned</span>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+
+                          <Button
+                            onClick={() => handleAttendanceClick(session.id)}
+                            className="bg-[#fc7416] hover:bg-[#e5661a] text-white font-semibold px-4 sm:px-6 py-2 sm:py-3 rounded-lg transition-colors duration-200 text-sm sm:text-base w-full sm:w-auto"
+                          >
+                            Manage Attendance
+                          </Button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-12 sm:py-16">
+                    <div className="w-16 h-16 sm:w-20 sm:h-20 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                      <Clock className="h-8 w-8 sm:h-10 sm:w-10 text-gray-400" />
+                    </div>
+                    <h3 className="text-lg sm:text-xl font-bold text-black mb-2">No upcoming sessions</h3>
+                    <p className="text-gray-600 text-sm sm:text-base">No training sessions are scheduled for the future.</p>
+                  </div>
+                )}
+              </div>
+            </DialogContent>
+          </Dialog>
+
+          {/* Past Sessions Modal */}
+          <Dialog open={isPastModalOpen} onOpenChange={setIsPastModalOpen}>
+            <DialogContent className="bg-white border border-gray-200 shadow-xl max-w-[95vw] sm:max-w-4xl mx-auto p-0 rounded-lg max-h-[90vh] overflow-y-auto">
+              <DialogHeader className="bg-black text-white px-4 sm:px-8 py-4 sm:py-6 border-b">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <DialogTitle className="text-lg sm:text-xl lg:text-2xl font-bold mb-2">
+                      Past Sessions
+                    </DialogTitle>
+                    <p className="text-gray-300 text-sm sm:text-base">
+                      {pastSessions.length} past session{pastSessions.length !== 1 ? 's' : ''}
+                    </p>
+                  </div>
+                  
+                  <button 
+                    onClick={() => setIsPastModalOpen(false)} 
+                    className="w-10 h-10 sm:w-12 sm:h-12 bg-[#fc7416] rounded-lg flex items-center justify-center text-white text-xl sm:text-2xl font-bold hover:bg-[#e5661a] transition-colors"
+                  >
+                    ×
+                  </button>
+                </div>
+              </DialogHeader>
+              
+              <div className="p-4 sm:p-8">
+                {pastSessions.length > 0 ? (
+                  <div className="space-y-4 sm:space-y-6">
+                    {pastSessions.map((session, index) => (
+                      <div 
+                        key={session.id} 
+                        className="border border-gray-200 rounded-lg p-4 sm:p-6 hover:border-gray-400 hover:shadow-md transition-all duration-200"
+                      >
+                        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-4 space-y-4 sm:space-y-0">
+                          <div className="flex flex-col sm:flex-row sm:items-center sm:gap-6">
+                            <div className="flex items-center gap-4 mb-2 sm:mb-0">
+                              <div className="w-8 h-8 bg-gray-600 rounded-full flex items-center justify-center text-white font-bold">
+                                {index + 1}
+                              </div>
+                              <div>
+                                <h3 className="text-lg sm:text-xl font-bold text-black">
+                                  {formatTime12Hour(session.start_time)} - {formatTime12Hour(session.end_time)}
+                                </h3>
+                                <p className="text-gray-600 text-sm sm:text-base">
+                                  {format(new Date(session.date), 'MMMM dd, yyyy')}
+                                </p>
+                              </div>
+                            </div>
+
+                            <div className="flex items-center gap-2">
+                              <MapPin className="h-4 w-4 sm:h-5 sm:w-5 text-gray-500" />
+                              <p className="font-bold text-black text-sm sm:text-base">{session.branches.name}</p>
+                            </div>
+                          </div>
+
+                          <Badge className={`${getStatusColor(session.status)} font-semibold px-4 py-2 capitalize rounded-full text-sm`}>
+                            {session.status}
+                          </Badge>
+                        </div>
+
+                        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between border-t border-gray-100 pt-4">
+                          <div className="flex items-center gap-4">
+                            <div className="w-8 h-8 sm:w-10 sm:h-10 bg-gray-100 rounded-lg flex items-center justify-center">
+                              <Users className="h-4 w-4 sm:h-5 sm:w-5 text-gray-500" />
+                            </div>
+                            <div>
+                              <p className="text-sm text-gray-600 font-medium">
+                                Players ({session.session_participants.length})
+                              </p>
+                              <div className="font-semibold text-black text-sm sm:text-base">
+                                {session.session_participants.length > 0 ? (
+                                  <div className="space-y-1">
+                                    {session.session_participants.slice(0, 2).map((participant, idx) => (
+                                      <div key={idx}>{participant.students.name}</div>
+                                    ))}
+                                    {session.session_participants.length > 2 && (
+                                      <div className="text-gray-600 text-sm">
+                                        +{session.session_participants.length - 2} more
+                                      </div>
+                                    )}
+                                  </div>
+                                ) : (
+                                  <span className="text-gray-500">No players assigned</span>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-12 sm:py-16">
+                    <div className="w-16 h-16 sm:w-20 sm:h-20 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                      <CalendarIcon className="h-8 w-8 sm:h-10 sm:w-10 text-gray-400" />
+                    </div>
+                    <h3 className="text-lg sm:text-xl font-bold text-black mb-2">No past sessions</h3>
+                    <p className="text-gray-400 text-sm sm:text-base">Completed sessions will appear here.</p>
                   </div>
                 )}
               </div>
@@ -474,14 +681,14 @@ export function CoachCalendarManager() {
                         </TableRow>
                       </TableHeader>
                       <TableBody>
-                        {upcomingSessions.map((session, index) => (
+                        {upcomingSessions.slice(0, 5).map((session, index) => (
                           <TableRow 
                             key={session.id} 
                             className={`
                               hover:bg-green-50 transition-colors border-b border-green-100 cursor-pointer
                               ${index % 2 === 0 ? 'bg-white' : 'bg-green-25'}
                             `}
-                            onClick={() => handleAttendanceClick(session.id)}
+                            onClick={handleUpcomingSessionClick}
                           >
                             <TableCell className="py-4">
                               <div className="font-semibold text-black text-sm">
@@ -511,6 +718,17 @@ export function CoachCalendarManager() {
                         ))}
                       </TableBody>
                     </Table>
+                    {upcomingSessions.length > 5 && (
+                      <div className="p-4 border-t border-green-100 bg-green-50/30">
+                        <Button 
+                          onClick={handleUpcomingSessionClick}
+                          variant="outline" 
+                          className="w-full border-green-300 text-green-700 hover:bg-green-100"
+                        >
+                          View All {upcomingSessions.length} Upcoming Sessions
+                        </Button>
+                      </div>
+                    )}
                   </div>
                 </div>
               ) : (
@@ -548,13 +766,14 @@ export function CoachCalendarManager() {
                         </TableRow>
                       </TableHeader>
                       <TableBody>
-                        {pastSessions.map((session, index) => (
+                        {pastSessions.slice(0, 5).map((session, index) => (
                           <TableRow 
                             key={session.id} 
                             className={`
-                              hover:bg-gray-50 transition-colors border-b border-gray-100
+                              hover:bg-gray-50 transition-colors border-b border-gray-100 cursor-pointer
                               ${index % 2 === 0 ? 'bg-white' : 'bg-gray-25'}
                             `}
+                            onClick={handlePastSessionClick}
                           >
                             <TableCell className="py-4">
                               <div className="font-semibold text-black text-sm">
@@ -584,6 +803,17 @@ export function CoachCalendarManager() {
                         ))}
                       </TableBody>
                     </Table>
+                    {pastSessions.length > 5 && (
+                      <div className="p-4 border-t border-gray-100 bg-gray-50/30">
+                        <Button 
+                          onClick={handlePastSessionClick}
+                          variant="outline" 
+                          className="w-full border-gray-300 text-gray-700 hover:bg-gray-100"
+                        >
+                          View All {pastSessions.length} Past Sessions
+                        </Button>
+                      </div>
+                    )}
                   </div>
                 </div>
               ) : (
