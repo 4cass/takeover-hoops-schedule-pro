@@ -31,34 +31,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const fetchUserRole = async (currentUser: User) => {
     try {
-      console.log("Fetching role for user:", currentUser.email);
+      console.log("Fetching role for user:", currentUser.email, "User ID:", currentUser.id);
       
-      // Try to find the user in coaches table by auth_id first, then by email
-      let { data: coachRecord, error: coachError } = await supabase
+      // First, try to find the user in coaches table by email
+      const { data: coachRecord, error: coachError } = await supabase
         .from("coaches")
         .select("*")
-        .eq("auth_id", currentUser.id)
+        .eq("email", currentUser.email)
         .maybeSingle();
 
-      console.log("Coach record by auth_id:", coachRecord, "Error:", coachError);
-
-      // If not found by auth_id, try by email
-      if (!coachRecord && !coachError) {
-        console.log("Trying to find coach by email...");
-        const { data: emailRecord, error: emailError } = await supabase
-          .from("coaches")
-          .select("*")
-          .eq("email", currentUser.email)
-          .maybeSingle();
-        
-        coachRecord = emailRecord;
-        coachError = emailError;
-        console.log("Coach record by email:", coachRecord, "Error:", coachError);
-      }
+      console.log("Coach record found:", coachRecord);
+      console.log("Coach query error:", coachError);
 
       if (coachError) {
         console.error("Error fetching coach record:", coachError);
-        toast.error("Failed to fetch user profile");
+        toast.error("Failed to fetch user profile: " + coachError.message);
         setRole(null);
         setCoachData(null);
         return;
@@ -66,6 +53,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       if (coachRecord) {
         console.log("Found coach record:", coachRecord);
+        console.log("Coach role from DB:", coachRecord.role);
         
         // Update auth_id if it's missing
         if (!coachRecord.auth_id) {
@@ -78,36 +66,89 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           if (updateError) {
             console.error("Error updating auth_id:", updateError);
           } else {
+            console.log("Successfully updated auth_id");
             coachRecord.auth_id = currentUser.id;
           }
         }
 
         const dbRole = coachRecord.role;
+        console.log("Processing role:", dbRole, "Type:", typeof dbRole);
+        
         if (dbRole && isValidRole(dbRole)) {
+          console.log("Setting role to:", dbRole);
           setRole(dbRole);
           setCoachData(coachRecord);
-          console.log("Set role to:", dbRole, "Coach data:", coachRecord);
+          toast.success(`Welcome back! Logged in as ${dbRole}`);
         } else {
-          console.log("Invalid or missing role in database:", dbRole, "Setting default role to 'coach'");
-          // Set default role to 'coach' if role is invalid or missing
-          setRole('coach');
-          setCoachData(coachRecord);
-          
-          // Update the database with the default role
-          const { error: updateRoleError } = await supabase
-            .from("coaches")
-            .update({ role: 'coach' })
-            .eq("id", coachRecord.id);
-          
-          if (updateRoleError) {
-            console.error("Error updating role to default:", updateRoleError);
+          console.log("Invalid or missing role in database:", dbRole);
+          // Check if this specific email should be admin
+          if (currentUser.email === 'chaewonniya@gmail.com') {
+            console.log("Detected admin email, setting role to admin and updating DB");
+            setRole('admin');
+            setCoachData({ ...coachRecord, role: 'admin' });
+            
+            // Update the database with admin role
+            const { error: updateRoleError } = await supabase
+              .from("coaches")
+              .update({ role: 'admin' })
+              .eq("id", coachRecord.id);
+            
+            if (updateRoleError) {
+              console.error("Error updating role to admin:", updateRoleError);
+            } else {
+              console.log("Successfully updated role to admin");
+            }
+            
+            toast.success("Welcome back, Admin!");
+          } else {
+            console.log("Setting default role to 'coach'");
+            setRole('coach');
+            setCoachData({ ...coachRecord, role: 'coach' });
+            
+            // Update the database with the default role
+            const { error: updateRoleError } = await supabase
+              .from("coaches")
+              .update({ role: 'coach' })
+              .eq("id", coachRecord.id);
+            
+            if (updateRoleError) {
+              console.error("Error updating role to default:", updateRoleError);
+            }
           }
         }
       } else {
-        console.log("No coach record found for user - this might be a new user");
-        toast.error("No coach profile found. Please contact administrator.");
-        setRole(null);
-        setCoachData(null);
+        console.log("No coach record found for user");
+        
+        // Check if this is the admin email that needs a record created
+        if (currentUser.email === 'chaewonniya@gmail.com') {
+          console.log("Creating admin coach record");
+          const { data: newCoachRecord, error: createError } = await supabase
+            .from("coaches")
+            .insert({
+              name: currentUser.email.split('@')[0],
+              email: currentUser.email,
+              role: 'admin',
+              auth_id: currentUser.id
+            })
+            .select()
+            .single();
+          
+          if (createError) {
+            console.error("Error creating admin coach record:", createError);
+            toast.error("Failed to create admin profile: " + createError.message);
+            setRole(null);
+            setCoachData(null);
+          } else {
+            console.log("Successfully created admin coach record:", newCoachRecord);
+            setRole('admin');
+            setCoachData(newCoachRecord);
+            toast.success("Admin profile created successfully!");
+          }
+        } else {
+          toast.error("No coach profile found. Please contact administrator.");
+          setRole(null);
+          setCoachData(null);
+        }
       }
     } catch (error) {
       console.error("Exception while fetching role:", error);
