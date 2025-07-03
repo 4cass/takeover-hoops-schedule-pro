@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -23,6 +22,13 @@ type AttendanceRecord = Database["public"]["Tables"]["attendance_records"]["Row"
   };
 };
 
+const PACKAGE_TYPES = [
+  "Camp Training",
+  "Personal Training",
+  "Group Training",
+  "Elite Training"
+];
+
 export function StudentsManager() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isRecordsDialogOpen, setIsRecordsDialogOpen] = useState(false);
@@ -36,6 +42,7 @@ export function StudentsManager() {
     sessions: 0,
     remaining_sessions: 0,
     branch_id: null as string | null,
+    package_type: null as string | null,
   });
 
   const queryClient = useQueryClient();
@@ -117,6 +124,7 @@ export function StudentsManager() {
           sessions: student.sessions,
           remaining_sessions: student.remaining_sessions,
           branch_id: student.branch_id,
+          package_type: student.package_type,
         }])
         .select()
         .single();
@@ -145,6 +153,7 @@ export function StudentsManager() {
           sessions: student.sessions,
           remaining_sessions: student.remaining_sessions,
           branch_id: student.branch_id,
+          package_type: student.package_type,
         })
         .eq("id", id)
         .select()
@@ -185,6 +194,7 @@ export function StudentsManager() {
       sessions: 0,
       remaining_sessions: 0,
       branch_id: null,
+      package_type: null,
     });
     setEditingStudent(null);
     setIsDialogOpen(false);
@@ -208,6 +218,7 @@ export function StudentsManager() {
       sessions: student.sessions || 0,
       remaining_sessions: student.remaining_sessions,
       branch_id: student.branch_id || null,
+      package_type: student.package_type || null,
     });
     setIsDialogOpen(true);
   };
@@ -316,6 +327,24 @@ export function StudentsManager() {
                       </Select>
                     </div>
                     <div>
+                      <Label htmlFor="package_type" className="text-gray-700 font-medium">Package Type</Label>
+                      <Select
+                        value={formData.package_type ?? undefined}
+                        onValueChange={(value) => setFormData((prev) => ({ ...prev, package_type: value }))}
+                      >
+                        <SelectTrigger className="mt-1 border-2 border-[#fc7416]/20 rounded-xl focus:border-[#fc7416] focus:ring-[#fc7416]/20">
+                          <SelectValue placeholder="Select Package Type" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {PACKAGE_TYPES.map((packageType) => (
+                            <SelectItem key={packageType} value={packageType}>
+                              {packageType}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div>
                       <Label htmlFor="sessions" className="text-gray-700 font-medium">Total Sessions</Label>
                       <Input
                         id="sessions"
@@ -392,6 +421,7 @@ export function StudentsManager() {
                       <th className="py-4 px-6 text-left font-semibold">Email</th>
                       <th className="py-4 px-6 text-left font-semibold">Phone</th>
                       <th className="py-4 px-6 text-left font-semibold">Branch</th>
+                      <th className="py-4 px-6 text-left font-semibold">Package Type</th>
                       <th className="py-4 px-6 text-left font-semibold">Session Progress</th>
                       <th className="py-4 px-6 text-left font-semibold">Actions</th>
                     </tr>
@@ -422,6 +452,9 @@ export function StudentsManager() {
                           <td className="py-4 px-6 text-gray-700 font-medium">{student.phone || "N/A"}</td>
                           <td className="py-4 px-6 text-gray-700 font-medium">
                             {branch?.name || "N/A"}
+                          </td>
+                          <td className="py-4 px-6 text-gray-700 font-medium">
+                            {student.package_type || "N/A"}
                           </td>
                           <td className="py-4 px-6">
                             <div className="space-y-2">
@@ -492,6 +525,7 @@ export function StudentsManager() {
                   </div>
                   <div>
                     <p className="text-sm text-gray-700"><span className="font-medium">Branch:</span> {branches?.find(b => b.id === selectedStudent?.branch_id)?.name || "N/A"}</p>
+                    <p className="text-sm text-gray-700"><span className="font-medium">Package Type:</span> {selectedStudent?.package_type || "N/A"}</p>
                     <p className="text-sm text-gray-700"><span className="font-medium">Total Sessions:</span> {selectedStudent?.sessions || 0}</p>
                     <p className="text-sm text-gray-700"><span className="font-medium">Remaining Sessions:</span> {selectedStudent?.remaining_sessions}</p>
                   </div>
