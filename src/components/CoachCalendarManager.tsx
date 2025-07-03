@@ -131,10 +131,12 @@ export function CoachCalendarManager() {
   };
 
   const handleUpcomingSessionClick = () => {
+    console.log("Opening upcoming sessions modal");
     setIsUpcomingModalOpen(true);
   };
 
   const handlePastSessionClick = () => {
+    console.log("Opening past sessions modal");
     setIsPastModalOpen(true);
   };
 
@@ -286,7 +288,7 @@ export function CoachCalendarManager() {
             </CardContent>
           </Card>
 
-          {/* Sessions Modal */}
+          {/* Sessions Modal for Selected Date */}
           <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
             <DialogContent className="bg-white border border-gray-200 shadow-xl max-w-[95vw] sm:max-w-4xl mx-auto p-0 rounded-lg max-h-[90vh] overflow-y-auto">
               
@@ -688,7 +690,10 @@ export function CoachCalendarManager() {
                               hover:bg-green-50 transition-colors border-b border-green-100 cursor-pointer
                               ${index % 2 === 0 ? 'bg-white' : 'bg-green-25'}
                             `}
-                            onClick={handleUpcomingSessionClick}
+                            onClick={() => {
+                              console.log("Clicked upcoming session row");
+                              handleUpcomingSessionClick();
+                            }}
                           >
                             <TableCell className="py-4">
                               <div className="font-semibold text-black text-sm">
@@ -721,7 +726,10 @@ export function CoachCalendarManager() {
                     {upcomingSessions.length > 5 && (
                       <div className="p-4 border-t border-green-100 bg-green-50/30">
                         <Button 
-                          onClick={handleUpcomingSessionClick}
+                          onClick={() => {
+                            console.log("Clicked View All upcoming sessions");
+                            handleUpcomingSessionClick();
+                          }}
                           variant="outline" 
                           className="w-full border-green-300 text-green-700 hover:bg-green-100"
                         >
@@ -773,7 +781,10 @@ export function CoachCalendarManager() {
                               hover:bg-gray-50 transition-colors border-b border-gray-100 cursor-pointer
                               ${index % 2 === 0 ? 'bg-white' : 'bg-gray-25'}
                             `}
-                            onClick={handlePastSessionClick}
+                            onClick={() => {
+                              console.log("Clicked past session row");
+                              handlePastSessionClick();
+                            }}
                           >
                             <TableCell className="py-4">
                               <div className="font-semibold text-black text-sm">
@@ -806,7 +817,10 @@ export function CoachCalendarManager() {
                     {pastSessions.length > 5 && (
                       <div className="p-4 border-t border-gray-100 bg-gray-50/30">
                         <Button 
-                          onClick={handlePastSessionClick}
+                          onClick={() => {
+                            console.log("Clicked View All past sessions");
+                            handlePastSessionClick();
+                          }}
                           variant="outline" 
                           className="w-full border-gray-300 text-gray-700 hover:bg-gray-100"
                         >
