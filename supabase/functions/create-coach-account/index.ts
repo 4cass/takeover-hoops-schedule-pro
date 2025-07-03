@@ -37,15 +37,15 @@ const handler = async (req: Request): Promise<Response> => {
 
     console.log("Creating coach account for:", { name, email, phone, package_type });
 
-    // Create the user account with default password and proper metadata
+    // Create the user account with proper metadata structure
     const { data: authData, error: authError } = await supabaseAdmin.auth.admin.createUser({
       email: email,
       password: "TOcoachAccount!1",
-      email_confirm: true, // Skip email confirmation
+      email_confirm: true,
       user_metadata: {
+        display_name: name,
         name: name,
-        role: 'coach',
-        display_name: name // Add display_name to prevent trigger error
+        role: 'coach'
       }
     });
 
@@ -56,17 +56,20 @@ const handler = async (req: Request): Promise<Response> => {
 
     console.log("Auth user created successfully:", authData.user?.id);
 
+    // Wait a moment for the trigger to complete
+    await new Promise(resolve => setTimeout(resolve, 1000));
+
     // Check if coach record was automatically created by trigger
     const { data: existingCoach } = await supabaseAdmin
       .from("coaches")
-      .select("id")
+      .select("*")
       .eq("auth_id", authData.user?.id)
       .single();
 
     let coachData;
 
     if (existingCoach) {
-      // Update the existing coach record created by trigger
+      // Update the existing coach record created by trigger with complete information
       const { data: updatedCoach, error: updateError } = await supabaseAdmin
         .from("coaches")
         .update({
