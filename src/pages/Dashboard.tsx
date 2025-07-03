@@ -58,7 +58,7 @@ export default function Dashboard() {
           </div>
           <button 
             onClick={() => window.location.href = "/login"}
-            className="responsive-button bg-accent text-accent-foreground rounded hover:bg-accent/90 transition-colors"
+            className="responsive-button bg-accent text-accent-foreground rounded hover:bg-secondary transition-colors"
           >
             Back to Login
           </button>

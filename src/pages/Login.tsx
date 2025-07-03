@@ -79,7 +79,7 @@ export default function Login() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background p-4">
+    <div className="min-h-screen flex items-center justify-center bg-background responsive-padding">
       <Card className="w-full max-w-sm sm:max-w-md shadow-lg border-2 border-border bg-card">
         <CardHeader className="text-center">
           <CardTitle className="responsive-subheading text-primary">
@@ -135,7 +135,7 @@ export default function Login() {
 
             <Button
               type="submit"
-              className="w-full bg-accent hover:bg-accent/90 text-accent-foreground responsive-button"
+              className="w-full bg-accent hover:bg-secondary text-accent-foreground responsive-button"
               disabled={loading}
             >
               {loading

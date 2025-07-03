@@ -7,9 +7,9 @@
 
 @layer base {
   :root {
-    /* Background: #efeff1 converted to HSL */
+    /* Background: #EFEFF1 converted to HSL */
     --background: 240 6% 94%;
-    /* Primary: #3a3a3c converted to HSL */
+    /* Primary: #3A3A3C converted to HSL */
     --foreground: 240 2% 23%;
 
     /* Card backgrounds using slightly lighter version of background */
@@ -19,7 +19,7 @@
     --popover: 240 8% 96%;
     --popover-foreground: 240 2% 23%;
 
-    /* Primary: #3a3a3c */
+    /* Primary: #3A3A3C */
     --primary: 240 2% 23%;
     --primary-foreground: 240 6% 94%;
 

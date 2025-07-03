@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -185,35 +184,35 @@ export function CoachesManager() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-white p-6">
+      <div className="min-h-screen bg-background responsive-padding">
         <div className="max-w-7xl mx-auto text-center py-16">
-          <Users className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-          <h3 className="text-2xl font-bold text-black mb-3">Loading coaches...</h3>
-          <p className="text-lg text-gray-600">Please wait while we fetch the coach data.</p>
+          <Users className="w-16 h-16 text-muted mx-auto mb-4" />
+          <h3 className="responsive-subheading font-bold text-foreground mb-3">Loading coaches...</h3>
+          <p className="responsive-body text-muted-foreground">Please wait while we fetch the coach data.</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-white pt-4 p-6">
-      <div className="max-w-7xl mx-auto space-y-8 -mt-5">
+    <div className="min-h-screen bg-background pt-4 responsive-padding">
+      <div className="max-w-7xl mx-auto responsive-spacing -mt-5">
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-4xl font-bold text-black mb-2 tracking-tight">Coaches Manager</h1>
-          <p className="text-lg text-gray-700">Manage coach information and session history</p>
+          <h1 className="responsive-heading font-bold text-foreground mb-2 tracking-tight">Coaches Manager</h1>
+          <p className="responsive-body text-muted-foreground">Manage coach information and session history</p>
         </div>
 
         {/* Coaches Card */}
-        <Card className="border-2 border-black bg-white/90 backdrop-blur-sm shadow-xl">
-          <CardHeader className="border-b border-black bg-black">
+        <Card className="border-2 border-primary bg-card backdrop-blur-sm shadow-xl">
+          <CardHeader className="border-b border-primary bg-primary">
             <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between space-y-4 lg:space-y-0">
               <div>
-                <CardTitle className="text-2xl font-bold text-white flex items-center">
-                  <Users className="h-6 w-6 mr-3 text-[#fc7416]" />
+                <CardTitle className="responsive-subheading font-bold text-primary-foreground flex items-center">
+                  <Users className="h-6 w-6 mr-3 text-accent" />
                   Coach Management
                 </CardTitle>
-                <CardDescription className="text-gray-400 text-base">
+                <CardDescription className="text-primary-foreground/80 responsive-body">
                   View and manage coach profiles
                 </CardDescription>
               </div>
@@ -221,50 +220,50 @@ export function CoachesManager() {
                 <DialogTrigger asChild>
                   <Button
                     onClick={() => resetForm()}
-                    className="bg-[#fc7416] hover:bg-[#fe822d] text-white transition-all duration-300 hover:scale-105"
+                    className="bg-accent hover:bg-secondary text-accent-foreground transition-all duration-300 hover:scale-105 responsive-button"
                   >
                     <Plus className="w-4 h-4 mr-2" />
                     Add Coach
                   </Button>
                 </DialogTrigger>
-                <DialogContent className="border-2 border-[#fc7416]/20 bg-gradient-to-br from-[#faf0e8]/30 to-white shadow-lg">
+                <DialogContent className="border-2 border-accent/20 bg-gradient-to-br from-accent/5 to-card shadow-lg max-w-[95vw] sm:max-w-md">
                   <DialogHeader>
-                    <DialogTitle className="text-2xl font-bold text-black">
+                    <DialogTitle className="responsive-subheading font-bold text-foreground">
                       {editingCoach ? "Edit Coach" : "Create Coach Account"}
                     </DialogTitle>
-                    <DialogDescription className="text-gray-600 text-base">
+                    <DialogDescription className="text-muted-foreground responsive-body">
                       {editingCoach ? "Update coach information" : "Create a new coach account with login credentials"}
                     </DialogDescription>
                   </DialogHeader>
-                  <form onSubmit={handleSubmit} className="space-y-6">
+                  <form onSubmit={handleSubmit} className="responsive-spacing">
                     <div>
-                      <Label htmlFor="name" className="text-gray-700 font-medium">Name</Label>
+                      <Label htmlFor="name" className="text-foreground font-medium responsive-small">Name</Label>
                       <Input
                         id="name"
                         value={formData.name}
                         onChange={(e) => setFormData((prev) => ({ ...prev, name: e.target.value }))}
                         required
-                        className="mt-1 pl-4 pr-4 py-3 border-2 border-[#fc7416]/20 rounded-xl text-sm focus:border-[#fc7416] focus:ring-[#fc7416]/20 bg-white"
+                        className="mt-1 responsive-button border-2 border-accent/20 rounded-xl focus:border-accent focus:ring-accent/20 bg-background"
                       />
                     </div>
                     <div>
-                      <Label htmlFor="email" className="text-gray-700 font-medium">Email</Label>
+                      <Label htmlFor="email" className="text-foreground font-medium responsive-small">Email</Label>
                       <Input
                         id="email"
                         type="email"
                         value={formData.email}
                         onChange={(e) => setFormData((prev) => ({ ...prev, email: e.target.value }))}
                         required
-                        className="mt-1 pl-4 pr-4 py-3 border-2 border-[#fc7416]/20 rounded-xl text-sm focus:border-[#fc7416] focus:ring-[#fc7416]/20 bg-white"
+                        className="mt-1 responsive-button border-2 border-accent/20 rounded-xl focus:border-accent focus:ring-accent/20 bg-background"
                       />
                     </div>
                     <div>
-                      <Label htmlFor="phone" className="text-gray-700 font-medium">Phone</Label>
+                      <Label htmlFor="phone" className="text-foreground font-medium responsive-small">Phone</Label>
                       <Input
                         id="phone"
                         value={formData.phone}
                         onChange={(e) => setFormData((prev) => ({ ...prev, phone: e.target.value }))}
-                        className="mt-1 pl-4 pr-4 py-3 border-2 border-[#fc7416]/20 rounded-xl text-sm focus:border-[#fc7416] focus:ring-[#fc7416]/20 bg-white"
+                        className="mt-1 responsive-button border-2 border-accent/20 rounded-xl focus:border-accent focus:ring-accent/20 bg-background"
                       />
                     </div>
                     {!editingCoach && (
@@ -275,19 +274,19 @@ export function CoachesManager() {
                         <p className="text-xs text-blue-600 mt-1">The coach can change this password after their first login.</p>
                       </div>
                     )}
-                    <div className="flex justify-end space-x-3">
+                    <div className="flex flex-col sm:flex-row justify-end space-y-2 sm:space-y-0 sm:space-x-3">
                       <Button
                         type="button"
                         variant="outline"
                         onClick={resetForm}
-                        className="border-[#fc7416]/30 text-[#fc7416] hover:bg-[#fc7416] hover:text-white transition-all duration-300 hover:scale-105"
+                        className="border-accent/30 text-accent hover:bg-accent hover:text-accent-foreground transition-all duration-300 hover:scale-105 responsive-button mobile-full-width"
                       >
                         Cancel
                       </Button>
                       <Button
                         type="submit"
                         disabled={createMutation.isPending || updateMutation.isPending}
-                        className="bg-[#fc7416] hover:bg-[#fe822d] text-white transition-all duration-300 hover:scale-105"
+                        className="bg-accent hover:bg-secondary text-accent-foreground transition-all duration-300 hover:scale-105 responsive-button mobile-full-width"
                       >
                         {createMutation.isPending || updateMutation.isPending ? "Processing..." : editingCoach ? "Update" : "Create Account"}
                       </Button>
@@ -297,19 +296,19 @@ export function CoachesManager() {
               </Dialog>
             </div>
           </CardHeader>
-          <CardContent className="p-8">
+          <CardContent className="responsive-padding">
             {/* Search and Filter */}
             <div className="mb-6">
               <div className="flex items-center mb-4">
-                <Filter className="h-5 w-5 text-[#fc7416] mr-2" />
-                <h3 className="text-lg font-semibold text-black">Filter Coaches</h3>
+                <Filter className="h-5 w-5 text-accent mr-2" />
+                <h3 className="responsive-body font-semibold text-foreground">Filter Coaches</h3>
               </div>
               <div className="relative max-w-md">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                 <input
                   type="text"
                   placeholder="Search coaches..."
-                  className="pl-10 pr-4 py-3 w-full border-2 border-accent/40 rounded-xl text-sm focus:border-[#fc7416] focus:ring-[#fc7416]/20 bg-white"
+                  className="pl-10 pr-4 py-3 w-full border-2 border-accent/40 rounded-xl responsive-small focus:border-accent focus:ring-accent/20 bg-background"
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                 />
@@ -317,10 +316,10 @@ export function CoachesManager() {
             </div>
 
             {/* Coaches Table */}
-            <div className="border-2 border-black rounded-2xl bg-gradient-to-br from-[#faf0e8]/30 to-white shadow-lg overflow-hidden">
+            <div className="border-2 border-primary rounded-2xl bg-gradient-to-br from-accent/5 to-card shadow-lg overflow-hidden">
               <div className="overflow-x-auto">
-                <table className="w-full">
-                  <thead className="bg-black text-white">
+                <table className="w-full responsive-table">
+                  <thead className="bg-primary text-primary-foreground">
                     <tr>
                       <th className="py-4 px-6 text-left font-semibold">Coach Name</th>
                       <th className="py-4 px-6 text-left font-semibold">Email</th>
@@ -333,27 +332,27 @@ export function CoachesManager() {
                       <tr
                         key={coach.id}
                         onClick={() => handleShowRecords(coach)}
-                        className={`transition-all duration-300 hover:bg-[#fc7416]/5 cursor-pointer ${
-                          index % 2 === 0 ? "bg-white" : "bg-[#faf0e8]/20"
+                        className={`transition-all duration-300 hover:bg-accent/5 cursor-pointer ${
+                          index % 2 === 0 ? "bg-background" : "bg-accent/5"
                         }`}
                       >
                         <td className="py-4 px-6">
                           <div className="flex items-center space-x-3">
-                            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#fc7416] to-[#fe822d] flex items-center justify-center text-white font-semibold">
+                            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-accent to-secondary flex items-center justify-center text-accent-foreground font-semibold">
                               {coach.name.split(" ").map((n) => n[0]).join("").toUpperCase()}
                             </div>
-                            <span className="font-semibold text-black">{coach.name}</span>
+                            <span className="font-semibold text-foreground">{coach.name}</span>
                           </div>
                         </td>
-                        <td className="py-4 px-6 text-gray-700 font-medium">{coach.email}</td>
-                        <td className="py-4 px-6 text-gray-700 font-medium">{coach.phone || "N/A"}</td>
+                        <td className="py-4 px-6 text-muted-foreground font-medium">{coach.email}</td>
+                        <td className="py-4 px-6 text-muted-foreground font-medium">{coach.phone || "N/A"}</td>
                         <td className="py-4 px-6" onClick={(e) => e.stopPropagation()}>
                           <div className="flex items-center space-x-2">
                             <Button
                               size="sm"
                               variant="outline"
                               onClick={() => handleEdit(coach)}
-                              className="border-[#fc7416]/30 text-[#fc7416] hover:bg-[#fc7416] hover:text-white transition-all duration-300 hover:scale-105"
+                              className="border-accent/30 text-accent hover:bg-accent hover:text-accent-foreground transition-all duration-300 hover:scale-105"
                             >
                               <Edit className="w-4 h-4 mr-1" />
                               <span className="hidden sm:inline">Edit</span>
@@ -362,7 +361,7 @@ export function CoachesManager() {
                               size="sm"
                               variant="destructive"
                               onClick={() => deleteMutation.mutate(coach.id)}
-                              className="bg-red-600 hover:bg-red-700 text-white transition-all duration-300 hover:scale-105"
+                              className="bg-destructive hover:bg-destructive/90 text-destructive-foreground transition-all duration-300 hover:scale-105"
                             >
                               <Trash2 className="w-4 h-4 mr-1" />
                               <span className="hidden sm:inline">Delete</span>
@@ -376,11 +375,11 @@ export function CoachesManager() {
               </div>
               {filteredCoaches.length === 0 && (
                 <div className="py-12 text-center">
-                  <Users className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-                  <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                  <Users className="w-16 h-16 text-muted mx-auto mb-4" />
+                  <h3 className="responsive-body font-semibold text-foreground mb-2">
                     {searchTerm ? "No coaches found" : "No coaches"}
                   </h3>
-                  <p className="text-gray-600">
+                  <p className="text-muted-foreground responsive-small">
                     {searchTerm ? "Try adjusting your search terms." : "Add a new coach to get started."}
                   </p>
                 </div>
@@ -391,24 +390,24 @@ export function CoachesManager() {
 
         {/* Session Records Modal */}
         <Dialog open={isRecordsDialogOpen} onOpenChange={setIsRecordsDialogOpen}>
-          <DialogContent className="max-w-4xl border-2 border-[#fc7416]/20 bg-gradient-to-br from-[#faf0e8]/30 to-white shadow-lg">
+          <DialogContent className="max-w-[95vw] sm:max-w-4xl border-2 border-accent/20 bg-gradient-to-br from-accent/5 to-card shadow-lg">
             <DialogHeader>
-              <DialogTitle className="text-2xl font-bold text-black">
+              <DialogTitle className="responsive-subheading font-bold text-foreground">
                 Session History for {selectedCoach?.name}
               </DialogTitle>
-              <DialogDescription className="text-gray-600 text-base">
+              <DialogDescription className="text-muted-foreground responsive-body">
                 View session details for this coach
               </DialogDescription>
             </DialogHeader>
-            <div className="space-y-6">
+            <div className="responsive-spacing">
               {/* Coach Details */}
-              <div className="border-b border-black pb-4">
-                <h3 className="text-lg font-semibold text-black mb-3">Coach Details</h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="border-b border-primary pb-4">
+                <h3 className="responsive-body font-semibold text-foreground mb-3">Coach Details</h3>
+                <div className="responsive-grid-2">
                   <div>
-                    <p className="text-sm text-gray-700"><span className="font-medium">Name:</span> {selectedCoach?.name}</p>
-                    <p className="text-sm text-gray-700"><span className="font-medium">Email:</span> {selectedCoach?.email}</p>
-                    <p className="text-sm text-gray-700"><span className="font-medium">Phone:</span> {selectedCoach?.phone || "N/A"}</p>
+                    <p className="responsive-small text-muted-foreground"><span className="font-medium">Name:</span> {selectedCoach?.name}</p>
+                    <p className="responsive-small text-muted-foreground"><span className="font-medium">Email:</span> {selectedCoach?.email}</p>
+                    <p className="responsive-small text-muted-foreground"><span className="font-medium">Phone:</span> {selectedCoach?.phone || "N/A"}</p>
                   </div>
                 </div>
               </div>
@@ -416,19 +415,19 @@ export function CoachesManager() {
               {/* Session Records */}
               <div>
                 <div className="flex items-center mb-4">
-                  <Filter className="h-5 w-5 text-[#fc7416] mr-2" />
-                  <h3 className="text-lg font-semibold text-black">Session Records</h3>
+                  <Filter className="h-5 w-5 text-accent mr-2" />
+                  <h3 className="responsive-body font-semibold text-foreground">Session Records</h3>
                 </div>
                 <div className="mb-4 max-w-md">
-                  <Label htmlFor="filter-session-package" className="flex items-center text-sm font-medium text-gray-700 mb-2">
-                    <Users className="w-4 h-4 mr-2" style={{ color: '#fc7416' }} />
+                  <Label htmlFor="filter-session-package" className="flex items-center responsive-small font-medium text-foreground mb-2">
+                    <Users className="w-4 h-4 mr-2 text-accent" />
                     Filter by Package Type
                   </Label>
                   <Select
                     value={filterSessionPackageType}
                     onValueChange={(value: "All" | "Personal Training" | "Camp Training") => setFilterSessionPackageType(value)}
                   >
-                    <SelectTrigger className="border-2 focus:border-[#fc7416] rounded-xl">
+                    <SelectTrigger className="border-2 focus:border-accent rounded-xl">
                       <SelectValue placeholder="Select package type" />
                     </SelectTrigger>
                     <SelectContent>
@@ -437,27 +436,27 @@ export function CoachesManager() {
                       <SelectItem value="Camp Training">Camp Training</SelectItem>
                     </SelectContent>
                   </Select>
-                  <p className="text-sm text-gray-600 mt-2">
+                  <p className="responsive-small text-muted-foreground mt-2">
                     Showing {filteredSessionRecords.length} session{filteredSessionRecords.length === 1 ? '' : 's'}
                   </p>
                 </div>
                 {recordsLoading ? (
                   <div className="text-center py-4">
-                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 mx-auto" style={{ borderColor: '#fc7416' }}></div>
-                    <p className="text-gray-600 mt-2">Loading session records...</p>
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-accent mx-auto"></div>
+                    <p className="text-muted-foreground mt-2 responsive-small">Loading session records...</p>
                   </div>
                 ) : recordsError ? (
-                  <p className="text-red-600 text-sm">Error loading records: {(recordsError as Error).message}</p>
+                  <p className="text-destructive responsive-small">Error loading records: {(recordsError as Error).message}</p>
                 ) : filteredSessionRecords.length === 0 ? (
-                  <p className="text-gray-600 text-sm">
+                  <p className="text-muted-foreground responsive-small">
                     {filterSessionPackageType !== "All" ? 
                       `No ${filterSessionPackageType} sessions found for this coach.` : 
                       "No session records found for this coach."}
                   </p>
                 ) : (
                   <div className="overflow-x-auto">
-                    <table className="w-full border-2 border-black rounded-xl">
-                      <thead className="bg-black text-white">
+                    <table className="w-full border-2 border-primary rounded-xl responsive-table">
+                      <thead className="bg-primary text-primary-foreground">
                         <tr>
                           <th className="py-3 px-4 text-left font-semibold"><Calendar className="w-4 h-4 inline mr-2" />Date</th>
                           <th className="py-3 px-4 text-left font-semibold"><Clock className="w-4 h-4 inline mr-2" />Time</th>
@@ -470,18 +469,18 @@ export function CoachesManager() {
                         {filteredSessionRecords.map((record, index) => (
                           <tr
                             key={record.id}
-                            className={`transition-all duration-300 ${index % 2 === 0 ? "bg-white" : "bg-[#faf0e8]/20"}`}
+                            className={`transition-all duration-300 ${index % 2 === 0 ? "bg-background" : "bg-accent/5"}`}
                           >
-                            <td className="py-3 px-4 text-gray-700">
+                            <td className="py-3 px-4 text-muted-foreground">
                               {format(new Date(record.date), 'MMM dd, yyyy')}
                             </td>
-                            <td className="py-3 px-4 text-gray-700">
+                            <td className="py-3 px-4 text-muted-foreground">
                               {format(new Date(`1970-01-01T${record.start_time}`), 'hh:mm a')} - 
                               {format(new Date(`1970-01-01T${record.end_time}`), 'hh:mm a')}
                             </td>
-                            <td className="py-3 px-4 text-gray-700">{record.branches.name}</td>
-                            <td className="py-3 px-4 text-gray-700">{record.package_type || "N/A"}</td>
-                            <td className="py-3 px-4 text-gray-700">
+                            <td className="py-3 px-4 text-muted-foreground">{record.branches.name}</td>
+                            <td className="py-3 px-4 text-muted-foreground">{record.package_type || "N/A"}</td>
+                            <td className="py-3 px-4 text-muted-foreground">
                               {record.session_participants.map(participant => participant.students.name).join(", ") || "No students"}
                             </td>
                           </tr>
@@ -496,7 +495,7 @@ export function CoachesManager() {
                 <Button
                   variant="outline"
                   onClick={() => setIsRecordsDialogOpen(false)}
-                  className="border-[#fc7416]/30 text-[#fc7416] hover:bg-[#fc7416] hover:text-white transition-all duration-300 hover:scale-105"
+                  className="border-accent/30 text-accent hover:bg-accent hover:text-accent-foreground transition-all duration-300 hover:scale-105 responsive-button"
                 >
                   Close
                 </Button>
