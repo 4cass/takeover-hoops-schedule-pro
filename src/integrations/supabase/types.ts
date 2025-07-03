@@ -178,36 +178,33 @@ export type Database = {
       }
       students: {
         Row: {
-          coach_id: string | null
+          branch_id: string | null
           created_at: string
           email: string
           id: string
           name: string
-          package_type: string | null
           phone: string | null
           remaining_sessions: number
           sessions: number | null
           updated_at: string
         }
         Insert: {
-          coach_id?: string | null
+          branch_id?: string | null
           created_at?: string
           email: string
           id?: string
           name: string
-          package_type?: string | null
           phone?: string | null
           remaining_sessions?: number
           sessions?: number | null
           updated_at?: string
         }
         Update: {
-          coach_id?: string | null
+          branch_id?: string | null
           created_at?: string
           email?: string
           id?: string
           name?: string
-          package_type?: string | null
           phone?: string | null
           remaining_sessions?: number
           sessions?: number | null
@@ -215,10 +212,10 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "students_coach_id_fkey"
-            columns: ["coach_id"]
+            foreignKeyName: "students_branch_id_fkey"
+            columns: ["branch_id"]
             isOneToOne: false
-            referencedRelation: "coaches"
+            referencedRelation: "branches"
             referencedColumns: ["id"]
           },
         ]
