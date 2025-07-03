@@ -24,9 +24,7 @@ type AttendanceRecord = Database["public"]["Tables"]["attendance_records"]["Row"
 
 const PACKAGE_TYPES = [
   "Camp Training",
-  "Personal Training",
-  "Group Training",
-  "Elite Training"
+  "Personal Training"
 ];
 
 export function StudentsManager() {
@@ -268,7 +266,7 @@ export function StudentsManager() {
                     Add Player
                   </Button>
                 </DialogTrigger>
-                <DialogContent className="border-2 border-[#fc7416]/20 bg-gradient-to-br from-[#faf0e8]/30 to-white shadow-lg">
+                <DialogContent className="border-2 border-[#fc7416]/20 bg-gradient-to-br from-[#faf0e8]/30 to-white shadow-lg max-w-2xl">
                   <DialogHeader>
                     <DialogTitle className="text-2xl font-bold text-black">
                       {editingStudent ? "Edit Player" : "Add New Player"}
@@ -277,55 +275,61 @@ export function StudentsManager() {
                       {editingStudent ? "Update player information" : "Add a new player to the system"}
                     </DialogDescription>
                   </DialogHeader>
-                  <form onSubmit={handleSubmit} className="space-y-6">
-                    <div>
-                      <Label htmlFor="name" className="text-gray-700 font-medium">Name</Label>
-                      <Input
-                        id="name"
-                        value={formData.name}
-                        onChange={(e) => setFormData((prev) => ({ ...prev, name: e.target.value }))}
-                        required
-                        className="mt-1 border-2 border-[#fc7416]/20 rounded-xl focus:border-[#fc7416] focus:ring-[#fc7416]/20"
-                      />
+                  <form onSubmit={handleSubmit} className="space-y-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <Label htmlFor="name" className="text-gray-700 font-medium">Name</Label>
+                        <Input
+                          id="name"
+                          value={formData.name}
+                          onChange={(e) => setFormData((prev) => ({ ...prev, name: e.target.value }))}
+                          required
+                          className="mt-1 border-2 border-[#fc7416]/20 rounded-xl focus:border-[#fc7416] focus:ring-[#fc7416]/20"
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor="email" className="text-gray-700 font-medium">Email</Label>
+                        <Input
+                          id="email"
+                          type="email"
+                          value={formData.email}
+                          onChange={(e) => setFormData((prev) => ({ ...prev, email: e.target.value }))}
+                          required
+                          className="mt-1 border-2 border-[#fc7416]/20 rounded-xl focus:border-[#fc7416] focus:ring-[#fc7416]/20"
+                        />
+                      </div>
                     </div>
-                    <div>
-                      <Label htmlFor="email" className="text-gray-700 font-medium">Email</Label>
-                      <Input
-                        id="email"
-                        type="email"
-                        value={formData.email}
-                        onChange={(e) => setFormData((prev) => ({ ...prev, email: e.target.value }))}
-                        required
-                        className="mt-1 border-2 border-[#fc7416]/20 rounded-xl focus:border-[#fc7416] focus:ring-[#fc7416]/20"
-                      />
+                    
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <Label htmlFor="phone" className="text-gray-700 font-medium">Phone</Label>
+                        <Input
+                          id="phone"
+                          value={formData.phone}
+                          onChange={(e) => setFormData((prev) => ({ ...prev, phone: e.target.value }))}
+                          className="mt-1 border-2 border-[#fc7416]/20 rounded-xl focus:border-[#fc7416] focus:ring-[#fc7416]/20"
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor="branch_id" className="text-gray-700 font-medium">Branch</Label>
+                        <Select
+                          value={formData.branch_id ?? undefined}
+                          onValueChange={(value) => setFormData((prev) => ({ ...prev, branch_id: value }))}
+                        >
+                          <SelectTrigger className="mt-1 border-2 border-[#fc7416]/20 rounded-xl focus:border-[#fc7416] focus:ring-[#fc7416]/20">
+                            <SelectValue placeholder="Select Branch" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {branches?.map((branch) => (
+                              <SelectItem key={branch.id} value={branch.id}>
+                                {branch.name}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
                     </div>
-                    <div>
-                      <Label htmlFor="phone" className="text-gray-700 font-medium">Phone</Label>
-                      <Input
-                        id="phone"
-                        value={formData.phone}
-                        onChange={(e) => setFormData((prev) => ({ ...prev, phone: e.target.value }))}
-                        className="mt-1 border-2 border-[#fc7416]/20 rounded-xl focus:border-[#fc7416] focus:ring-[#fc7416]/20"
-                      />
-                    </div>
-                    <div>
-                      <Label htmlFor="branch_id" className="text-gray-700 font-medium">Branch</Label>
-                      <Select
-                        value={formData.branch_id ?? undefined}
-                        onValueChange={(value) => setFormData((prev) => ({ ...prev, branch_id: value }))}
-                      >
-                        <SelectTrigger className="mt-1 border-2 border-[#fc7416]/20 rounded-xl focus:border-[#fc7416] focus:ring-[#fc7416]/20">
-                          <SelectValue placeholder="Select Branch" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {branches?.map((branch) => (
-                            <SelectItem key={branch.id} value={branch.id}>
-                              {branch.name}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
+
                     <div>
                       <Label htmlFor="package_type" className="text-gray-700 font-medium">Package Type</Label>
                       <Select
@@ -344,31 +348,35 @@ export function StudentsManager() {
                         </SelectContent>
                       </Select>
                     </div>
-                    <div>
-                      <Label htmlFor="sessions" className="text-gray-700 font-medium">Total Sessions</Label>
-                      <Input
-                        id="sessions"
-                        type="number"
-                        min="0"
-                        value={formData.sessions}
-                        onChange={(e) => setFormData((prev) => ({ ...prev, sessions: parseInt(e.target.value) || 0 }))}
-                        className="mt-1 border-2 border-[#fc7416]/20 rounded-xl focus:border-[#fc7416] focus:ring-[#fc7416]/20"
-                      />
+                    
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <Label htmlFor="sessions" className="text-gray-700 font-medium">Total Sessions</Label>
+                        <Input
+                          id="sessions"
+                          type="number"
+                          min="0"
+                          value={formData.sessions}
+                          onChange={(e) => setFormData((prev) => ({ ...prev, sessions: parseInt(e.target.value) || 0 }))}
+                          className="mt-1 border-2 border-[#fc7416]/20 rounded-xl focus:border-[#fc7416] focus:ring-[#fc7416]/20"
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor="remaining_sessions" className="text-gray-700 font-medium">Remaining Sessions</Label>
+                        <Input
+                          id="remaining_sessions"
+                          type="number"
+                          min="0"
+                          value={formData.remaining_sessions}
+                          onChange={(e) =>
+                            setFormData((prev) => ({ ...prev, remaining_sessions: parseInt(e.target.value) || 0 }))
+                          }
+                          className="mt-1 border-2 border-[#fc7416]/20 rounded-xl focus:border-[#fc7416] focus:ring-[#fc7416]/20"
+                        />
+                      </div>
                     </div>
-                    <div>
-                      <Label htmlFor="remaining_sessions" className="text-gray-700 font-medium">Remaining Sessions</Label>
-                      <Input
-                        id="remaining_sessions"
-                        type="number"
-                        min="0"
-                        value={formData.remaining_sessions}
-                        onChange={(e) =>
-                          setFormData((prev) => ({ ...prev, remaining_sessions: parseInt(e.target.value) || 0 }))
-                        }
-                        className="mt-1 border-2 border-[#fc7416]/20 rounded-xl focus:border-[#fc7416] focus:ring-[#fc7416]/20"
-                      />
-                    </div>
-                    <div className="flex justify-end space-x-3">
+                    
+                    <div className="flex justify-end space-x-3 pt-4">
                       <Button
                         type="button"
                         variant="outline"
