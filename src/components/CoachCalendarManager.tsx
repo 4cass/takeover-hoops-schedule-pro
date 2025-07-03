@@ -1,8 +1,9 @@
+
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -22,13 +23,8 @@ type Session = {
 };
 
 export function CoachCalendarManager() {
-  const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
-  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [currentMonth, setCurrentMonth] = useState<Date>(new Date());
-  const [selectedSessionId, setSelectedSessionId] = useState<string | null>(null);
-  const [isAttendanceModalOpen, setIsAttendanceModalOpen] = useState(false);
-  const [isUpcomingModalOpen, setIsUpcomingModalOpen] = useState(false);
-  const [isPastModalOpen, setIsPastModalOpen] = useState(false);
   const { coachData, loading } = useAuth();
   const navigate = useNavigate();
 
@@ -68,9 +64,9 @@ export function CoachCalendarManager() {
     enabled: !!coachData?.id && !loading,
   });
 
-  const selectedDateSessions = sessions.filter(
-    (session) => selectedDate && session.date === format(selectedDate, "yyyy-MM-dd")
-  );
+  const selectedDateSessions = selectedDate
+    ? sessions.filter((session) => session.date === format(selectedDate, "yyyy-MM-dd"))
+    : [];
 
   console.log("Selected date:", selectedDate);
   console.log("Selected date sessions:", selectedDateSessions);
@@ -110,50 +106,13 @@ export function CoachCalendarManager() {
     end: endOfMonth(currentMonth),
   });
 
-  const handleDateSelect = (date: Date | undefined) => {
+  const handleDateSelect = (date: Date) => {
     console.log("Date selected:", date);
     setSelectedDate(date);
-    if (date) {
-      const today = new Date();
-      const todayDateOnly = new Date(format(today, "yyyy-MM-dd") + "T00:00:00");
-      const selectedDateOnly = new Date(format(date, "yyyy-MM-dd") + "T00:00:00");
-      
-      const dateSessions = sessions.filter(
-        (session) => session.date === format(date, "yyyy-MM-dd")
-      );
-      
-      console.log("Sessions for selected date:", dateSessions);
-      
-      // Determine which modal to show based on the date
-      if (isAfter(selectedDateOnly, todayDateOnly) || isSameDay(selectedDateOnly, todayDateOnly)) {
-        // Future or today - show upcoming sessions modal
-        console.log("Selected date is future/today - showing upcoming sessions modal");
-        setIsUpcomingModalOpen(true);
-      } else {
-        // Past date - show past sessions modal
-        console.log("Selected date is past - showing past sessions modal");
-        setIsPastModalOpen(true);
-      }
-    }
   };
 
   const handlePrevMonth = () => setCurrentMonth(subMonths(currentMonth, 1));
   const handleNextMonth = () => setCurrentMonth(addMonths(currentMonth, 1));
-
-  const handleAttendanceClick = (sessionId: string) => {
-    setSelectedSessionId(sessionId);
-    setIsAttendanceModalOpen(true);
-  };
-
-  const handleUpcomingSessionClick = () => {
-    console.log("Opening upcoming sessions modal");
-    setIsUpcomingModalOpen(true);
-  };
-
-  const handlePastSessionClick = () => {
-    console.log("Opening past sessions modal");
-    setIsPastModalOpen(true);
-  };
 
   if (loading || sessionsLoading) {
     return (
@@ -192,8 +151,8 @@ export function CoachCalendarManager() {
           </p>
         </div>
 
-        <div className="grid gap-6 sm:gap-8 lg:grid">
-          {/* Calendar */}
+        <div className="grid gap-6 lg:grid-cols-2">
+          {/* Calendar - Left Side */}
           <Card className="border-2 border-black bg-white/90 backdrop-blur-sm shadow-xl">
             <CardHeader className="border-b border-black bg-black p-4 sm:p-6">
               <CardTitle className="text-lg sm:text-xl lg:text-2xl font-bold text-white flex items-center">
@@ -201,7 +160,7 @@ export function CoachCalendarManager() {
                 Session Calendar
               </CardTitle>
               <CardDescription className="text-gray-400 text-sm sm:text-base">
-                View and manage training sessions for {format(currentMonth, 'MMMM yyyy')}
+                Click on any date to view session details for {format(currentMonth, 'MMMM yyyy')}
               </CardDescription>
             </CardHeader>
             <CardContent className="p-4 sm:p-6 lg:p-8">
@@ -303,447 +262,223 @@ export function CoachCalendarManager() {
             </CardContent>
           </Card>
 
-          {/* Upcoming Sessions Modal */}
-          <Dialog open={isUpcomingModalOpen} onOpenChange={setIsUpcomingModalOpen}>
-            <DialogContent className="bg-white border border-gray-200 shadow-xl max-w-[95vw] sm:max-w-4xl mx-auto p-0 rounded-lg max-h-[90vh] overflow-y-auto">
-              <DialogHeader className="bg-black text-white px-4 sm:px-8 py-4 sm:py-6 border-b">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <DialogTitle className="text-lg sm:text-xl lg:text-2xl font-bold mb-2">
-                      Upcoming Sessions
-                    </DialogTitle>
-                    <p className="text-gray-300 text-sm sm:text-base">
-                      {upcomingSessions.length} upcoming session{upcomingSessions.length !== 1 ? 's' : ''}
-                    </p>
-                  </div>
-                  
-                  <button 
-                    onClick={() => setIsUpcomingModalOpen(false)} 
-                    className="w-10 h-10 sm:w-12 sm:h-12 bg-[#fc7416] rounded-lg flex items-center justify-center text-white text-xl sm:text-2xl font-bold hover:bg-[#e5661a] transition-colors"
-                  >
-                    ×
-                  </button>
-                </div>
-              </DialogHeader>
-              
-              <div className="p-4 sm:p-8">
+          {/* Sessions - Right Side */}
+          <div className="space-y-6">
+            {/* Upcoming Sessions */}
+            <Card className="border-2 border-black bg-gradient-to-br from-green-50 to-white shadow-lg">
+              <CardHeader className="border-b border-black bg-gradient-to-r from-green-100/50 to-green-50 p-4 sm:p-6">
+                <CardTitle className="text-lg sm:text-xl font-bold text-green-800 flex items-center">
+                  <Clock className="h-4 w-4 sm:h-5 sm:w-5 mr-3 text-green-600" />
+                  Upcoming Sessions
+                </CardTitle>
+                <CardDescription className="text-green-600 text-sm sm:text-base">
+                  {upcomingSessions.length} upcoming session{upcomingSessions.length !== 1 ? 's' : ''}
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="p-4 max-h-96 overflow-y-auto">
                 {upcomingSessions.length > 0 ? (
-                  <div className="space-y-4 sm:space-y-6">
-                    {upcomingSessions.map((session, index) => (
+                  <div className="space-y-3">
+                    {upcomingSessions.slice(0, 5).map((session, index) => (
                       <div 
                         key={session.id} 
-                        className="border border-gray-200 rounded-lg p-4 sm:p-6 hover:border-[#fc7416] hover:shadow-md transition-all duration-200"
+                        className="border border-green-200 rounded-lg p-4 hover:border-green-400 hover:shadow-md transition-all duration-200 bg-white"
                       >
-                        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-4 space-y-4 sm:space-y-0">
-                          <div className="flex flex-col sm:flex-row sm:items-center sm:gap-6">
-                            <div className="flex items-center gap-4 mb-2 sm:mb-0">
-                              <div className="w-8 h-8 bg-[#fc7416] rounded-full flex items-center justify-center text-white font-bold">
-                                {index + 1}
-                              </div>
-                              <div>
-                                <h3 className="text-lg sm:text-xl font-bold text-black">
-                                  {formatTime12Hour(session.start_time)} - {formatTime12Hour(session.end_time)}
-                                </h3>
-                                <p className="text-gray-600 text-sm sm:text-base">
-                                  {format(new Date(session.date), 'MMMM dd, yyyy')}
-                                </p>
-                              </div>
+                        <div className="flex flex-col space-y-2">
+                          <div className="flex items-center justify-between">
+                            <div className="font-semibold text-black text-sm">
+                              {format(new Date(session.date), 'MMM dd, yyyy')}
                             </div>
-
-                            <div className="flex items-center gap-2">
-                              <MapPin className="h-4 w-4 sm:h-5 sm:w-5 text-[#fc7416]" />
-                              <p className="font-bold text-black text-sm sm:text-base">{session.branches.name}</p>
-                            </div>
+                            <Badge className={`${getStatusColor(session.status)} text-xs`}>
+                              {session.status.charAt(0).toUpperCase() + session.status.slice(1)}
+                            </Badge>
                           </div>
-
-                          <Badge className={`${getStatusColor(session.status)} font-semibold px-4 py-2 capitalize rounded-full text-sm`}>
-                            {session.status}
-                          </Badge>
+                          <div className="text-sm text-green-600 font-medium">
+                            {formatTime12Hour(session.start_time)} - {formatTime12Hour(session.end_time)}
+                          </div>
+                          <div className="flex items-center gap-2 text-sm">
+                            <MapPin className="h-3 w-3 text-green-600" />
+                            <span className="text-gray-700">{session.branches.name}</span>
+                          </div>
+                          <div className="flex items-center gap-2 text-sm">
+                            <Users className="h-3 w-3 text-green-600" />
+                            <span className="text-gray-700">{session.session_participants?.length || 0} players</span>
+                          </div>
                         </div>
+                      </div>
+                    ))}
+                    {upcomingSessions.length > 5 && (
+                      <div className="text-center text-sm text-green-600 font-medium">
+                        +{upcomingSessions.length - 5} more upcoming sessions
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <div className="text-center py-8">
+                    <Clock className="h-12 w-12 text-green-300 mx-auto mb-4" />
+                    <p className="text-lg text-green-600 mb-2">No upcoming sessions</p>
+                    <p className="text-green-500 text-sm">Schedule new training sessions to get started.</p>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
 
-                        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between border-t border-gray-100 pt-4">
-                          <div className="flex items-center gap-4 mb-4 sm:mb-0">
-                            <div className="w-8 h-8 sm:w-10 sm:h-10 bg-gray-100 rounded-lg flex items-center justify-center">
-                              <Users className="h-4 w-4 sm:h-5 sm:w-5 text-[#fc7416]" />
+            {/* Past Sessions */}
+            <Card className="border-2 border-black bg-gradient-to-br from-gray-50 to-white shadow-lg">
+              <CardHeader className="border-b border-black bg-gradient-to-r from-gray-100/50 to-gray-50 p-4 sm:p-6">
+                <CardTitle className="text-lg sm:text-xl font-bold text-gray-800 flex items-center">
+                  <CalendarIcon className="h-4 w-4 sm:h-5 sm:w-5 mr-3 text-gray-600" />
+                  Past Sessions
+                </CardTitle>
+                <CardDescription className="text-gray-600 text-sm sm:text-base">
+                  {pastSessions.length} past session{pastSessions.length !== 1 ? 's' : ''}
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="p-4 max-h-96 overflow-y-auto">
+                {pastSessions.length > 0 ? (
+                  <div className="space-y-3">
+                    {pastSessions.slice(0, 5).map((session, index) => (
+                      <div 
+                        key={session.id} 
+                        className="border border-gray-200 rounded-lg p-4 hover:border-gray-400 hover:shadow-md transition-all duration-200 bg-white"
+                      >
+                        <div className="flex flex-col space-y-2">
+                          <div className="flex items-center justify-between">
+                            <div className="font-semibold text-black text-sm">
+                              {format(new Date(session.date), 'MMM dd, yyyy')}
                             </div>
+                            <Badge className={`${getStatusColor(session.status)} text-xs`}>
+                              {session.status.charAt(0).toUpperCase() + session.status.slice(1)}
+                            </Badge>
+                          </div>
+                          <div className="text-sm text-gray-500 font-medium">
+                            {formatTime12Hour(session.start_time)} - {formatTime12Hour(session.end_time)}
+                          </div>
+                          <div className="flex items-center gap-2 text-sm">
+                            <MapPin className="h-3 w-3 text-gray-500" />
+                            <span className="text-gray-700">{session.branches.name}</span>
+                          </div>
+                          <div className="flex items-center gap-2 text-sm">
+                            <Users className="h-3 w-3 text-gray-500" />
+                            <span className="text-gray-700">{session.session_participants?.length || 0} players</span>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                    {pastSessions.length > 5 && (
+                      <div className="text-center text-sm text-gray-600 font-medium">
+                        +{pastSessions.length - 5} more past sessions
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <div className="text-center py-8">
+                    <CalendarIcon className="h-12 w-12 text-gray-300 mx-auto mb-4" />
+                    <p className="text-lg text-gray-500 mb-2">No past sessions</p>
+                    <p className="text-gray-400 text-sm">Completed sessions will appear here.</p>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+
+        {/* Date Selection Modal */}
+        <Dialog open={!!selectedDate} onOpenChange={() => setSelectedDate(null)}>
+          <DialogContent className="max-w-5xl border-2 border-[#fc7416]/20 bg-gradient-to-br from-[#faf0e8]/30 to-white shadow-lg">
+            <DialogHeader>
+              <DialogTitle className="text-2xl font-bold text-black flex items-center">
+                <Eye className="h-5 w-5 mr-3 text-[#fc7416]" />
+                Sessions on {selectedDate ? format(selectedDate, 'EEEE, MMMM dd, yyyy') : ''}
+              </DialogTitle>
+              <DialogDescription className="text-gray-600 text-base">
+                View session details for the selected date
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4">
+              {selectedDateSessions.length > 0 ? (
+                <div className="space-y-4">
+                  {selectedDateSessions.map(session => (
+                    <Card key={session.id} className="border border-black bg-gradient-to-r from-[#faf0e8]/50 to-white hover:shadow-lg transition-all duration-300">
+                      <CardContent className="p-6">
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-4 items-center">
+                          <div className="flex items-center space-x-2">
+                            <Clock className="h-4 w-4 text-[#fc7416]" />
                             <div>
-                              <p className="text-sm text-gray-600 font-medium">
-                                Players ({session.session_participants.length})
+                              <p className="text-sm font-medium text-gray-600">Time</p>
+                              <p className="font-semibold text-black">
+                                {formatTime12Hour(session.start_time)} - {formatTime12Hour(session.end_time)}
                               </p>
-                              <div className="font-semibold text-black text-sm sm:text-base">
-                                {session.session_participants.length > 0 ? (
-                                  <div className="space-y-1">
-                                    {session.session_participants.slice(0, 2).map((participant, idx) => (
-                                      <div key={idx}>{participant.students.name}</div>
-                                    ))}
-                                    {session.session_participants.length > 2 && (
-                                      <div className="text-gray-600 text-sm">
-                                        +{session.session_participants.length - 2} more
-                                      </div>
-                                    )}
-                                  </div>
-                                ) : (
-                                  <span className="text-gray-500">No players assigned</span>
-                                )}
-                              </div>
                             </div>
                           </div>
-
+                          <div className="flex items-center space-x-2">
+                            <MapPin className="h-4 w-4 text-[#fc7416]" />
+                            <div>
+                              <p className="text-sm font-medium text-gray-600">Branch</p>
+                              <p className="font-semibold text-black">{session.branches.name}</p>
+                            </div>
+                          </div>
+                          <div className="flex items-center space-x-2">
+                            <Users className="h-4 w-4 text-[#fc7416]" />
+                            <div>
+                              <p className="text-sm font-medium text-gray-600">Players</p>
+                              <p className="font-semibold text-black">{session.session_participants?.length || 0}</p>
+                            </div>
+                          </div>
+                          <div className="flex items-center space-x-2">
+                            <Badge className={`${getStatusColor(session.status)} font-medium px-3 py-1`}>
+                              {session.status.charAt(0).toUpperCase() + session.status.slice(1)}
+                            </Badge>
+                          </div>
+                          <div className="col-span-2">
+                            <div className="text-sm font-medium text-gray-600 mb-2">Players:</div>
+                            <div className="space-y-1">
+                              {session.session_participants?.length > 0 ? (
+                                session.session_participants.map((participant, idx) => (
+                                  <div key={idx} className="text-sm text-black font-medium">
+                                    {participant.students.name}
+                                  </div>
+                                ))
+                              ) : (
+                                <span className="text-sm text-gray-500">No players assigned</span>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                        <div className="mt-4 flex justify-end">
                           <Button
-                            onClick={() => handleAttendanceClick(session.id)}
-                            className="bg-[#fc7416] hover:bg-[#e5661a] text-white font-semibold px-4 sm:px-6 py-2 sm:py-3 rounded-lg transition-colors duration-200 text-sm sm:text-base w-full sm:w-auto"
+                            onClick={() => navigate(`/dashboard/attendance/${session.id}`)}
+                            className="bg-gradient-to-r from-[#fc7416] to-[#fe822d] hover:from-[#fe822d] hover:to-[#fc7416] text-white font-medium transition-all duration-300 hover:scale-105 hover:shadow-lg"
                           >
-                            Manage Attendance
+                            Attendance
                           </Button>
                         </div>
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <div className="text-center py-12 sm:py-16">
-                    <div className="w-16 h-16 sm:w-20 sm:h-20 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-6">
-                      <Clock className="h-8 w-8 sm:h-10 sm:w-10 text-gray-400" />
-                    </div>
-                    <h3 className="text-lg sm:text-xl font-bold text-black mb-2">No upcoming sessions</h3>
-                    <p className="text-gray-600 text-sm sm:text-base">No training sessions are scheduled for the future.</p>
-                  </div>
-                )}
-              </div>
-            </DialogContent>
-          </Dialog>
-
-          {/* Past Sessions Modal */}
-          <Dialog open={isPastModalOpen} onOpenChange={setIsPastModalOpen}>
-            <DialogContent className="bg-white border border-gray-200 shadow-xl max-w-[95vw] sm:max-w-4xl mx-auto p-0 rounded-lg max-h-[90vh] overflow-y-auto">
-              <DialogHeader className="bg-black text-white px-4 sm:px-8 py-4 sm:py-6 border-b">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <DialogTitle className="text-lg sm:text-xl lg:text-2xl font-bold mb-2">
-                      Past Sessions
-                    </DialogTitle>
-                    <p className="text-gray-300 text-sm sm:text-base">
-                      {pastSessions.length} past session{pastSessions.length !== 1 ? 's' : ''}
-                    </p>
-                  </div>
-                  
-                  <button 
-                    onClick={() => setIsPastModalOpen(false)} 
-                    className="w-10 h-10 sm:w-12 sm:h-12 bg-[#fc7416] rounded-lg flex items-center justify-center text-white text-xl sm:text-2xl font-bold hover:bg-[#e5661a] transition-colors"
-                  >
-                    ×
-                  </button>
+                      </CardContent>
+                    </Card>
+                  ))}
                 </div>
-              </DialogHeader>
-              
-              <div className="p-4 sm:p-8">
-                {pastSessions.length > 0 ? (
-                  <div className="space-y-4 sm:space-y-6">
-                    {pastSessions.map((session, index) => (
-                      <div 
-                        key={session.id} 
-                        className="border border-gray-200 rounded-lg p-4 sm:p-6 hover:border-gray-400 hover:shadow-md transition-all duration-200"
-                      >
-                        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-4 space-y-4 sm:space-y-0">
-                          <div className="flex flex-col sm:flex-row sm:items-center sm:gap-6">
-                            <div className="flex items-center gap-4 mb-2 sm:mb-0">
-                              <div className="w-8 h-8 bg-gray-600 rounded-full flex items-center justify-center text-white font-bold">
-                                {index + 1}
-                              </div>
-                              <div>
-                                <h3 className="text-lg sm:text-xl font-bold text-black">
-                                  {formatTime12Hour(session.start_time)} - {formatTime12Hour(session.end_time)}
-                                </h3>
-                                <p className="text-gray-600 text-sm sm:text-base">
-                                  {format(new Date(session.date), 'MMMM dd, yyyy')}
-                                </p>
-                              </div>
-                            </div>
-
-                            <div className="flex items-center gap-2">
-                              <MapPin className="h-4 w-4 sm:h-5 sm:w-5 text-gray-500" />
-                              <p className="font-bold text-black text-sm sm:text-base">{session.branches.name}</p>
-                            </div>
-                          </div>
-
-                          <Badge className={`${getStatusColor(session.status)} font-semibold px-4 py-2 capitalize rounded-full text-sm`}>
-                            {session.status}
-                          </Badge>
-                        </div>
-
-                        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between border-t border-gray-100 pt-4">
-                          <div className="flex items-center gap-4">
-                            <div className="w-8 h-8 sm:w-10 sm:h-10 bg-gray-100 rounded-lg flex items-center justify-center">
-                              <Users className="h-4 w-4 sm:h-5 sm:w-5 text-gray-500" />
-                            </div>
-                            <div>
-                              <p className="text-sm text-gray-600 font-medium">
-                                Players ({session.session_participants.length})
-                              </p>
-                              <div className="font-semibold text-black text-sm sm:text-base">
-                                {session.session_participants.length > 0 ? (
-                                  <div className="space-y-1">
-                                    {session.session_participants.slice(0, 2).map((participant, idx) => (
-                                      <div key={idx}>{participant.students.name}</div>
-                                    ))}
-                                    {session.session_participants.length > 2 && (
-                                      <div className="text-gray-600 text-sm">
-                                        +{session.session_participants.length - 2} more
-                                      </div>
-                                    )}
-                                  </div>
-                                ) : (
-                                  <span className="text-gray-500">No players assigned</span>
-                                )}
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <div className="text-center py-12 sm:py-16">
-                    <div className="w-16 h-16 sm:w-20 sm:h-20 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-6">
-                      <CalendarIcon className="h-8 w-8 sm:h-10 sm:w-10 text-gray-400" />
-                    </div>
-                    <h3 className="text-lg sm:text-xl font-bold text-black mb-2">No past sessions</h3>
-                    <p className="text-gray-400 text-sm sm:text-base">Completed sessions will appear here.</p>
-                  </div>
-                )}
-              </div>
-            </DialogContent>
-          </Dialog>
-
-          {/* Attendance Management Modal */}
-          <Dialog open={isAttendanceModalOpen} onOpenChange={setIsAttendanceModalOpen}>
-            <DialogContent className="bg-white border border-gray-200 shadow-xl max-w-[95vw] sm:max-w-4xl mx-auto p-0 rounded-lg max-h-[90vh] overflow-y-auto">
-              <DialogHeader className="bg-black text-white px-4 sm:px-8 py-4 sm:py-6 border-b">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <DialogTitle className="text-lg sm:text-xl lg:text-2xl font-bold mb-2">
-                      Attendance Management
-                    </DialogTitle>
-                    <p className="text-gray-300 text-sm sm:text-base">
-                      Manage player attendance for this session
-                    </p>
-                  </div>
-                  
-                  <button 
-                    onClick={() => setIsAttendanceModalOpen(false)} 
-                    className="w-10 h-10 sm:w-12 sm:h-12 bg-[#fc7416] rounded-lg flex items-center justify-center text-white text-xl sm:text-2xl font-bold hover:bg-[#e5661a] transition-colors"
-                  >
-                    ×
-                  </button>
-                </div>
-              </DialogHeader>
-              
-              <div className="p-4 sm:p-8">
-                <div className="text-center py-12 sm:py-16">
-                  <div className="w-16 h-16 sm:w-20 sm:h-20 bg-[#fc7416] rounded-full flex items-center justify-center mx-auto mb-6">
-                    <Users className="h-8 w-8 sm:h-10 sm:w-10 text-white" />
-                  </div>
-                  <h3 className="text-lg sm:text-xl font-bold text-black mb-2">Attendance Management</h3>
-                  <p className="text-gray-600 text-sm sm:text-base mb-6">
-                    This feature will be available soon. For now, use the main attendance page.
+              ) : (
+                <div className="text-center py-12">
+                  <CalendarIcon className="h-16 w-16 text-gray-300 mx-auto mb-4" />
+                  <p className="text-xl text-gray-500 mb-2">
+                    No sessions on this day
                   </p>
-                  <Button
-                    onClick={() => {
-                      setIsAttendanceModalOpen(false);
-                      navigate(`/dashboard/attendance/${selectedSessionId}`);
-                    }}
-                    className="bg-[#fc7416] hover:bg-[#e5661a] text-white font-semibold px-6 py-3 rounded-lg"
-                  >
-                    Go to Attendance Page
-                  </Button>
+                  <p className="text-gray-400">
+                    No sessions scheduled for this date.
+                  </p>
                 </div>
+              )}
+              <div className="flex justify-end">
+                <Button
+                  variant="outline"
+                  onClick={() => setSelectedDate(null)}
+                  className="border-[#fc7416]/30 text-[#fc7416] hover:bg-[#fc7416] hover:text-white transition-all duration-300 hover:scale-105"
+                >
+                  Close
+                </Button>
               </div>
-            </DialogContent>
-          </Dialog>
-        </div>
-
-        <div className="grid gap-6 sm:gap-8 lg:grid-cols-2">
-          {/* Upcoming Sessions */}
-          <Card className="border-2 border-black bg-gradient-to-br from-green-50 to-white shadow-lg">
-            <CardHeader className="border-b border-black bg-gradient-to-r from-green-100/50 to-green-50 p-4 sm:p-6">
-              <CardTitle className="text-lg sm:text-xl font-bold text-green-800 flex items-center">
-                <Clock className="h-4 w-4 sm:h-5 sm:w-5 mr-3 text-green-600" />
-                Upcoming Sessions
-              </CardTitle>
-              <CardDescription className="text-green-600 text-sm sm:text-base">
-                Scheduled sessions for today or the future ({upcomingSessions.length} total)
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="p-0">
-              {upcomingSessions.length > 0 ? (
-                <div className="overflow-hidden">
-                  <div className="overflow-x-auto">
-                    <Table>
-                      <TableHeader>
-                        <TableRow className="bg-gradient-to-r from-green-100 to-green-50 border-b border-black">
-                          <TableHead className="font-semibold text-green-800 text-sm">Date & Time</TableHead>
-                          <TableHead className="font-semibold text-green-800 text-sm">Branch</TableHead>
-                          <TableHead className="font-semibold text-green-800 text-sm">Players</TableHead>
-                          <TableHead className="font-semibold text-green-800 text-sm">Status</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {upcomingSessions.slice(0, 5).map((session, index) => (
-                          <TableRow 
-                            key={session.id} 
-                            className={`
-                              hover:bg-green-50 transition-colors border-b border-green-100 cursor-pointer
-                              ${index % 2 === 0 ? 'bg-white' : 'bg-green-25'}
-                            `}
-                            onClick={() => {
-                              console.log("Clicked upcoming session row");
-                              handleUpcomingSessionClick();
-                            }}
-                          >
-                            <TableCell className="py-4">
-                              <div className="font-semibold text-black text-sm">
-                                {session.date ? format(new Date(session.date), 'MMM dd, yyyy') : 'Invalid Date'}
-                              </div>
-                              <div className="text-sm text-green-600 font-medium">
-                                {session.start_time && session.end_time ? (
-                                  `${formatTime12Hour(session.start_time)} - ${formatTime12Hour(session.end_time)}`
-                                ) : (
-                                  'Invalid Time'
-                                )}
-                              </div>
-                            </TableCell>
-                            <TableCell className="text-gray-700 font-medium text-sm">{session.branches.name}</TableCell>
-                            <TableCell>
-                              <div className="flex items-center space-x-2">
-                                <Users className="w-4 h-4 text-green-600" />
-                                <span className="font-medium text-sm">{session.session_participants?.length || 0}</span>
-                              </div>
-                            </TableCell>
-                            <TableCell>
-                              <Badge className={`${getStatusColor(session.status)} text-xs`}>
-                                {session.status.charAt(0).toUpperCase() + session.status.slice(1)}
-                              </Badge>
-                            </TableCell>
-                          </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
-                    {upcomingSessions.length > 5 && (
-                      <div className="p-4 border-t border-green-100 bg-green-50/30">
-                        <Button 
-                          onClick={() => {
-                            console.log("Clicked View All upcoming sessions");
-                            handleUpcomingSessionClick();
-                          }}
-                          variant="outline" 
-                          className="w-full border-green-300 text-green-700 hover:bg-green-100"
-                        >
-                          View All {upcomingSessions.length} Upcoming Sessions
-                        </Button>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              ) : (
-                <div className="p-8 sm:p-12 text-center">
-                  <Clock className="h-12 w-12 sm:h-16 sm:w-16 text-green-300 mx-auto mb-4" />
-                  <p className="text-lg sm:text-xl text-green-600 mb-2">No upcoming scheduled sessions</p>
-                  <p className="text-green-500 text-sm sm:text-base">Schedule new training sessions to get started.</p>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-
-          {/* Past Sessions */}
-          <Card className="border-2 border-black bg-gradient-to-br from-gray-50 to-white shadow-lg">
-            <CardHeader className="border-b border-black bg-gradient-to-r from-gray-100/50 to-gray-50 p-4 sm:p-6">
-              <CardTitle className="text-lg sm:text-xl font-bold text-gray-800 flex items-center">
-                <CalendarIcon className="h-4 w-4 sm:h-5 sm:w-5 mr-3 text-gray-600" />
-                Past Sessions
-              </CardTitle>
-              <CardDescription className="text-gray-600 text-sm sm:text-base">
-                Completed sessions or sessions before today ({pastSessions.length} total)
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="p-0">
-              {pastSessions.length > 0 ? (
-                <div className="overflow-hidden">
-                  <div className="overflow-x-auto">
-                    <Table>
-                      <TableHeader>
-                        <TableRow className="bg-gradient-to-r from-gray-100 to-gray-50 border-b border-black">
-                          <TableHead className="font-semibold text-gray-800 text-sm">Date & Time</TableHead>
-                          <TableHead className="font-semibold text-gray-800 text-sm">Branch</TableHead>
-                          <TableHead className="font-semibold text-gray-800 text-sm">Players</TableHead>
-                          <TableHead className="font-semibold text-gray-800 text-sm">Status</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {pastSessions.slice(0, 5).map((session, index) => (
-                          <TableRow 
-                            key={session.id} 
-                            className={`
-                              hover:bg-gray-50 transition-colors border-b border-gray-100 cursor-pointer
-                              ${index % 2 === 0 ? 'bg-white' : 'bg-gray-25'}
-                            `}
-                            onClick={() => {
-                              console.log("Clicked past session row");
-                              handlePastSessionClick();
-                            }}
-                          >
-                            <TableCell className="py-4">
-                              <div className="font-semibold text-black text-sm">
-                                {session.date ? format(new Date(session.date), 'MMM dd, yyyy') : 'Invalid Date'}
-                              </div>
-                              <div className="text-sm text-gray-500 font-medium">
-                                {session.start_time && session.end_time ? (
-                                  `${formatTime12Hour(session.start_time)} - ${formatTime12Hour(session.end_time)}`
-                                ) : (
-                                  'Invalid Time'
-                                )}
-                              </div>
-                            </TableCell>
-                            <TableCell className="text-gray-700 font-medium text-sm">{session.branches.name}</TableCell>
-                            <TableCell>
-                              <div className="flex items-center space-x-2">
-                                <Users className="w-4 h-4 text-gray-500" />
-                                <span className="font-medium text-sm">{session.session_participants?.length || 0}</span>
-                              </div>
-                            </TableCell>
-                            <TableCell>
-                              <Badge className={`${getStatusColor(session.status)} text-xs`}>
-                                {session.status.charAt(0).toUpperCase() + session.status.slice(1)}
-                              </Badge>
-                            </TableCell>
-                          </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
-                    {pastSessions.length > 5 && (
-                      <div className="p-4 border-t border-gray-100 bg-gray-50/30">
-                        <Button 
-                          onClick={() => {
-                            console.log("Clicked View All past sessions");
-                            handlePastSessionClick();
-                          }}
-                          variant="outline" 
-                          className="w-full border-gray-300 text-gray-700 hover:bg-gray-100"
-                        >
-                          View All {pastSessions.length} Past Sessions
-                        </Button>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              ) : (
-                <div className="p-8 sm:p-12 text-center">
-                  <CalendarIcon className="h-12 w-12 sm:h-16 sm:w-16 text-gray-300 mx-auto mb-4" />
-                  <p className="text-lg sm:text-xl text-gray-500 mb-2">No past or completed sessions</p>
-                  <p className="text-gray-400 text-sm sm:text-base">Completed sessions or sessions before today will appear here.</p>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        </div>
+            </div>
+          </DialogContent>
+        </Dialog>
       </div>
     </div>
   );
