@@ -3,88 +3,99 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Definition of the design system. All colors, gradients, fonts, etc should be defined here. */
+/* Definition of the design system with your custom colors */
 
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground:  0 0% 0%;
+    /* Background: #efeff1 converted to HSL */
+    --background: 240 6% 94%;
+    /* Primary: #3a3a3c converted to HSL */
+    --foreground: 240 2% 23%;
 
-    --card: 0 0% 100%;
-    --card-foreground: 0 0% 0%;
+    /* Card backgrounds using slightly lighter version of background */
+    --card: 240 8% 96%;
+    --card-foreground: 240 2% 23%;
 
-    --popover: 0 0% 100%;
-    --popover-foreground: 0 0% 0%;
+    --popover: 240 8% 96%;
+    --popover-foreground: 240 2% 23%;
 
-    --primary: 0 0% 0%;
-    --primary-foreground: 0 0% 100%;
+    /* Primary: #3a3a3c */
+    --primary: 240 2% 23%;
+    --primary-foreground: 240 6% 94%;
 
-    --secondary: 0 0% 100%;
-    --secondary-foreground: 0 0% 0%;
+    /* Secondary: #8E7A3F */
+    --secondary: 42 39% 40%;
+    --secondary-foreground: 240 6% 94%;
 
-    --muted: 210 40% 96.1%;
-    --muted-foreground: 215.4 16.3% 46.9%;
+    /* Muted variations */
+    --muted: 240 4% 88%;
+    --muted-foreground: 240 2% 45%;
 
-    --accent: 18 95% 60%;
-    --accent-foreground: 0 0% 100%;
+    /* Accent: #C6B275 */
+    --accent: 42 39% 61%;
+    --accent-foreground: 240 2% 23%;
 
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 210 40% 98%;
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 240 6% 94%;
 
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
-    --ring: 18 95% 60%;
+    /* Border and input colors */
+    --border: 240 4% 85%;
+    --input: 240 4% 85%;
+    --ring: 42 39% 61%;
 
     --radius: 0.5rem;
 
-    --sidebar-background: 0 0% 0%;
-    --sidebar-foreground: 0 0% 100%;
-    --sidebar-primary: 18 95% 60%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 18 95% 60%;
-    --sidebar-accent-foreground: 0 0% 100%;
-    --sidebar-border: 0 0% 20%;
-    --sidebar-ring: 18 95% 60%;
-    --sidebar-muted: 220 4% 50%;
+    /* Sidebar colors using primary theme */
+    --sidebar-background: 240 2% 23%;
+    --sidebar-foreground: 240 6% 94%;
+    --sidebar-primary: 42 39% 61%;
+    --sidebar-primary-foreground: 240 2% 23%;
+    --sidebar-accent: 42 39% 61%;
+    --sidebar-accent-foreground: 240 2% 23%;
+    --sidebar-border: 240 4% 30%;
+    --sidebar-ring: 42 39% 61%;
+    --sidebar-muted: 240 2% 40%;
   }
 
   .dark {
-    --background: 0 0% 100%;
-    --foreground:  0 0% 0%;
+    /* Keep the same colors for dark mode consistency */
+    --background: 240 6% 94%;
+    --foreground: 240 2% 23%;
 
-    --card: 0 0% 100%;
-    --card-foreground: 0 0% 0%;
+    --card: 240 8% 96%;
+    --card-foreground: 240 2% 23%;
 
-    --popover: 0 0% 100%;
-    --popover-foreground: 0 0% 0%;
+    --popover: 240 8% 96%;
+    --popover-foreground: 240 2% 23%;
 
-    --primary: 0 0% 0%;
-    --primary-foreground: 0 0% 100%;
+    --primary: 240 2% 23%;
+    --primary-foreground: 240 6% 94%;
 
-    --secondary: 0 0% 100%;
-    --secondary-foreground: 0 0% 0%;
+    --secondary: 42 39% 40%;
+    --secondary-foreground: 240 6% 94%;
 
-    --muted: 210 40% 96.1%;
-    --muted-foreground: 215.4 16.3% 46.9%;
+    --muted: 240 4% 88%;
+    --muted-foreground: 240 2% 45%;
 
-    --accent: 18 95% 60%;
-    --accent-foreground: 0 0% 100%;
+    --accent: 42 39% 61%;
+    --accent-foreground: 240 2% 23%;
 
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 210 40% 98%;
+    --destructive: 0 62% 30%;
+    --destructive-foreground: 240 6% 94%;
 
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
-    --ring: 18 95% 60%;
-    --sidebar-background: 0 0% 0%;
-    --sidebar-foreground: 0 0% 100%;
-    --sidebar-primary: 18 95% 60%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 18 95% 60%;
-    --sidebar-accent-foreground: 0 0% 100%;
-    --sidebar-border: 0 0% 20%;
-    --sidebar-ring: 18 95% 60%;
-    --sidebar-muted: 220 4% 50%;
+    --border: 240 4% 85%;
+    --input: 240 4% 85%;
+    --ring: 42 39% 61%;
+    
+    --sidebar-background: 240 2% 23%;
+    --sidebar-foreground: 240 6% 94%;
+    --sidebar-primary: 42 39% 61%;
+    --sidebar-primary-foreground: 240 2% 23%;
+    --sidebar-accent: 42 39% 61%;
+    --sidebar-accent-foreground: 240 2% 23%;
+    --sidebar-border: 240 4% 30%;
+    --sidebar-ring: 42 39% 61%;
+    --sidebar-muted: 240 2% 40%;
   }
 }
 
@@ -98,7 +109,7 @@
     overflow-x: hidden;
   }
 
-  /* Responsive utilities */
+  /* Enhanced responsive utilities */
   .container {
     @apply w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8;
   }
@@ -107,23 +118,94 @@
   [data-radix-dialog-content] {
     @apply max-w-[95vw] max-h-[95vh] overflow-y-auto;
   }
+
+  /* Responsive text scaling */
+  .responsive-heading {
+    @apply text-lg sm:text-xl md:text-2xl lg:text-3xl xl:text-4xl;
+  }
+
+  .responsive-subheading {
+    @apply text-base sm:text-lg md:text-xl lg:text-2xl;
+  }
+
+  .responsive-body {
+    @apply text-sm sm:text-base md:text-lg;
+  }
+
+  .responsive-small {
+    @apply text-xs sm:text-sm md:text-base;
+  }
 }
 
-/* Custom responsive classes */
+/* Enhanced responsive classes */
 @layer utilities {
   .responsive-grid {
-    @apply grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4;
+    @apply grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4 lg:gap-6;
   }
   
-  .responsive-text {
-    @apply text-sm sm:text-base lg:text-lg;
+  .responsive-grid-2 {
+    @apply grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6;
+  }
+  
+  .responsive-grid-3 {
+    @apply grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6;
+  }
+  
+  .responsive-flex {
+    @apply flex flex-col sm:flex-row gap-3 sm:gap-4 lg:gap-6;
   }
   
   .responsive-padding {
-    @apply p-4 sm:p-6 lg:p-8;
+    @apply p-3 sm:p-4 md:p-6 lg:p-8;
   }
   
   .responsive-margin {
-    @apply m-4 sm:m-6 lg:m-8;
+    @apply m-3 sm:m-4 md:m-6 lg:m-8;
+  }
+
+  .responsive-spacing {
+    @apply space-y-3 sm:space-y-4 md:space-y-6;
+  }
+
+  /* Form responsive utilities */
+  .responsive-form-grid {
+    @apply grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6;
+  }
+
+  /* Button responsive utilities */
+  .responsive-button {
+    @apply text-sm sm:text-base px-3 py-2 sm:px-4 sm:py-2.5;
+  }
+
+  /* Card responsive utilities */
+  .responsive-card {
+    @apply p-4 sm:p-6 m-2 sm:m-4;
+  }
+
+  /* Table responsive utilities */
+  .responsive-table {
+    @apply text-xs sm:text-sm md:text-base;
+  }
+}
+
+/* Mobile-first responsive breakpoints */
+@media (max-width: 640px) {
+  .mobile-stack {
+    @apply flex-col space-y-2;
+  }
+  
+  .mobile-full-width {
+    @apply w-full;
+  }
+  
+  .mobile-text-center {
+    @apply text-center;
+  }
+}
+
+/* Tablet responsive adjustments */  
+@media (min-width: 641px) and (max-width: 1024px) {
+  .tablet-compact {
+    @apply px-4 py-3;    
   }
 }

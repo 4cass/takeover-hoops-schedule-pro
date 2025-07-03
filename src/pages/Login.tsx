@@ -79,19 +79,19 @@ export default function Login() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-[#faf0e8] to-[#fffefe] p-4">
-      <Card className="w-full max-w-md shadow-lg border-2 border-orange-200 bg-white">
-        <CardHeader>
-          <CardTitle className="text-2xl text-center text-[#fc7416]">
+    <div className="min-h-screen flex items-center justify-center bg-background p-4">
+      <Card className="w-full max-w-sm sm:max-w-md shadow-lg border-2 border-border bg-card">
+        <CardHeader className="text-center">
+          <CardTitle className="responsive-subheading text-primary">
             {isSignUp ? "Coach Sign Up" : "Coach Login"}
           </CardTitle>
         </CardHeader>
-        <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-4">
+        <CardContent className="responsive-padding">
+          <form onSubmit={handleSubmit} className="responsive-spacing">
             {isSignUp && (
               <>
                 <div>
-                  <Label className="block text-sm font-medium text-gray-700 mb-1">Name</Label>
+                  <Label className="block responsive-small font-medium text-foreground mb-1">Name</Label>
                   <Input
                     type="text"
                     value={name}
@@ -101,7 +101,7 @@ export default function Login() {
                   />
                 </div>
                 <div>
-                  <Label className="block text-sm font-medium text-gray-700 mb-1">Phone</Label>
+                  <Label className="block responsive-small font-medium text-foreground mb-1">Phone</Label>
                   <Input
                     type="text"
                     value={phone}
@@ -113,7 +113,7 @@ export default function Login() {
             )}
 
             <div>
-              <Label className="block text-sm font-medium text-gray-700 mb-1">Email</Label>
+              <Label className="block responsive-small font-medium text-foreground mb-1">Email</Label>
               <Input
                 type="email"
                 value={email}
@@ -123,7 +123,7 @@ export default function Login() {
               />
             </div>
             <div>
-              <Label className="block text-sm font-medium text-gray-700 mb-1">Password</Label>
+              <Label className="block responsive-small font-medium text-foreground mb-1">Password</Label>
               <Input
                 type="password"
                 value={password}
@@ -135,7 +135,7 @@ export default function Login() {
 
             <Button
               type="submit"
-              className="w-full bg-[#fc7416] hover:bg-[#fe822d]"
+              className="w-full bg-accent hover:bg-accent/90 text-accent-foreground responsive-button"
               disabled={loading}
             >
               {loading
@@ -150,7 +150,7 @@ export default function Login() {
             <div className="text-center mt-3">
               <button
                 type="button"
-                className="text-[#fc7416] hover:underline text-sm"
+                className="text-secondary hover:underline responsive-small"
                 onClick={() => setIsSignUp(!isSignUp)}
               >
                 {isSignUp
