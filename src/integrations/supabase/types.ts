@@ -183,6 +183,7 @@ export type Database = {
           email: string
           id: string
           name: string
+          package_type: string | null
           phone: string | null
           remaining_sessions: number
           sessions: number | null
@@ -194,6 +195,7 @@ export type Database = {
           email: string
           id?: string
           name: string
+          package_type?: string | null
           phone?: string | null
           remaining_sessions?: number
           sessions?: number | null
@@ -205,6 +207,7 @@ export type Database = {
           email?: string
           id?: string
           name?: string
+          package_type?: string | null
           phone?: string | null
           remaining_sessions?: number
           sessions?: number | null
