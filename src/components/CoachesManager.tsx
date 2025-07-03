@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -93,21 +94,29 @@ export function CoachesManager() {
 
   const createMutation = useMutation({
     mutationFn: async (coach: typeof formData) => {
-      const { data, error } = await supabase
-        .from("coaches")
-        .insert([{ name: coach.name, email: coach.email, phone: coach.phone || null, package_type: coach.package_type || null }])
-        .select()
-        .single();
+      // Call the edge function to create coach account
+      const { data, error } = await supabase.functions.invoke('create-coach-account', {
+        body: {
+          name: coach.name,
+          email: coach.email,
+          phone: coach.phone || null,
+          package_type: coach.package_type || null
+        }
+      });
+
       if (error) throw error;
-      return data;
+      if (!data.success) throw new Error(data.error);
+      
+      return data.coach;
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ["coaches"] });
-      toast.success("Coach created successfully");
+      toast.success("Coach account created successfully! Default password: TOcoachAccount!1");
       resetForm();
     },
     onError: (error: any) => {
-      toast.error("Failed to create coach: " + error.message);
+      console.error("Create coach error:", error);
+      toast.error("Failed to create coach account: " + error.message);
     },
   });
 
@@ -225,10 +234,10 @@ export function CoachesManager() {
                 <DialogContent className="border-2 border-[#fc7416]/20 bg-gradient-to-br from-[#faf0e8]/30 to-white shadow-lg">
                   <DialogHeader>
                     <DialogTitle className="text-2xl font-bold text-black">
-                      {editingCoach ? "Edit Coach" : "Add New Coach"}
+                      {editingCoach ? "Edit Coach" : "Create Coach Account"}
                     </DialogTitle>
                     <DialogDescription className="text-gray-600 text-base">
-                      {editingCoach ? "Update coach information" : "Add a new coach to the system"}
+                      {editingCoach ? "Update coach information" : "Create a new coach account with login credentials"}
                     </DialogDescription>
                   </DialogHeader>
                   <form onSubmit={handleSubmit} className="space-y-6">
@@ -278,6 +287,14 @@ export function CoachesManager() {
                         <option value="Personal Training">Personal Training</option>
                       </select>
                     </div>
+                    {!editingCoach && (
+                      <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                        <p className="text-sm text-blue-800">
+                          <strong>Note:</strong> A login account will be created with default password: <code className="bg-blue-100 px-1 rounded">TOcoachAccount!1</code>
+                        </p>
+                        <p className="text-xs text-blue-600 mt-1">The coach can change this password after their first login.</p>
+                      </div>
+                    )}
                     <div className="flex justify-end space-x-3">
                       <Button
                         type="button"
@@ -292,7 +309,7 @@ export function CoachesManager() {
                         disabled={createMutation.isPending || updateMutation.isPending}
                         className="bg-[#fc7416] hover:bg-[#fe822d] text-white transition-all duration-300 hover:scale-105"
                       >
-                        {editingCoach ? "Update" : "Create"}
+                        {createMutation.isPending || updateMutation.isPending ? "Processing..." : editingCoach ? "Update" : "Create Account"}
                       </Button>
                     </div>
                   </form>
