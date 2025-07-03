@@ -28,10 +28,10 @@ export default function Dashboard() {
   // Show loading while auth is being determined
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-white">
-        <div className="text-center">
-          <div className="text-2xl font-bold text-black mb-2">Loading Dashboard...</div>
-          <div className="text-lg text-gray-600">Please wait while we verify your access.</div>
+      <div className="min-h-screen flex items-center justify-center bg-white px-4">
+        <div className="text-center max-w-sm w-full">
+          <div className="text-xl sm:text-2xl font-bold text-black mb-2">Loading Dashboard...</div>
+          <div className="text-base sm:text-lg text-gray-600">Please wait while we verify your access.</div>
         </div>
       </div>
     );
@@ -47,10 +47,10 @@ export default function Dashboard() {
   if (!role) {
     console.log("No role found for authenticated user, showing error message");
     return (
-      <div className="min-h-screen flex items-center justify-center bg-white">
-        <div className="text-center">
-          <div className="text-2xl font-bold text-red-600 mb-2">Access Error</div>
-          <div className="text-lg text-gray-600 mb-4">
+      <div className="min-h-screen flex items-center justify-center bg-white px-4">
+        <div className="text-center max-w-md w-full">
+          <div className="text-xl sm:text-2xl font-bold text-red-600 mb-2">Access Error</div>
+          <div className="text-base sm:text-lg text-gray-600 mb-4">
             Your account doesn't have the proper permissions to access this dashboard.
           </div>
           <div className="text-sm text-gray-500 mb-4">
@@ -58,7 +58,7 @@ export default function Dashboard() {
           </div>
           <button 
             onClick={() => window.location.href = "/login"}
-            className="px-4 py-2 bg-[#fc7416] text-white rounded hover:bg-[#fe822d]"
+            className="px-4 py-2 bg-[#fc7416] text-white rounded hover:bg-[#fe822d] transition-colors"
           >
             Back to Login
           </button>
@@ -82,11 +82,11 @@ export default function Dashboard() {
     <SidebarProvider>
       <div className="min-h-screen bg-white flex w-full">
         <AppSidebar activeTab={activeTab} onTabChange={(tab) => navigate(`/dashboard/${tab === "overview" ? "" : tab}`)} />
-        <SidebarInset>
+        <SidebarInset className="flex-1 min-w-0">
           <header className="sticky top-0 z-50 bg-white flex h-16 shrink-0 items-center gap-2 px-4 border-b">
             <SidebarTrigger className="text-black hover:text-accent hover:bg-muted" />
           </header>
-          <main className="flex-1 p-6 bg-white">
+          <main className="flex-1 p-4 sm:p-6 bg-white overflow-x-hidden">
             <Routes>
               <Route path="/" element={<DashboardStats />} />
               

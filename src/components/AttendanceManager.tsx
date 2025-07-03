@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -153,37 +154,37 @@ export function AttendanceManager() {
   };
 
   return (
-    <div className="min-h-screen bg-white pt-4 p-6">
-      <div className="max-w-7xl mx-auto space-y-8 -mt-5">
+    <div className="min-h-screen bg-white pt-4 p-4 sm:p-6">
+      <div className="max-w-7xl mx-auto space-y-6 sm:space-y-8 -mt-5">
         
         {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-4xl font-bold text-black mb-2 tracking-tight">
+        <div className="mb-6 sm:mb-8">
+          <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-black mb-2 tracking-tight">
             Attendance Manager
           </h1>
-          <p className="text-lg text-gray-700">
+          <p className="text-base sm:text-lg text-gray-700">
             Track and manage player attendance for training sessions
           </p>
         </div>
 
         {/* Session Selection Card */}
         <Card className="border-2 border-black bg-white shadow-xl">
-          <CardHeader className="border-b border-black bg-black">
-            <CardTitle className="text-2xl font-bold text-white flex items-center">
-              <Calendar className="h-6 w-6 mr-3 text-accent" />
+          <CardHeader className="border-b border-black bg-black p-4 sm:p-6 lg:p-8">
+            <CardTitle className="text-lg sm:text-xl lg:text-2xl font-bold text-white flex items-center">
+              <Calendar className="h-5 w-5 sm:h-6 sm:w-6 mr-3 text-accent" />
               Training Sessions
             </CardTitle>
-            <CardDescription className="text-gray-400 text-base">
+            <CardDescription className="text-gray-400 text-sm sm:text-base">
               Select a training session to manage player attendance
             </CardDescription>
           </CardHeader>
-          <CardContent className="p-8">
+          <CardContent className="p-4 sm:p-6 lg:p-8">
             <div className="mb-6">
               <div className="flex items-center mb-4">
-                <Filter className="h-5 w-5 text-accent mr-2" />
-                <h3 className="text-lg font-semibold text-black">Filter Sessions</h3>
+                <Filter className="h-4 w-4 sm:h-5 sm:w-5 text-accent mr-2" />
+                <h3 className="text-base sm:text-lg font-semibold text-black">Filter Sessions</h3>
               </div>
-              <div className="flex flex-col sm:flex-row sm:items-end gap-4">
+              <div className="flex flex-col space-y-4 lg:flex-row lg:items-end lg:gap-4 lg:space-y-0">
                 <div className="relative flex-1">
                   <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
                   <input
@@ -237,7 +238,7 @@ export function AttendanceManager() {
               </p>
             </div>
 
-            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+            <div className="grid gap-4 sm:gap-6 md:grid-cols-2 lg:grid-cols-3">
               {filteredSessions.map((session) => (
                 <Card
                   key={session.id}
@@ -248,7 +249,7 @@ export function AttendanceManager() {
                   }`}
                   onClick={() => setSelectedSession(session.id)}
                 >
-                  <CardContent className="p-5 space-y-4">
+                  <CardContent className="p-4 sm:p-5 space-y-4">
                     <div className="flex items-center space-x-2">
                       <Calendar className="w-4 h-4 text-accent" />
                       <span className="font-semibold text-black text-sm">{formatDate(session.date)}</span>
@@ -279,12 +280,12 @@ export function AttendanceManager() {
             </div>
 
             {filteredSessions.length === 0 && (
-              <div className="py-12 text-center">
-                <Calendar className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-                <h3 className="text-lg font-semibold text-gray-900 mb-2">
+              <div className="py-8 sm:py-12 text-center">
+                <Calendar className="w-12 h-12 sm:w-16 sm:h-16 text-gray-300 mx-auto mb-4" />
+                <h3 className="text-base sm:text-lg font-semibold text-gray-900 mb-2">
                   {sessionSearchTerm || filterPackageType !== "All" ? `No ${filterPackageType === "All" ? "" : filterPackageType} sessions found` : "No sessions"}
                 </h3>
-                <p className="text-gray-600">
+                <p className="text-gray-600 text-sm sm:text-base">
                   {sessionSearchTerm || filterPackageType !== "All" ? "Try adjusting your search or filter." : "No scheduled sessions available."}
                 </p>
               </div>
@@ -295,21 +296,21 @@ export function AttendanceManager() {
         {/* Attendance Management Card */}
         {selectedSessionDetails && attendanceRecords && (
           <Card className="border-2 border-black bg-white shadow-xl">
-            <CardHeader className="border-b border-accent/10 bg-accent/5">
+            <CardHeader className="border-b border-accent/10 bg-accent/5 p-4 sm:p-6 lg:p-8">
               <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between space-y-4 lg:space-y-0">
                 <div>
-                  <CardTitle className="text-2xl font-bold text-black flex items-center">
-                    <Users className="h-6 w-6 mr-3 text-accent" />
+                  <CardTitle className="text-lg sm:text-xl lg:text-2xl font-bold text-black flex items-center">
+                    <Users className="h-5 w-5 sm:h-6 sm:w-6 mr-3 text-accent" />
                     Attendance Management
                   </CardTitle>
-                  <CardDescription className="text-gray-600 text-base">
+                  <CardDescription className="text-gray-600 text-sm sm:text-base">
                     {formatDate(selectedSessionDetails.date)} • {selectedSessionDetails.branches.name}
                   </CardDescription>
                 </div>
                 
                 {/* Stats */}
                 <div className="flex flex-col sm:flex-row items-start sm:items-center space-y-4 sm:space-y-0 sm:space-x-6">
-                  <div className="flex items-center space-x-6 text-sm">
+                  <div className="flex flex-wrap items-center gap-4 sm:gap-6 text-sm">
                     <div className="flex items-center gap-2">
                       <div className="w-3 h-3 bg-green-500 rounded-full"></div>
                       <span className="text-gray-700 font-medium">Present: {presentCount}</span>
@@ -326,13 +327,13 @@ export function AttendanceManager() {
                 </div>
               </div>
             </CardHeader>
-            <CardContent className="p-8">
+            <CardContent className="p-4 sm:p-6 lg:p-8">
               
               {/* Search for Attendance Records */}
               <div className="mb-6">
                 <div className="flex items-center mb-4">
-                  <Filter className="h-5 w-5 text-accent mr-2" />
-                  <h3 className="text-lg font-semibold text-black">Filter Players</h3>
+                  <Filter className="h-4 w-4 sm:h-5 sm:w-5 text-accent mr-2" />
+                  <h3 className="text-base sm:text-lg font-semibold text-black">Filter Players</h3>
                 </div>
                 <div className="relative max-w-md">
                   <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
@@ -352,10 +353,10 @@ export function AttendanceManager() {
                   <table className="w-full">
                     <thead className="bg-black text-white">
                       <tr>
-                        <th className="py-4 px-6 text-left font-semibold">Player Name</th>
-                        <th className="py-4 px-6 text-left font-semibold">Status</th>
-                        <th className="py-4 px-6 text-left font-semibold">Marked At</th>
-                        <th className="py-4 px-6 text-left font-semibold">Actions</th>
+                        <th className="py-3 sm:py-4 px-4 sm:px-6 text-left font-semibold text-sm sm:text-base">Player Name</th>
+                        <th className="py-3 sm:py-4 px-4 sm:px-6 text-left font-semibold text-sm sm:text-base">Status</th>
+                        <th className="py-3 sm:py-4 px-4 sm:px-6 text-left font-semibold text-sm sm:text-base">Marked At</th>
+                        <th className="py-3 sm:py-4 px-4 sm:px-6 text-left font-semibold text-sm sm:text-base">Actions</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -366,38 +367,38 @@ export function AttendanceManager() {
                             index % 2 === 0 ? 'bg-white' : 'bg-gray-50'
                           }`}
                         >
-                          <td className="py-4 px-6">
+                          <td className="py-3 sm:py-4 px-4 sm:px-6">
                             <div className="flex items-center space-x-3">
-                              <div className="w-10 h-10 rounded-full bg-accent flex items-center justify-center text-white font-semibold">
+                              <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-accent flex items-center justify-center text-white font-semibold text-sm">
                                 {record.students.name.split(' ').map(n => n[0]).join('').toUpperCase()}
                               </div>
-                              <span className="font-semibold text-black">{record.students.name}</span>
+                              <span className="font-semibold text-black text-sm sm:text-base">{record.students.name}</span>
                             </div>
                           </td>
-                          <td className="py-4 px-6">
+                          <td className="py-3 sm:py-4 px-4 sm:px-6">
                             <div className="flex items-center space-x-2">
                               {getAttendanceIcon(record.status)}
-                              <Badge className={`${getAttendanceBadgeColor(record.status)} border capitalize font-medium`}>
+                              <Badge className={`${getAttendanceBadgeColor(record.status)} border capitalize font-medium text-xs sm:text-sm`}>
                                 {record.status}
                               </Badge>
                             </div>
                           </td>
-                          <td className="py-4 px-6 text-gray-600">
+                          <td className="py-3 sm:py-4 px-4 sm:px-6 text-gray-600 text-sm">
                             {record.marked_at ? (
                               <span className="font-medium">{formatDateTime(record.marked_at)}</span>
                             ) : (
                               <span className="italic text-gray-400">Not marked</span>
                             )}
                           </td>
-                          <td className="py-4 px-6">
-                            <div className="flex items-center space-x-2">
+                          <td className="py-3 sm:py-4 px-4 sm:px-6">
+                            <div className="flex flex-col sm:flex-row items-start sm:items-center space-y-2 sm:space-y-0 sm:space-x-2">
                               {attendanceStatuses.map((status) => (
                                 <Button
                                   key={status}
                                   size="sm"
                                   variant={record.status === status ? "default" : "outline"}
                                   onClick={() => handleAttendanceChange(record.id, status)}
-                                  className={`transition-all duration-300 hover:scale-105 ${
+                                  className={`transition-all duration-300 hover:scale-105 text-xs sm:text-sm ${
                                     record.status === status
                                       ? status === "present"
                                         ? "bg-green-600 hover:bg-green-700 text-white"
@@ -420,12 +421,12 @@ export function AttendanceManager() {
                 </div>
                 
                 {filteredAttendanceRecords.length === 0 && (
-                  <div className="py-12 text-center">
-                    <Users className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-                    <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                  <div className="py-8 sm:py-12 text-center">
+                    <Users className="w-12 h-12 sm:w-16 sm:h-16 text-gray-300 mx-auto mb-4" />
+                    <h3 className="text-base sm:text-lg font-semibold text-gray-900 mb-2">
                       {searchTerm ? 'No players found' : 'No attendance records'}
                     </h3>
-                    <p className="text-gray-600">
+                    <p className="text-gray-600 text-sm sm:text-base">
                       {searchTerm 
                         ? 'Try adjusting your search terms.' 
                         : 'No attendance records found for this session.'
@@ -439,12 +440,12 @@ export function AttendanceManager() {
         )}
         
         {!selectedSession && (
-          <div className="text-center py-16">
-            <div className="w-24 h-24 rounded-full bg-accent flex items-center justify-center mx-auto mb-6">
-              <Calendar className="w-12 h-12 text-white" />
+          <div className="text-center py-12 sm:py-16">
+            <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-full bg-accent flex items-center justify-center mx-auto mb-6">
+              <Calendar className="w-10 h-10 sm:w-12 sm:h-12 text-white" />
             </div>
-            <h3 className="text-2xl font-bold text-black mb-3">Select a Training Session</h3>
-            <p className="text-lg text-gray-600">Choose a session from above to start managing attendance.</p>
+            <h3 className="text-xl sm:text-2xl font-bold text-black mb-3">Select a Training Session</h3>
+            <p className="text-base sm:text-lg text-gray-600">Choose a session from above to start managing attendance.</p>
           </div>
         )}
       </div>

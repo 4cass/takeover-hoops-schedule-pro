@@ -95,5 +95,35 @@
 
   body {
     @apply bg-background text-foreground font-poppins;
+    overflow-x: hidden;
+  }
+
+  /* Responsive utilities */
+  .container {
+    @apply w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8;
+  }
+
+  /* Ensure modals and dialogs are responsive */
+  [data-radix-dialog-content] {
+    @apply max-w-[95vw] max-h-[95vh] overflow-y-auto;
+  }
+}
+
+/* Custom responsive classes */
+@layer utilities {
+  .responsive-grid {
+    @apply grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4;
+  }
+  
+  .responsive-text {
+    @apply text-sm sm:text-base lg:text-lg;
+  }
+  
+  .responsive-padding {
+    @apply p-4 sm:p-6 lg:p-8;
+  }
+  
+  .responsive-margin {
+    @apply m-4 sm:m-6 lg:m-8;
   }
 }
