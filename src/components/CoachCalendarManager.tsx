@@ -4,7 +4,6 @@ import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -88,7 +87,7 @@ export function CoachCalendarManager() {
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case "scheduled": return "bg-[#fc7416]/10 text-[#fc7416] border-[#fc7416]/20";
+      case "scheduled": return "bg-blue-100 text-blue-700 border-blue-200";
       case "completed": return "bg-green-100 text-green-700 border-green-200";
       case "cancelled": return "bg-red-100 text-red-700 border-red-200";
       default: return "bg-gray-100 text-gray-700 border-gray-200";
@@ -128,11 +127,11 @@ export function CoachCalendarManager() {
 
   if (loading || sessionsLoading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-[#faf0e8] to-[#fffefe] p-4 sm:p-6">
+      <div className="min-h-screen bg-white p-6">
         <div className="max-w-7xl mx-auto text-center py-16">
           <CalendarIcon className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-          <h3 className="text-xl sm:text-2xl font-bold text-black mb-3">Loading your calendar...</h3>
-          <p className="text-base sm:text-lg text-gray-600">Please wait while we fetch your sessions.</p>
+          <h3 className="text-2xl font-bold text-black mb-3">Loading your calendar...</h3>
+          <p className="text-lg text-gray-600">Please wait while we fetch your sessions.</p>
         </div>
       </div>
     );
@@ -140,77 +139,77 @@ export function CoachCalendarManager() {
 
   if (error) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-[#faf0e8] to-[#fffefe] p-4 sm:p-6">
+      <div className="min-h-screen bg-white p-6">
         <div className="max-w-7xl mx-auto text-center py-16">
           <CalendarIcon className="w-16 h-16 text-red-300 mx-auto mb-4" />
-          <h3 className="text-xl sm:text-2xl font-bold text-black mb-3">Error loading calendar</h3>
-          <p className="text-base sm:text-lg text-gray-600">Please try refreshing the page.</p>
+          <h3 className="text-2xl font-bold text-black mb-3">Error loading calendar</h3>
+          <p className="text-lg text-gray-600">Please try refreshing the page.</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#faf0e8] to-[#fffefe] pt-4 p-4 sm:p-6">
-      <div className="max-w-7xl mx-auto space-y-6 sm:space-y-8 -mt-5">
+    <div className="min-h-screen bg-white p-6">
+      <div className="max-w-7xl mx-auto space-y-8">
         {/* Header */}
-        <div className="mb-6 sm:mb-8">
-          <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-black mb-2 tracking-tight">
+        <div className="mb-8">
+          <h1 className="text-4xl font-bold text-black mb-2 tracking-tight">
             Your Calendar
           </h1>
-          <p className="text-base sm:text-lg text-gray-700">
+          <p className="text-lg text-gray-700">
             View and manage your training sessions
           </p>
         </div>
 
         <div className="grid gap-6 lg:grid-cols-2">
           {/* Calendar - Left Side */}
-          <Card className="border-2 border-black bg-white/90 backdrop-blur-sm shadow-xl">
-            <CardHeader className="border-b border-black bg-black p-4 sm:p-6">
-              <CardTitle className="text-lg sm:text-xl lg:text-2xl font-bold text-white flex items-center">
-                <CalendarIcon className="h-5 w-5 sm:h-6 sm:w-6 mr-3 text-[#fc7416]" />
+          <Card className="border-2 border-black bg-white shadow-xl">
+            <CardHeader className="border-b border-black bg-black">
+              <CardTitle className="text-2xl font-bold text-white flex items-center">
+                <CalendarIcon className="h-6 w-6 mr-3 text-accent" />
                 Session Calendar
               </CardTitle>
-              <CardDescription className="text-gray-400 text-sm sm:text-base">
+              <CardDescription className="text-gray-400 text-base">
                 Click on any date to view session details for {format(currentMonth, 'MMMM yyyy')}
               </CardDescription>
             </CardHeader>
-            <CardContent className="p-4 sm:p-6 lg:p-8">
-              <div className="border-2 border-black rounded-2xl p-4 sm:p-6 bg-gradient-to-br from-[#faf0e8]/30 to-white shadow-lg">
+            <CardContent className="p-8">
+              <div className="border-2 border-black rounded-2xl p-6 bg-white shadow-lg">
                 {/* Calendar Navigation */}
-                <div className="flex justify-between items-center mb-4 sm:mb-6">
+                <div className="flex justify-between items-center mb-6">
                   <Button
                     onClick={handlePrevMonth}
                     variant="outline"
                     size="sm"
-                    className="border-[#fc7416]/30 text-[#fc7416] hover:bg-[#fc7416] hover:text-white transition-all duration-300"
+                    className="border-accent/30 text-accent hover:bg-accent hover:text-white transition-all duration-300"
                   >
                     <ChevronLeft className="h-4 w-4" />
                   </Button>
-                  <h3 className="text-lg sm:text-xl lg:text-2xl font-bold text-black">
+                  <h3 className="text-2xl font-bold text-black">
                     {format(currentMonth, 'MMMM yyyy')}
                   </h3>
                   <Button
                     onClick={handleNextMonth}
                     variant="outline"
                     size="sm"
-                    className="border-[#fc7416]/30 text-[#fc7416] hover:bg-[#fc7416] hover:text-white transition-all duration-300"
+                    className="border-accent/30 text-accent hover:bg-accent hover:text-white transition-all duration-300"
                   >
                     <ChevronRight className="h-4 w-4" />
                   </Button>
                 </div>
                 
                 {/* Days of Week Header */}
-                <div className="grid grid-cols-7 gap-1 sm:gap-2 mb-4">
+                <div className="grid grid-cols-7 gap-2 mb-4">
                   {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(day => (
-                    <div key={day} className="text-center py-2 sm:py-3 bg-black text-white font-semibold rounded-lg text-xs sm:text-sm">
+                    <div key={day} className="text-center py-3 bg-black text-white font-semibold rounded-lg text-sm">
                       {day}
                     </div>
                   ))}
                 </div>
                 
                 {/* Calendar Days */}
-                <div className="grid grid-cols-7 gap-1 sm:gap-2">
+                <div className="grid grid-cols-7 gap-2">
                   {daysInMonth.map(day => {
                     const daySessions = sessions.filter(session => isSameDay(parseISO(session.date), day)) || [];
                     const hasScheduled = daySessions.some(s => s.status === 'scheduled');
@@ -224,18 +223,18 @@ export function CoachCalendarManager() {
                         key={day.toString()}
                         onClick={() => handleDateSelect(day)}
                         className={`
-                          relative p-2 sm:p-3 h-16 sm:h-20 rounded-xl text-left transition-all duration-300 hover:scale-105 hover:shadow-lg
+                          relative p-3 h-20 rounded-xl text-left transition-all duration-300 hover:scale-105 hover:shadow-lg
                           ${isSelected 
-                            ? 'bg-gradient-to-br from-[#fc7416] to-[#fe822d] text-white shadow-lg scale-105' 
+                            ? 'bg-gradient-to-br from-accent to-accent/80 text-white shadow-lg scale-105' 
                             : isToday
-                              ? 'bg-gradient-to-br from-[#fc7416]/20 to-[#fe822d]/20 border-2 border-[#fc7416] text-black'
+                              ? 'bg-gradient-to-br from-accent/20 to-accent/10 border-2 border-accent text-black'
                               : daySessions.length > 0
-                                ? 'bg-gradient-to-br from-[#faf0e8] to-white border border-[#fc7416]/30 text-black hover:border-[#fc7416]'
-                                : 'bg-white border border-gray-200 text-gray-700 hover:bg-[#faf0e8]/50'
+                                ? 'bg-gradient-to-br from-gray-50 to-white border border-accent/30 text-black hover:border-accent'
+                                : 'bg-white border border-gray-200 text-gray-700 hover:bg-gray-50'
                           }
                         `}
                       >
-                        <div className="font-semibold text-sm sm:text-lg mb-1">
+                        <div className="font-semibold text-lg mb-1">
                           {format(day, 'd')}
                         </div>
                         {daySessions.length > 0 && (
@@ -256,7 +255,7 @@ export function CoachCalendarManager() {
                 </div>
                 
                 {/* Legend */}
-                <div className="mt-4 sm:mt-6 flex flex-wrap gap-2 sm:gap-4 justify-center text-sm">
+                <div className="mt-6 flex flex-wrap gap-4 justify-center text-sm">
                   <div className="flex items-center gap-2">
                     <div className="w-3 h-3 bg-blue-500 rounded-full"></div>
                     <span className="text-gray-600">Scheduled</span>
@@ -271,133 +270,126 @@ export function CoachCalendarManager() {
                   </div>
                 </div>
               </div>
+
+              {/* Session Action Buttons */}
+              <div className="mt-8 grid gap-4 md:grid-cols-2">
+                {/* Upcoming Sessions Button */}
+                <Card className="border-2 border-green-200 bg-gradient-to-br from-green-50 to-white shadow-lg">
+                  <CardHeader className="border-b border-green-200 bg-gradient-to-r from-green-100/50 to-green-50 p-4">
+                    <CardTitle className="text-lg font-bold text-green-800 flex items-center">
+                      <Clock className="h-5 w-5 mr-2 text-green-600" />
+                      Upcoming Sessions
+                    </CardTitle>
+                    <CardDescription className="text-green-600 text-sm">
+                      {upcomingSessions.length} upcoming session{upcomingSessions.length !== 1 ? 's' : ''}
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="p-4 text-center">
+                    <Button
+                      onClick={() => setShowUpcomingSessions(true)}
+                      className="bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white font-semibold py-3 px-6 rounded-xl transition-all duration-300 hover:scale-105 hover:shadow-lg w-full"
+                    >
+                      View {upcomingSessions.length} Upcoming
+                    </Button>
+                  </CardContent>
+                </Card>
+
+                {/* Past Sessions Button */}
+                <Card className="border-2 border-gray-200 bg-gradient-to-br from-gray-50 to-white shadow-lg">
+                  <CardHeader className="border-b border-gray-200 bg-gradient-to-r from-gray-100/50 to-gray-50 p-4">
+                    <CardTitle className="text-lg font-bold text-gray-800 flex items-center">
+                      <CalendarIcon className="h-5 w-5 mr-2 text-gray-600" />
+                      Past Sessions
+                    </CardTitle>
+                    <CardDescription className="text-gray-600 text-sm">
+                      {pastSessions.length} past session{pastSessions.length !== 1 ? 's' : ''}
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="p-4 text-center">
+                    <Button
+                      onClick={() => setShowPastSessions(true)}
+                      className="bg-gradient-to-r from-gray-600 to-gray-700 hover:from-gray-700 hover:to-gray-800 text-white font-semibold py-3 px-6 rounded-xl transition-all duration-300 hover:scale-105 hover:shadow-lg w-full"
+                    >
+                      View {pastSessions.length} Past
+                    </Button>
+                  </CardContent>
+                </Card>
+              </div>
             </CardContent>
           </Card>
 
-          {/* Sessions - Right Side */}
-          <div className="space-y-6">
-            {/* Upcoming Sessions Button */}
-            <Card className="border-2 border-black bg-gradient-to-br from-green-50 to-white shadow-lg">
-              <CardHeader className="border-b border-black bg-gradient-to-r from-green-100/50 to-green-50 p-4 sm:p-6">
-                <CardTitle className="text-lg sm:text-xl font-bold text-green-800 flex items-center">
-                  <Clock className="h-4 w-4 sm:h-5 sm:w-5 mr-3 text-green-600" />
-                  Upcoming Sessions
-                </CardTitle>
-                <CardDescription className="text-green-600 text-sm sm:text-base">
-                  {upcomingSessions.length} upcoming session{upcomingSessions.length !== 1 ? 's' : ''}
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="p-4 text-center">
-                <Button
-                  onClick={() => setShowUpcomingSessions(true)}
-                  className="bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white font-semibold py-4 px-8 rounded-xl transition-all duration-300 hover:scale-105 hover:shadow-lg"
-                >
-                  View {upcomingSessions.length} Upcoming Session{upcomingSessions.length !== 1 ? 's' : ''}
-                </Button>
-              </CardContent>
-            </Card>
-
-            {/* Past Sessions Button */}
-            <Card className="border-2 border-black bg-gradient-to-br from-gray-50 to-white shadow-lg">
-              <CardHeader className="border-b border-black bg-gradient-to-r from-gray-100/50 to-gray-50 p-4 sm:p-6">
-                <CardTitle className="text-lg sm:text-xl font-bold text-gray-800 flex items-center">
-                  <CalendarIcon className="h-4 w-4 sm:h-5 sm:w-5 mr-3 text-gray-600" />
-                  Past Sessions
-                </CardTitle>
-                <CardDescription className="text-gray-600 text-sm sm:text-base">
-                  {pastSessions.length} past session{pastSessions.length !== 1 ? 's' : ''}
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="p-4 text-center">
-                <Button
-                  onClick={() => setShowPastSessions(true)}
-                  className="bg-gradient-to-r from-gray-600 to-gray-700 hover:from-gray-700 hover:to-gray-800 text-white font-semibold py-4 px-8 rounded-xl transition-all duration-300 hover:scale-105 hover:shadow-lg"
-                >
-                  View {pastSessions.length} Past Session{pastSessions.length !== 1 ? 's' : ''}
-                </Button>
-              </CardContent>
-            </Card>
-          </div>
-        </div>
-
-        {/* Date Selection Modal */}
-        <Dialog open={!!selectedDate} onOpenChange={() => setSelectedDate(null)}>
-          <DialogContent className="max-w-5xl border-2 border-[#fc7416]/20 bg-gradient-to-br from-[#faf0e8]/30 to-white shadow-lg">
-            <DialogHeader>
-              <DialogTitle className="text-2xl font-bold text-black flex items-center">
-                <Eye className="h-5 w-5 mr-3 text-[#fc7416]" />
-                Sessions on {selectedDate ? format(selectedDate, 'EEEE, MMMM dd, yyyy') : ''}
-              </DialogTitle>
-              <DialogDescription className="text-gray-600 text-base">
-                View session details for the selected date
-              </DialogDescription>
-            </DialogHeader>
-            <div className="space-y-4">
+          {/* Selected Date Sessions - Right Side */}
+          <Card className="border-2 border-black bg-white shadow-xl">
+            <CardHeader className="border-b border-accent/10 bg-accent/5">
+              <CardTitle className="text-2xl font-bold text-black flex items-center">
+                <Eye className="h-6 w-6 mr-3 text-accent" />
+                {selectedDate ? `Sessions on ${format(selectedDate, 'EEEE, MMMM dd, yyyy')}` : 'Select a Date'}
+              </CardTitle>
+              <CardDescription className="text-gray-600 text-base">
+                {selectedDate ? 'View session details for the selected date' : 'Click on a date in the calendar to view sessions'}
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="p-8">
               {selectedDateSessions.length > 0 ? (
                 <div className="space-y-4">
                   {selectedDateSessions.map(session => (
-                    <Card key={session.id} className="border border-black bg-gradient-to-r from-[#faf0e8]/50 to-white hover:shadow-lg transition-all duration-300">
+                    <Card key={session.id} className="border border-accent/20 bg-gradient-to-r from-accent/5 to-white hover:shadow-lg transition-all duration-300">
                       <CardContent className="p-6">
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-4 items-center">
+                        <div className="grid grid-cols-1 gap-4">
+                          <div className="grid md:grid-cols-3 gap-4 items-center">
+                            <div className="flex items-center space-x-2">
+                              <Clock className="h-4 w-4 text-accent" />
+                              <div>
+                                <p className="text-sm font-medium text-gray-600">Time</p>
+                                <p className="font-semibold text-black">
+                                  {formatTime12Hour(session.start_time)} - {formatTime12Hour(session.end_time)}
+                                </p>
+                              </div>
+                            </div>
+                            <div className="flex items-center space-x-2">
+                              <MapPin className="h-4 w-4 text-accent" />
+                              <div>
+                                <p className="text-sm font-medium text-gray-600">Branch</p>
+                                <p className="font-semibold text-black">{session.branches.name}</p>
+                              </div>
+                            </div>
+                            <div className="flex items-center space-x-2">
+                              <Badge className={`${getStatusColor(session.status)} font-medium px-3 py-1`}>
+                                {session.status.charAt(0).toUpperCase() + session.status.slice(1)}
+                              </Badge>
+                            </div>
+                          </div>
                           <div className="flex items-center space-x-2">
-                            <Clock className="h-4 w-4 text-[#fc7416]" />
+                            <Users className="h-4 w-4 text-accent" />
                             <div>
-                              <p className="text-sm font-medium text-gray-600">Time</p>
-                              <p className="font-semibold text-black">
-                                {formatTime12Hour(session.start_time)} - {formatTime12Hour(session.end_time)}
-                              </p>
+                              <p className="text-sm font-medium text-gray-600 mb-2">Players ({session.session_participants?.length || 0}):</p>
+                              <div className="space-y-1">
+                                {session.session_participants?.length > 0 ? (
+                                  session.session_participants.map((participant, idx) => (
+                                    <div key={idx} className="text-sm text-black font-medium">
+                                      {participant.students.name}
+                                    </div>
+                                  ))
+                                ) : (
+                                  <span className="text-sm text-gray-500">No players assigned</span>
+                                )}
+                              </div>
                             </div>
                           </div>
-                          <div className="flex items-center space-x-2">
-                            <MapPin className="h-4 w-4 text-[#fc7416]" />
-                            <div>
-                              <p className="text-sm font-medium text-gray-600">Branch</p>
-                              <p className="font-semibold text-black">{session.branches.name}</p>
-                            </div>
+                          <div className="flex justify-end">
+                            <Button
+                              onClick={() => handleAttendanceRedirect(session.id)}
+                              className="bg-gradient-to-r from-accent to-accent/80 hover:from-accent/80 hover:to-accent text-white font-medium transition-all duration-300 hover:scale-105 hover:shadow-lg"
+                            >
+                              Manage Attendance
+                            </Button>
                           </div>
-                          <div className="flex items-center space-x-2">
-                            <Users className="h-4 w-4 text-[#fc7416]" />
-                            <div>
-                              <p className="text-sm font-medium text-gray-600">Players</p>
-                              <p className="font-semibold text-black">{session.session_participants?.length || 0}</p>
-                            </div>
-                          </div>
-                          <div className="flex items-center space-x-2">
-                            <Badge className={`${getStatusColor(session.status)} font-medium px-3 py-1`}>
-                              {session.status.charAt(0).toUpperCase() + session.status.slice(1)}
-                            </Badge>
-                          </div>
-                          <div className="col-span-2">
-                            <div className="text-sm font-medium text-gray-600 mb-2">Players:</div>
-                            <div className="space-y-1">
-                              {session.session_participants?.length > 0 ? (
-                                session.session_participants.map((participant, idx) => (
-                                  <div key={idx} className="text-sm text-black font-medium">
-                                    {participant.students.name}
-                                  </div>
-                                ))
-                              ) : (
-                                <span className="text-sm text-gray-500">No players assigned</span>
-                              )}
-                            </div>
-                          </div>
-                        </div>
-                        <div className="mt-4 flex justify-end">
-                          <Button
-                            onClick={() => {
-                              setSelectedDate(null);
-                              handleAttendanceRedirect(session.id);
-                            }}
-                            className="bg-gradient-to-r from-[#fc7416] to-[#fe822d] hover:from-[#fe822d] hover:to-[#fc7416] text-white font-medium transition-all duration-300 hover:scale-105 hover:shadow-lg"
-                          >
-                            Manage Attendance
-                          </Button>
                         </div>
                       </CardContent>
                     </Card>
                   ))}
                 </div>
-              ) : (
+              ) : selectedDate ? (
                 <div className="text-center py-12">
                   <CalendarIcon className="h-16 w-16 text-gray-300 mx-auto mb-4" />
                   <p className="text-xl text-gray-500 mb-2">
@@ -407,19 +399,20 @@ export function CoachCalendarManager() {
                     No sessions scheduled for this date.
                   </p>
                 </div>
+              ) : (
+                <div className="text-center py-12">
+                  <CalendarIcon className="h-16 w-16 text-gray-300 mx-auto mb-4" />
+                  <p className="text-xl text-gray-500 mb-2">
+                    Select a date
+                  </p>
+                  <p className="text-gray-400">
+                    Click on a date in the calendar to view sessions.
+                  </p>
+                </div>
               )}
-              <div className="flex justify-end">
-                <Button
-                  variant="outline"
-                  onClick={() => setSelectedDate(null)}
-                  className="border-[#fc7416]/30 text-[#fc7416] hover:bg-[#fc7416] hover:text-white transition-all duration-300 hover:scale-105"
-                >
-                  Close
-                </Button>
-              </div>
-            </div>
-          </DialogContent>
-        </Dialog>
+            </CardContent>
+          </Card>
+        </div>
 
         {/* Upcoming Sessions Modal */}
         <Dialog open={showUpcomingSessions} onOpenChange={setShowUpcomingSessions}>

@@ -1,15 +1,17 @@
 
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useParams } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
-import { CheckCircle, XCircle, Clock, Calendar, MapPin, User, Users, Filter, Search } from "lucide-react";
+import { CheckCircle, XCircle, Clock, Calendar, MapPin, User, Users, Filter, Search, ArrowLeft } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useAuth } from "@/context/AuthContext";
 import { format, parseISO, addDays, subDays } from "date-fns";
+import { useNavigate } from "react-router-dom";
 
 type AttendanceStatus = "present" | "absent" | "pending";
 
@@ -26,7 +28,6 @@ const formatTime12Hour = (timeString: string) => {
 const formatDate = (dateString: string) => {
   try {
     console.log("Formatting date:", dateString);
-    // Handle the date string properly - parse as local date
     const date = new Date(dateString + 'T00:00:00');
     const formattedDate = format(date, 'EEEE, MMMM dd, yyyy');
     console.log("Formatted date result:", formattedDate);
@@ -48,12 +49,15 @@ const formatDateTime = (dateString: string) => {
 };
 
 export function CoachAttendanceManager() {
-  const [selectedSession, setSelectedSession] = useState<string | null>(null);
+  const { sessionId } = useParams();
+  const [selectedSession, setSelectedSession] = useState<string | null>(sessionId || null);
   const [selectedSessionModal, setSelectedSessionModal] = useState<any | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [sessionSearchTerm, setSessionSearchTerm] = useState("");
+  const [statusFilter, setStatusFilter] = useState<string>("all");
   const queryClient = useQueryClient();
   const { user } = useAuth();
+  const navigate = useNavigate();
 
   const { data: coachId } = useQuery({
     queryKey: ["coach-id", user?.id],
@@ -82,7 +86,6 @@ export function CoachAttendanceManager() {
       if (!coachId) return [];
       console.log("Fetching sessions for coach:", coachId);
       
-      // Get sessions from a wider date range to ensure we don't miss any
       const today = new Date();
       const pastDate = subDays(today, 30);
       const futureDate = addDays(today, 30);
@@ -91,7 +94,6 @@ export function CoachAttendanceManager() {
         .from("training_sessions")
         .select("id, date, start_time, end_time, status, package_type, branches (name), coaches (name)")
         .eq("coach_id", coachId)
-        .eq("status", "scheduled")
         .gte("date", format(pastDate, 'yyyy-MM-dd'))
         .lte("date", format(futureDate, 'yyyy-MM-dd'))
         .order("date", { ascending: false });
@@ -154,11 +156,12 @@ export function CoachAttendanceManager() {
   const selectedSessionDetails = sessions?.find((s) => s.id === selectedSession);
 
   const filteredSessions = sessions
-    ?.filter((session) =>
-      session.branches.name.toLowerCase().includes(sessionSearchTerm.toLowerCase())
-    )
+    ?.filter((session) => {
+      const matchesSearch = session.branches.name.toLowerCase().includes(sessionSearchTerm.toLowerCase());
+      const matchesStatus = statusFilter === "all" || session.status === statusFilter;
+      return matchesSearch && matchesStatus;
+    })
     .sort((a, b) => {
-      // Sort by date (newest first)
       const dateA = new Date(a.date).getTime();
       const dateB = new Date(b.date).getTime();
       return dateB - dateA;
@@ -194,108 +197,150 @@ export function CoachAttendanceManager() {
     }
   };
 
+  const getStatusBadgeColor = (status: string) => {
+    switch (status) {
+      case "scheduled": return "bg-blue-50 text-blue-700 border-blue-200";
+      case "completed": return "bg-green-50 text-green-700 border-green-200";
+      case "cancelled": return "bg-red-50 text-red-700 border-red-200";
+      default: return "bg-gray-50 text-gray-700 border-gray-200";
+    }
+  };
+
   const handleSessionCardClick = (session: any) => {
     setSelectedSessionModal(session);
+  };
+
+  const handleBackToCalendar = () => {
+    navigate('/dashboard/calendar');
   };
 
   return (
     <div className="min-h-screen bg-white p-6">
       <div className="max-w-7xl mx-auto space-y-8">
         
-        {/* Header */}
+        {/* Header with Back Button */}
         <div className="mb-8">
+          <div className="flex items-center gap-4 mb-4">
+            <Button
+              onClick={handleBackToCalendar}
+              variant="outline"
+              className="border-accent/30 text-accent hover:bg-accent hover:text-white transition-all duration-300"
+            >
+              <ArrowLeft className="h-4 w-4 mr-2" />
+              Back to Calendar
+            </Button>
+          </div>
           <h1 className="text-4xl font-bold text-black mb-2 tracking-tight">
-            Your Attendance Management
+            Attendance Management
           </h1>
           <p className="text-lg text-gray-700">
             Track and manage player attendance for your training sessions
           </p>
         </div>
 
-        {/* Session Selection Card */}
-        <Card className="border-2 border-black bg-white shadow-xl">
-          <CardHeader className="border-b border-black bg-black">
-            <CardTitle className="text-2xl font-bold text-white flex items-center">
-              <Calendar className="h-6 w-6 mr-3 text-accent" />
-              Your Training Sessions
-            </CardTitle>
-            <CardDescription className="text-gray-400 text-base">
-              Select a training session to manage player attendance
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="p-8">
-            <div className="mb-6">
-              <div className="flex items-center mb-4">
-                <Filter className="h-5 w-5 text-accent mr-2" />
-                <h3 className="text-lg font-semibold text-black">Filter Sessions</h3>
-              </div>
-              <div className="relative max-w-md">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
-                <input
-                  type="text"
-                  placeholder="Search by branch..."
-                  className="pl-10 pr-4 py-3 w-full border-2 border-accent/40 rounded-xl text-sm focus:border-accent focus:ring-accent/20 bg-white"
-                  value={sessionSearchTerm}
-                  onChange={(e) => setSessionSearchTerm(e.target.value)}
-                />
-              </div>
-              <p className="text-sm text-gray-600 mt-3">
-                Showing {filteredSessions.length} session{filteredSessions.length === 1 ? '' : 's'}
-              </p>
-            </div>
-
-            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-              {filteredSessions.map((session) => (
-                <Card
-                  key={session.id}
-                  className={`cursor-pointer border-2 transition-all duration-300 hover:scale-105 hover:shadow-lg ${
-                    selectedSession === session.id
-                      ? "border-accent bg-accent/10 shadow-lg scale-105"
-                      : "border-accent/20 bg-white hover:border-accent/50"
-                  }`}
-                  onClick={() => handleSessionCardClick(session)}
-                >
-                  <CardContent className="p-5 space-y-4">
-                    <div className="flex items-center space-x-2">
-                      <Calendar className="w-4 h-4 text-accent" />
-                      <span className="font-semibold text-black text-sm">
-                        {format(new Date(session.date + 'T00:00:00'), 'MMM dd, yyyy')}
-                      </span>
-                    </div>
-                    <div className="space-y-3 text-sm">
-                      <div className="flex items-center space-x-2">
-                        <Clock className="w-4 h-4 text-gray-600" />
-                        <span className="text-gray-700 font-medium">
-                          {formatTime12Hour(session.start_time)} - {formatTime12Hour(session.end_time)}
-                        </span>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <MapPin className="w-4 h-4 text-gray-600" />
-                        <span className="text-gray-700">{session.branches.name}</span>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <Users className="w-4 h-4 text-gray-600" />
-                        <span className="text-gray-700">{session.package_type || 'N/A'}</span>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-
-            {filteredSessions.length === 0 && (
-              <div className="py-12 text-center">
-                <Calendar className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-                <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                  {sessionSearchTerm ? "No sessions found" : "No sessions"}
-                </h3>
-                <p className="text-gray-600">
-                  {sessionSearchTerm ? "Try adjusting your search terms." : "No scheduled sessions available."}
+        {/* Session Selection Card - Only show if no sessionId from URL */}
+        {!sessionId && (
+          <Card className="border-2 border-black bg-white shadow-xl">
+            <CardHeader className="border-b border-black bg-black">
+              <CardTitle className="text-2xl font-bold text-white flex items-center">
+                <Calendar className="h-6 w-6 mr-3 text-accent" />
+                Your Training Sessions
+              </CardTitle>
+              <CardDescription className="text-gray-400 text-base">
+                Select a training session to manage player attendance
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="p-8">
+              <div className="mb-6">
+                <div className="flex items-center mb-4">
+                  <Filter className="h-5 w-5 text-accent mr-2" />
+                  <h3 className="text-lg font-semibold text-black">Filter Sessions</h3>
+                </div>
+                <div className="grid gap-4 md:grid-cols-2">
+                  <div className="relative">
+                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+                    <input
+                      type="text"
+                      placeholder="Search by branch..."
+                      className="pl-10 pr-4 py-3 w-full border-2 border-accent/40 rounded-xl text-sm focus:border-accent focus:ring-accent/20 bg-white"
+                      value={sessionSearchTerm}
+                      onChange={(e) => setSessionSearchTerm(e.target.value)}
+                    />
+                  </div>
+                  <select
+                    value={statusFilter}
+                    onChange={(e) => setStatusFilter(e.target.value)}
+                    className="py-3 px-4 border-2 border-accent/40 rounded-xl text-sm focus:border-accent focus:ring-accent/20 bg-white"
+                  >
+                    <option value="all">All Statuses</option>
+                    <option value="scheduled">Scheduled</option>
+                    <option value="completed">Completed</option>
+                    <option value="cancelled">Cancelled</option>
+                  </select>
+                </div>
+                <p className="text-sm text-gray-600 mt-3">
+                  Showing {filteredSessions.length} session{filteredSessions.length === 1 ? '' : 's'}
                 </p>
               </div>
-            )}
-          </CardContent>
-        </Card>
+
+              <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+                {filteredSessions.map((session) => (
+                  <Card
+                    key={session.id}
+                    className={`cursor-pointer border-2 transition-all duration-300 hover:scale-105 hover:shadow-lg ${
+                      selectedSession === session.id
+                        ? "border-accent bg-accent/10 shadow-lg scale-105"
+                        : "border-accent/20 bg-white hover:border-accent/50"
+                    }`}
+                    onClick={() => handleSessionCardClick(session)}
+                  >
+                    <CardContent className="p-5 space-y-4">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center space-x-2">
+                          <Calendar className="w-4 h-4 text-accent" />
+                          <span className="font-semibold text-black text-sm">
+                            {format(new Date(session.date + 'T00:00:00'), 'MMM dd, yyyy')}
+                          </span>
+                        </div>
+                        <Badge className={`${getStatusBadgeColor(session.status)} border text-xs px-2 py-1`}>
+                          {session.status}
+                        </Badge>
+                      </div>
+                      <div className="space-y-3 text-sm">
+                        <div className="flex items-center space-x-2">
+                          <Clock className="w-4 h-4 text-gray-600" />
+                          <span className="text-gray-700 font-medium">
+                            {formatTime12Hour(session.start_time)} - {formatTime12Hour(session.end_time)}
+                          </span>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <MapPin className="w-4 h-4 text-gray-600" />
+                          <span className="text-gray-700">{session.branches.name}</span>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <Users className="w-4 h-4 text-gray-600" />
+                          <span className="text-gray-700">{session.package_type || 'N/A'}</span>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+
+              {filteredSessions.length === 0 && (
+                <div className="py-12 text-center">
+                  <Calendar className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+                  <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                    {sessionSearchTerm || statusFilter !== "all" ? "No sessions found" : "No sessions"}
+                  </h3>
+                  <p className="text-gray-600">
+                    {sessionSearchTerm || statusFilter !== "all" ? "Try adjusting your search terms or filters." : "No scheduled sessions available."}
+                  </p>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        )}
 
         {/* Session Details Modal */}
         <Dialog open={!!selectedSessionModal} onOpenChange={() => setSelectedSessionModal(null)}>
@@ -336,7 +381,7 @@ export function CoachAttendanceManager() {
                     </div>
                   </div>
                   <div className="flex items-center space-x-3">
-                    <Badge className="bg-accent/10 text-accent border-accent/20 font-medium px-3 py-1">
+                    <Badge className={`${getStatusBadgeColor(selectedSessionModal.status)} border font-medium px-3 py-1`}>
                       {selectedSessionModal.status.charAt(0).toUpperCase() + selectedSessionModal.status.slice(1)}
                     </Badge>
                   </div>
@@ -510,7 +555,7 @@ export function CoachAttendanceManager() {
           </Card>
         )}
         
-        {!selectedSession && (
+        {!selectedSession && !sessionId && (
           <div className="text-center py-16">
             <div className="w-24 h-24 rounded-full bg-accent flex items-center justify-center mx-auto mb-6">
               <Calendar className="w-12 h-12 text-white" />
