@@ -19,6 +19,7 @@ type Student = {
   name: string;
   remaining_sessions: number;
   branch_id: string | null;
+  package_type: string | null;
 };
 
 type TrainingSession = {
@@ -137,52 +138,46 @@ export function SessionsManager() {
   });
 
   const { data: coaches, isLoading: coachesLoading, error: coachesError } = useQuery({
-    queryKey: ['coaches-select', formData.package_type],
+    queryKey: ['coaches-select'],
     queryFn: async () => {
-      const query = supabase
+      const { data, error } = await supabase
         .from('coaches')
-        .select('id, name, package_type')
+        .select('id, name')
         .order('name');
-
-      let data, error;
-      if (formData.package_type === 'Camp Training') {
-        ({ data, error } = await query.or('package_type.eq.Camp Training, package_type.eq.Personal Training, package_type.is.null'));
-      } else if (formData.package_type === 'Personal Training') {
-        ({ data, error } = await query.eq('package_type', 'Personal Training'));
-      } else {
-        return [];
-      }
 
       if (error) {
         console.error('coaches query error:', error);
         throw error;
       }
-      console.log(`Fetched coaches for ${formData.package_type}:`, data);
+      console.log('Fetched coaches:', data);
       return data as { id: string; name: string; }[];
     },
-    enabled: !!formData.package_type,
   });
 
   const { data: students, isLoading: studentsLoading, error: studentsError } = useQuery({
-    queryKey: ['students-select', formData.branch_id],
+    queryKey: ['students-select', formData.branch_id, formData.package_type],
     queryFn: async () => {
-      if (!formData.branch_id) {
-        console.log('Students query skipped: missing branch_id', { branch_id: formData.branch_id });
+      if (!formData.branch_id || !formData.package_type) {
+        console.log('Students query skipped: missing branch_id or package_type', { 
+          branch_id: formData.branch_id, 
+          package_type: formData.package_type 
+        });
         return [];
       }
       const { data, error } = await supabase
         .from('students')
-        .select('id, name, remaining_sessions, branch_id')
+        .select('id, name, remaining_sessions, branch_id, package_type')
         .eq('branch_id', formData.branch_id)
+        .eq('package_type', formData.package_type)
         .order('name');
       if (error) {
         console.error('Students query error:', error);
         throw error;
       }
-      console.log(`Fetched students for branch_id=${formData.branch_id}:`, data);
+      console.log(`Fetched students for branch_id=${formData.branch_id} and package_type=${formData.package_type}:`, data);
       return data as Student[];
     },
-    enabled: !!formData.branch_id,
+    enabled: !!formData.branch_id && !!formData.package_type,
   });
 
   const createMutation = useMutation({
@@ -578,7 +573,6 @@ export function SessionsManager() {
                             <SelectValue placeholder={
                               coachesLoading ? "Loading coaches..." : 
                               coachesError ? "Error loading coaches" : 
-                              coaches?.length === 0 ? `No coaches for ${formData.package_type}` : 
                               formData.package_type ? "Select coach" : "Select package type first"
                             } />
                           </SelectTrigger>
@@ -592,9 +586,6 @@ export function SessionsManager() {
                         </Select>
                         {coachesError && (
                           <p className="text-sm text-red-600 mt-1">Error loading coaches: {(coachesError as Error).message}</p>
-                        )}
-                        {!coachesLoading && coaches?.length === 0 && formData.package_type && (
-                          <p className="text-sm text-gray-600 mt-1">No coaches available for {formData.package_type}.</p>
                         )}
                       </div>
 
@@ -682,14 +673,14 @@ export function SessionsManager() {
                           Select Players ({selectedStudents.length} selected)
                         </Label>
                         <div className="border-2 rounded-lg p-4 max-h-48 overflow-y-auto" style={{ backgroundColor: '#faf0e8', borderColor: 'black' }}>
-                          {formData.branch_id ? (
+                          {formData.branch_id && formData.package_type ? (
                             studentsLoading ? (
                               <p className="text-sm text-gray-600">Loading students...</p>
                             ) : studentsError ? (
                               <p className="text-sm text-red-600">Error loading students: {(studentsError as Error).message}</p>
                             ) : students?.length === 0 ? (
                               <p className="text-sm text-gray-600">
-                                No students available for this branch. 
+                                No students available for this branch and package type combination.
                               </p>
                             ) : (
                               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -717,7 +708,7 @@ export function SessionsManager() {
                               </div>
                             )
                           ) : (
-                            <p className="text-sm text-gray-600">Select a branch to view available students.</p>
+                            <p className="text-sm text-gray-600">Select a branch and package type to view available students.</p>
                           )}
                         </div>
                       </div>
@@ -968,7 +959,7 @@ export function SessionsManager() {
                     <p className="text-sm text-red-600">Error loading students: {(studentsError as Error).message}</p>
                   ) : students?.length === 0 ? (
                     <p className="text-sm text-gray-600">
-                      No students available for this branch. 
+                      No students available for this branch and package type combination.
                     </p>
                   ) : (
                     students?.map(student => (

@@ -17,7 +17,6 @@ type Coach = {
   name: string;
   email: string;
   phone: string | null;
-  package_type?: string | null;
   created_at: string;
 };
 
@@ -28,7 +27,7 @@ type SessionRecord = {
   end_time: string;
   branch_id: string;
   branches: { name: string };
-  coaches: { package_type: string | null };
+  package_type: string | null;
   session_participants: { students: { name: string } }[];
 };
 
@@ -43,7 +42,6 @@ export function CoachesManager() {
     name: "",
     email: "",
     phone: "",
-    package_type: "",
   });
 
   const queryClient = useQueryClient();
@@ -72,8 +70,8 @@ export function CoachesManager() {
           start_time,
           end_time,
           branch_id,
+          package_type,
           branches (name),
-          coaches (package_type),
           session_participants (students (name))
         `)
         .eq("coach_id", selectedCoach.id)
@@ -89,7 +87,7 @@ export function CoachesManager() {
   ) || [];
 
   const filteredSessionRecords = sessionRecords?.filter((record) =>
-    filterSessionPackageType === "All" || record.coaches.package_type === filterSessionPackageType
+    filterSessionPackageType === "All" || record.package_type === filterSessionPackageType
   ) || [];
 
   const createMutation = useMutation({
@@ -99,8 +97,7 @@ export function CoachesManager() {
         body: {
           name: coach.name,
           email: coach.email,
-          phone: coach.phone || null,
-          package_type: coach.package_type || null
+          phone: coach.phone || null
         }
       });
 
@@ -124,7 +121,7 @@ export function CoachesManager() {
     mutationFn: async ({ id, ...coach }: typeof formData & { id: string }) => {
       const { data, error } = await supabase
         .from("coaches")
-        .update({ name: coach.name, email: coach.email, phone: coach.phone || null, package_type: coach.package_type || null })
+        .update({ name: coach.name, email: coach.email, phone: coach.phone || null })
         .eq("id", id)
         .select()
         .single();
@@ -156,7 +153,7 @@ export function CoachesManager() {
   });
 
   const resetForm = () => {
-    setFormData({ name: "", email: "", phone: "", package_type: "" });
+    setFormData({ name: "", email: "", phone: "" });
     setEditingCoach(null);
     setIsDialogOpen(false);
   };
@@ -176,7 +173,6 @@ export function CoachesManager() {
       name: coach.name,
       email: coach.email,
       phone: coach.phone || "",
-      package_type: coach.package_type || "",
     });
     setIsDialogOpen(true);
   };
@@ -270,22 +266,6 @@ export function CoachesManager() {
                         onChange={(e) => setFormData((prev) => ({ ...prev, phone: e.target.value }))}
                         className="mt-1 pl-4 pr-4 py-3 border-2 border-[#fc7416]/20 rounded-xl text-sm focus:border-[#fc7416] focus:ring-[#fc7416]/20 bg-white"
                       />
-                    </div>
-                    <div>
-                      <Label htmlFor="packageType" className="text-gray-700 font-medium">Package Type</Label>
-                      <select
-                        id="packageType"
-                        value={formData.package_type}
-                        onChange={(e) =>
-                          setFormData((prev) => ({ ...prev, package_type: e.target.value }))
-                        }
-                        required
-                        className="mt-1 border-2 border-[#fc7416]/20 rounded-xl focus:border-[#fc7416] focus:ring-[#fc7416]/20 w-full h-10 px-2"
-                      >
-                        <option value="">Select Package</option>
-                        <option value="Camp Training">Camp Training</option>
-                        <option value="Personal Training">Personal Training</option>
-                      </select>
                     </div>
                     {!editingCoach && (
                       <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
@@ -430,9 +410,6 @@ export function CoachesManager() {
                     <p className="text-sm text-gray-700"><span className="font-medium">Email:</span> {selectedCoach?.email}</p>
                     <p className="text-sm text-gray-700"><span className="font-medium">Phone:</span> {selectedCoach?.phone || "N/A"}</p>
                   </div>
-                  <div>
-                    <p className="text-sm text-gray-700"><span className="font-medium">Package Type:</span> {selectedCoach?.package_type || "N/A"}</p>
-                  </div>
                 </div>
               </div>
 
@@ -503,7 +480,7 @@ export function CoachesManager() {
                               {format(new Date(`1970-01-01T${record.end_time}`), 'hh:mm a')}
                             </td>
                             <td className="py-3 px-4 text-gray-700">{record.branches.name}</td>
-                            <td className="py-3 px-4 text-gray-700">{record.coaches.package_type || "N/A"}</td>
+                            <td className="py-3 px-4 text-gray-700">{record.package_type || "N/A"}</td>
                             <td className="py-3 px-4 text-gray-700">
                               {record.session_participants.map(participant => participant.students.name).join(", ") || "No students"}
                             </td>
