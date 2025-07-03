@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Calendar as CalendarIcon, Users, Clock, MapPin, User, ChevronLeft, ChevronRight, Filter, Eye } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameDay, isBefore, addMonths, subMonths, isAfter } from "date-fns";
+import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameDay, isBefore, addMonths, subMonths, isAfter, parseISO } from "date-fns";
 import type { Database } from "@/integrations/supabase/types";
 import { useAuth } from "@/context/AuthContext";
 import { CoachCalendarManager } from "./CoachCalendarManager";
@@ -128,20 +128,23 @@ export function CalendarManager() {
   const handleNextMonth = () => setCurrentMonth(addMonths(currentMonth, 1));
 
   const selectedDateSessions = selectedDate
-    ? filteredSessions.filter(session => isSameDay(new Date(session.date), selectedDate)) || []
+    ? filteredSessions.filter(session => {
+        const sessionDate = parseISO(session.date);
+        return isSameDay(sessionDate, selectedDate);
+      }) || []
     : [];
 
   const today = new Date();
   const todayDateOnly = new Date(format(today, "yyyy-MM-dd") + "T00:00:00");
 
   const upcomingSessions = filteredSessions.filter(session => {
-    const sessionDate = new Date(session.date + "T00:00:00");
+    const sessionDate = parseISO(session.date);
     return (isAfter(sessionDate, todayDateOnly) || isSameDay(sessionDate, todayDateOnly)) &&
            session.status !== 'cancelled' && session.status !== 'completed';
   }) || [];
 
   const pastSessions = filteredSessions.filter(session => {
-    const sessionDate = new Date(session.date + "T00:00:00");
+    const sessionDate = parseISO(session.date);
     return session.status === 'completed' || isBefore(sessionDate, todayDateOnly);
   }) || [];
 
@@ -271,7 +274,7 @@ export function CalendarManager() {
               {/* Calendar Days */}
               <div className="grid grid-cols-7 gap-2">
                 {daysInMonth.map(day => {
-                  const daySessions = filteredSessions.filter(session => isSameDay(new Date(session.date), day)) || [];
+                  const daySessions = filteredSessions.filter(session => isSameDay(parseISO(session.date), day)) || [];
                   const hasScheduled = daySessions.some(s => s.status === 'scheduled');
                   const hasCompleted = daySessions.some(s => s.status === 'completed');
                   const hasCancelled = daySessions.some(s => s.status === 'cancelled');
@@ -468,7 +471,7 @@ export function CalendarManager() {
                         >
                           <TableCell className="py-4">
                             <div className="font-semibold text-black">
-                              {session.date ? format(new Date(session.date), 'MMM dd, yyyy') : 'Invalid Date'}
+                              {session.date ? format(parseISO(session.date), 'MMM dd, yyyy') : 'Invalid Date'}
                             </div>
                             <div className="text-sm text-green-600 font-medium">
                               {session.start_time && session.end_time ? (
@@ -541,7 +544,7 @@ export function CalendarManager() {
                         >
                           <TableCell className="py-4">
                             <div className="font-semibold text-black">
-                              {session.date ? format(new Date(session.date), 'MMM dd, yyyy') : 'Invalid Date'}
+                              {session.date ? format(parseISO(session.date), 'MMM dd, yyyy') : 'Invalid Date'}
                             </div>
                             <div className="text-sm text-gray-500 font-medium">
                               {session.start_time && session.end_time ? (

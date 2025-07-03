@@ -8,6 +8,7 @@ import { CheckCircle, XCircle, Clock, Calendar, MapPin, User, Users, Filter, Sea
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useAuth } from "@/context/AuthContext";
+import { format, parseISO } from "date-fns";
 
 type AttendanceStatus = "present" | "absent" | "pending";
 
@@ -22,23 +23,13 @@ const formatTime12Hour = (timeString: string) => {
 };
 
 const formatDate = (dateString: string) => {
-  const date = new Date(dateString);
-  return date.toLocaleDateString("en-US", {
-    weekday: "short",
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-  });
+  const date = parseISO(dateString);
+  return format(date, 'EEEE, MMMM dd, yyyy');
 };
 
 const formatDateTime = (dateString: string) => {
-  const date = new Date(dateString);
-  return date.toLocaleDateString("en-US", {
-    month: "short",
-    day: "numeric",
-    hour: "numeric",
-    minute: "2-digit",
-  });
+  const date = parseISO(dateString);
+  return format(date, 'MMM dd, h:mm a');
 };
 
 export function CoachAttendanceManager() {
@@ -116,8 +107,8 @@ export function CoachAttendanceManager() {
       session.branches.name.toLowerCase().includes(sessionSearchTerm.toLowerCase())
     )
     .sort((a, b) => {
-      const dateA = new Date(a.date).getTime();
-      const dateB = new Date(b.date).getTime();
+      const dateA = parseISO(a.date).getTime();
+      const dateB = parseISO(b.date).getTime();
       return dateB - dateA;
     }) || [];
 
@@ -211,7 +202,9 @@ export function CoachAttendanceManager() {
                   <CardContent className="p-5 space-y-4">
                     <div className="flex items-center space-x-2">
                       <Calendar className="w-4 h-4 text-accent" />
-                      <span className="font-semibold text-black text-sm">{formatDate(session.date)}</span>
+                      <span className="font-semibold text-black text-sm">
+                        {format(parseISO(session.date), 'MMM dd, yyyy')}
+                      </span>
                     </div>
                     <div className="space-y-3 text-sm">
                       <div className="flex items-center space-x-2">
