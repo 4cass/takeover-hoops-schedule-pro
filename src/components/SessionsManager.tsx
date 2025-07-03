@@ -8,7 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { format } from "date-fns";
+import { format, parseISO } from "date-fns";
 import type { Database } from "@/integrations/supabase/types";
 import { Badge, Calendar, Clock, FileText, MapPin, Plus, Trash2, User, Users, Filter, Search } from "lucide-react";
 
@@ -39,6 +39,40 @@ type TrainingSession = {
     student_id: string;
     students: { name: string; package_type: "Camp Training" | "Personal Training" | null };
   }>;
+};
+
+// Helper function to format date for display
+const formatDisplayDate = (dateString: string) => {
+  try {
+    const date = parseISO(dateString);
+    return format(date, 'MMM dd, yyyy');
+  } catch (error) {
+    console.error('Error formatting display date:', error);
+    return 'Invalid Date';
+  }
+};
+
+// Helper function to format time for display
+const formatDisplayTime = (timeString: string) => {
+  try {
+    // Create a date object with today's date and the provided time
+    const today = new Date().toISOString().split('T')[0];
+    const dateTimeString = `${today}T${timeString}`;
+    const date = parseISO(dateTimeString);
+    return format(date, 'hh:mm a');
+  } catch (error) {
+    console.error('Error formatting display time:', error);
+    return 'Invalid Time';
+  }
+};
+
+// Helper function to get today's date in YYYY-MM-DD format
+const getTodayDate = () => {
+  const today = new Date();
+  const year = today.getFullYear();
+  const month = String(today.getMonth() + 1).padStart(2, '0');
+  const day = String(today.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
 };
 
 export function SessionsManager() {
@@ -180,13 +214,20 @@ export function SessionsManager() {
         throw new Error('This coach is already scheduled for a session on this date/time.');
       }
 
+      console.log('Creating session with data:', session);
+      
       const { data, error } = await supabase
         .from('training_sessions')
         .insert([{ ...session, package_type: session.package_type || null }])
         .select()
         .single();
       
-      if (error) throw error;
+      if (error) {
+        console.error('Error creating session:', error);
+        throw error;
+      }
+
+      console.log('Session created successfully:', data);
 
       if (selectedStudents.length > 0) {
         const { error: participantsError } = await supabase
@@ -222,6 +263,7 @@ export function SessionsManager() {
       resetForm();
     },
     onError: (error) => {
+      console.error('Create mutation error:', error);
       toast.error('Failed to create session: ' + error.message);
     }
   });
@@ -241,6 +283,8 @@ export function SessionsManager() {
         throw new Error('Selected students must match the session package type and coach');
       }
 
+      console.log('Updating session with data:', session);
+
       const { data, error } = await supabase
         .from('training_sessions')
         .update({ ...session, package_type: session.package_type || null })
@@ -248,7 +292,12 @@ export function SessionsManager() {
         .select()
         .single();
       
-      if (error) throw error;
+      if (error) {
+        console.error('Error updating session:', error);
+        throw error;
+      }
+
+      console.log('Session updated successfully:', data);
 
       await supabase
         .from('session_participants')
@@ -289,6 +338,7 @@ export function SessionsManager() {
       resetForm();
     },
     onError: (error) => {
+      console.error('Update mutation error:', error);
       toast.error('Failed to update session: ' + error.message);
     }
   });
@@ -342,6 +392,18 @@ export function SessionsManager() {
       return;
     }
 
+    if (!formData.date) {
+      toast.error('Please select a date');
+      return;
+    }
+
+    if (!formData.start_time || !formData.end_time) {
+      toast.error('Please select start and end times');
+      return;
+    }
+
+    console.log('Submitting form with data:', formData);
+
     const hasConflict = sessions?.some(session =>
       session.coach_id === formData.coach_id &&
       session.date === formData.date &&
@@ -365,6 +427,7 @@ export function SessionsManager() {
   };
 
   const handleEdit = (session: TrainingSession) => {
+    console.log('Editing session:', session);
     setEditingSession(session);
     setFormData({
       date: session.date,
@@ -557,8 +620,12 @@ export function SessionsManager() {
                             id="date"
                             type="date"
                             value={formData.date}
-                            onChange={(e) => setFormData(prev => ({ ...prev, date: e.target.value }))}
+                            onChange={(e) => {
+                              console.log('Date input changed:', e.target.value);
+                              setFormData(prev => ({ ...prev, date: e.target.value }));
+                            }}
                             required
+                            min={getTodayDate()}
                             className="border-2 focus:border-orange-500 rounded-lg"
                             disabled={!formData.package_type}
                           />
@@ -592,7 +659,10 @@ export function SessionsManager() {
                             id="start_time"
                             type="time"
                             value={formData.start_time}
-                            onChange={(e) => setFormData(prev => ({ ...prev, start_time: e.target.value }))}
+                            onChange={(e) => {
+                              console.log('Start time input changed:', e.target.value);
+                              setFormData(prev => ({ ...prev, start_time: e.target.value }));
+                            }}
                             required
                             className="border-2 focus:border-orange-500 rounded-lg"
                             disabled={!formData.package_type}
@@ -607,7 +677,10 @@ export function SessionsManager() {
                             id="end_time"
                             type="time"
                             value={formData.end_time}
-                            onChange={(e) => setFormData(prev => ({ ...prev, end_time: e.target.value }))}
+                            onChange={(e) => {
+                              console.log('End time input changed:', e.target.value);
+                              setFormData(prev => ({ ...prev, end_time: e.target.value }));
+                            }}
                             required
                             className="border-2 focus:border-orange-500 rounded-lg"
                             disabled={!formData.package_type}
@@ -705,7 +778,7 @@ export function SessionsManager() {
                           </Button>
                           <Button 
                             type="submit" 
-                            disabled={createMutation.isPending || updateMutation.isPending || !formData.package_type || !formData.coach_id}
+                            disabled={createMutation.isPending || updateMutation.isPending || !formData.package_type || !formData.coach_id || !formData.date}
                             className="flex-1 sm:flex-none font-semibold"
                             style={{ backgroundColor: '#fc7416', color: 'white' }}
                           >
@@ -810,7 +883,7 @@ export function SessionsManager() {
                         <div className="flex items-center space-x-2">
                           <Calendar className="w-5 h-5" style={{ color: '#fc7416' }} />
                           <h3 className="font-bold text-lg text-gray-900">
-                            {format(new Date(session.date), 'MMM dd, yyyy')}
+                            {formatDisplayDate(session.date)}
                           </h3>
                         </div>
                         <Badge className={`font-medium ${getStatusBadgeColor(session.status)}`}>
@@ -820,9 +893,7 @@ export function SessionsManager() {
                       <div className="flex items-center space-x-2 text-gray-600">
                         <Clock className="w-4 h-4" />
                         <span className="text-sm font-medium">
-                          {session.start_time && session.end_time ? (
-                            `${format(new Date(`1970-01-01T${session.start_time}`), 'hh:mm a')} - ${format(new Date(`1970-01-01T${session.end_time}`), 'hh:mm a')}`
-                          ) : 'Invalid Time'}
+                          {formatDisplayTime(session.start_time)} - {formatDisplayTime(session.end_time)}
                         </span>
                       </div>
                     </CardHeader>
@@ -887,7 +958,7 @@ export function SessionsManager() {
               <div className="p-4 rounded-lg" style={{ backgroundColor: '#faf0e8' }}>
                 <p className="text-sm text-gray-700 mb-1">
                   <span className="font-medium">Session Date:</span>{' '}
-                  {selectedSession?.date ? format(new Date(selectedSession.date), 'MMMM dd, yyyy') : 'Invalid Date'}
+                  {selectedSession?.date ? formatDisplayDate(selectedSession.date) : 'Invalid Date'}
                 </p>
                 <p className="text-sm text-gray-700 mb-1">
                   <span className="font-medium">Package Type:</span> {selectedSession?.package_type || 'N/A'}
