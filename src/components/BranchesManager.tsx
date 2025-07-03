@@ -160,7 +160,7 @@ export function BranchesManager() {
         </div>
 
         {/* Branches Card */}
-        <Card className="border-2 border-foreground bg-card shadow-xl">
+        <Card className="border-2 border-foreground bg-white shadow-xl">
           <CardHeader className="border-b border-foreground bg-foreground">
             <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between space-y-4 lg:space-y-0">
               <div>
@@ -182,7 +182,7 @@ export function BranchesManager() {
                     Add Branch
                   </Button>
                 </DialogTrigger>
-                <DialogContent className="border-2 border-accent/20 bg-card shadow-lg">
+                <DialogContent className="border-2 border-accent/20 bg-white shadow-lg">
                   <DialogHeader>
                     <DialogTitle className="text-2xl font-bold text-foreground">
                       {editingBranch ? "Edit Branch" : "Add New Branch"}
@@ -274,7 +274,7 @@ export function BranchesManager() {
             </div>
 
             {/* Branches Table */}
-            <div className="border-2 border-foreground rounded-2xl bg-card shadow-lg overflow-hidden">
+            <div className="border-2 border-foreground rounded-2xl bg-white shadow-lg overflow-hidden">
               <div className="overflow-x-auto">
                 <table className="w-full">
                   <thead className="bg-foreground text-primary-foreground">
@@ -291,7 +291,7 @@ export function BranchesManager() {
                       <tr
                         key={branch.id}
                         className={`transition-all duration-300 hover:bg-accent/5 ${
-                          index % 2 === 0 ? "bg-card" : "bg-muted/20"
+                          index % 2 === 0 ? "bg-white" : "bg-muted/20"
                         }`}
                       >
                         <td className="py-4 px-6">

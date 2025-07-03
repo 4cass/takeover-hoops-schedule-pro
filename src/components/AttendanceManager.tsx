@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useSearchParams } from "react-router-dom";
@@ -239,7 +238,7 @@ export function AttendanceManager() {
         </div>
 
         {/* Session Selection Card */}
-        <Card className="border-2 border-foreground bg-card shadow-xl">
+        <Card className="border-2 border-foreground bg-white shadow-xl">
           <CardHeader className="border-b border-foreground bg-foreground">
             <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between space-y-4 lg:space-y-0">
               <div>
@@ -337,10 +336,10 @@ export function AttendanceManager() {
               {filteredSessions.map((session) => (
                 <Card
                   key={session.id}
-                  className={`cursor-pointer border-2 transition-all duration-300 hover:scale-105 hover:shadow-lg ${
+                  className={`cursor-pointer border-2 transition-all duration-300 hover:scale-105 hover:shadow-lg bg-white ${
                     selectedSession === session.id
                       ? "border-accent bg-accent/10 shadow-lg scale-105"
-                      : "border-accent/20 bg-card hover:border-accent/50"
+                      : "border-accent/20 hover:border-accent/50"
                   }`}
                   onClick={() => {
                     setSelectedSession(session.id);
@@ -400,7 +399,7 @@ export function AttendanceManager() {
 
         {/* Attendance Management Modal */}
         <Dialog open={showAttendanceModal} onOpenChange={setShowAttendanceModal}>
-          <DialogContent className="max-w-6xl max-h-[90vh] border-2 border-foreground bg-card shadow-xl">
+          <DialogContent className="max-w-6xl max-h-[90vh] border-2 border-foreground bg-white shadow-xl">
             <DialogHeader className="border-b border-accent/10 bg-accent/5 p-6">
               <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between space-y-4 lg:space-y-0">
                 <div>
@@ -455,7 +454,7 @@ export function AttendanceManager() {
               </div>
 
               {/* Attendance Table */}
-              <div className="border-2 border-foreground rounded-2xl bg-card shadow-lg overflow-hidden">
+              <div className="border-2 border-foreground rounded-2xl bg-white shadow-lg overflow-hidden">
                 <div className="overflow-x-auto">
                   <table className="w-full">
                     <thead className="bg-foreground text-primary-foreground">
@@ -471,7 +470,7 @@ export function AttendanceManager() {
                         <tr 
                           key={record.id} 
                           className={`transition-all duration-300 hover:bg-accent/5 ${
-                            index % 2 === 0 ? 'bg-card' : 'bg-muted/20'
+                            index % 2 === 0 ? 'bg-white' : 'bg-muted/20'
                           }`}
                         >
                           <td className="py-4 px-6">
