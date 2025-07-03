@@ -1,10 +1,12 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useSearchParams } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { CheckCircle, XCircle, Clock, Calendar, MapPin, User, Users, Filter, Search } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -14,6 +16,7 @@ import { CoachAttendanceManager } from "./CoachAttendanceManager";
 import { format, addDays, subDays } from "date-fns";
 
 type AttendanceStatus = "present" | "absent" | "pending";
+type SessionStatus = "scheduled" | "completed" | "cancelled";
 
 type UpdateAttendanceVariables = {
   recordId: string;
@@ -33,7 +36,6 @@ const formatTime12Hour = (timeString: string) => {
 
 const formatDate = (dateString: string) => {
   try {
-    // Handle the date string properly - parse as local date
     const date = new Date(dateString + 'T00:00:00');
     return date.toLocaleDateString("en-US", {
       weekday: "short",
@@ -64,25 +66,36 @@ const formatDateTime = (dateString: string) => {
 
 export function AttendanceManager() {
   const { role } = useAuth();
+  const [searchParams] = useSearchParams();
+  const sessionIdFromUrl = searchParams.get('sessionId');
 
   // If user is a coach, show coach-specific attendance manager
   if (role === 'coach') {
     return <CoachAttendanceManager />;
   }
 
-  const [selectedSession, setSelectedSession] = useState<string | null>(null);
+  const [selectedSession, setSelectedSession] = useState<string | null>(sessionIdFromUrl);
   const [searchTerm, setSearchTerm] = useState("");
   const [sessionSearchTerm, setSessionSearchTerm] = useState("");
   const [filterPackageType, setFilterPackageType] = useState<"All" | "Camp Training" | "Personal Training">("All");
+  const [filterSessionStatus, setFilterSessionStatus] = useState<"All" | SessionStatus>("All");
   const [sortOrder, setSortOrder] = useState<"Newest to Oldest" | "Oldest to Newest">("Newest to Oldest");
+  const [showAttendanceModal, setShowAttendanceModal] = useState(false);
   const queryClient = useQueryClient();
+
+  // Set selected session when URL parameter changes
+  useEffect(() => {
+    if (sessionIdFromUrl) {
+      setSelectedSession(sessionIdFromUrl);
+      setShowAttendanceModal(true);
+    }
+  }, [sessionIdFromUrl]);
 
   const { data: sessions } = useQuery<any[]>({
     queryKey: ["sessions"],
     queryFn: async () => {
       console.log("Fetching all sessions for admin");
       
-      // Get sessions from a wider date range
       const today = new Date();
       const pastDate = subDays(today, 30);
       const futureDate = addDays(today, 30);
@@ -90,7 +103,6 @@ export function AttendanceManager() {
       const { data, error } = await supabase
         .from("training_sessions")
         .select("id, date, start_time, end_time, status, package_type, branches (name), coaches (name)")
-        .eq("status", "scheduled")
         .gte("date", format(pastDate, 'yyyy-MM-dd'))
         .lte("date", format(futureDate, 'yyyy-MM-dd'))
         .order("date", { ascending: false });
@@ -127,6 +139,9 @@ export function AttendanceManager() {
     enabled: !!selectedSession,
   });
 
+  // Get selected session details
+  const selectedSessionDetails = sessions?.find((s) => s.id === selectedSession);
+
   const updateAttendance = useMutation<void, unknown, UpdateAttendanceVariables>({
     mutationFn: async ({ recordId, status }) => {
       console.log("Updating attendance:", recordId, status);
@@ -149,13 +164,12 @@ export function AttendanceManager() {
     },
   });
 
-  const selectedSessionDetails = sessions?.find((s) => s.id === selectedSession);
-
   const filteredSessions = sessions
     ?.filter((session) =>
       (session.coaches.name.toLowerCase().includes(sessionSearchTerm.toLowerCase()) ||
        session.branches.name.toLowerCase().includes(sessionSearchTerm.toLowerCase())) &&
-      (filterPackageType === "All" || session.package_type === filterPackageType)
+      (filterPackageType === "All" || session.package_type === filterPackageType) &&
+      (filterSessionStatus === "All" || session.status === filterSessionStatus)
     )
     .sort((a, b) => {
       const dateA = new Date(a.date).getTime();
@@ -190,6 +204,15 @@ export function AttendanceManager() {
       case "absent": return "bg-red-50 text-red-700 border-red-200";
       case "pending": return "bg-amber-50 text-amber-700 border-amber-200";
       default: return "bg-gray-50 text-gray-700 border-gray-200";
+    }
+  };
+
+  const getStatusBadgeColor = (status: string) => {
+    switch (status) {
+      case 'scheduled': return 'bg-blue-50 text-blue-700 border-blue-200';
+      case 'completed': return 'bg-green-50 text-green-700 border-green-200';
+      case 'cancelled': return 'bg-red-50 text-red-700 border-red-200';
+      default: return 'bg-gray-50 text-gray-700 border-gray-200';
     }
   };
 
@@ -238,7 +261,7 @@ export function AttendanceManager() {
                 <div className="flex-1">
                   <Label htmlFor="filter-package" className="flex items-center text-sm font-medium text-gray-700 mb-2">
                     <Users className="w-4 h-4 mr-2 text-accent" />
-                    Filter by Package Type
+                    Package Type
                   </Label>
                   <Select
                     value={filterPackageType}
@@ -251,6 +274,26 @@ export function AttendanceManager() {
                       <SelectItem value="All">All Sessions</SelectItem>
                       <SelectItem value="Camp Training">Camp Training</SelectItem>
                       <SelectItem value="Personal Training">Personal Training</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="flex-1">
+                  <Label htmlFor="filter-status" className="flex items-center text-sm font-medium text-gray-700 mb-2">
+                    <Calendar className="w-4 h-4 mr-2 text-accent" />
+                    Session Status
+                  </Label>
+                  <Select
+                    value={filterSessionStatus}
+                    onValueChange={(value: "All" | SessionStatus) => setFilterSessionStatus(value)}
+                  >
+                    <SelectTrigger className="border-2 focus:border-accent rounded-xl">
+                      <SelectValue placeholder="Select status" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="All">All Status</SelectItem>
+                      <SelectItem value="scheduled">Scheduled</SelectItem>
+                      <SelectItem value="completed">Completed</SelectItem>
+                      <SelectItem value="cancelled">Cancelled</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -287,14 +330,22 @@ export function AttendanceManager() {
                       ? "border-accent bg-accent/10 shadow-lg scale-105"
                       : "border-accent/20 bg-white hover:border-accent/50"
                   }`}
-                  onClick={() => setSelectedSession(session.id)}
+                  onClick={() => {
+                    setSelectedSession(session.id);
+                    setShowAttendanceModal(true);
+                  }}
                 >
                   <CardContent className="p-4 sm:p-5 space-y-4">
-                    <div className="flex items-center space-x-2">
-                      <Calendar className="w-4 h-4 text-accent" />
-                      <span className="font-semibold text-black text-sm">
-                        {format(new Date(session.date + 'T00:00:00'), 'MMM dd, yyyy')}
-                      </span>
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center space-x-2">
+                        <Calendar className="w-4 h-4 text-accent" />
+                        <span className="font-semibold text-black text-sm">
+                          {format(new Date(session.date + 'T00:00:00'), 'MMM dd, yyyy')}
+                        </span>
+                      </div>
+                      <Badge className={`${getStatusBadgeColor(session.status)} font-medium text-xs`}>
+                        {session.status.charAt(0).toUpperCase() + session.status.slice(1)}
+                      </Badge>
                     </div>
                     <div className="space-y-3 text-sm">
                       <div className="flex items-center space-x-2">
@@ -325,29 +376,31 @@ export function AttendanceManager() {
               <div className="py-8 sm:py-12 text-center">
                 <Calendar className="w-12 h-12 sm:w-16 sm:h-16 text-gray-300 mx-auto mb-4" />
                 <h3 className="text-base sm:text-lg font-semibold text-gray-900 mb-2">
-                  {sessionSearchTerm || filterPackageType !== "All" ? `No ${filterPackageType === "All" ? "" : filterPackageType} sessions found` : "No sessions"}
+                  No sessions found
                 </h3>
                 <p className="text-gray-600 text-sm sm:text-base">
-                  {sessionSearchTerm || filterPackageType !== "All" ? "Try adjusting your search or filter." : "No scheduled sessions available."}
+                  Try adjusting your search or filter criteria.
                 </p>
               </div>
             )}
           </CardContent>
         </Card>
 
-        {/* Attendance Management Card */}
-        {selectedSessionDetails && attendanceRecords && (
-          <Card className="border-2 border-black bg-white shadow-xl">
-            <CardHeader className="border-b border-accent/10 bg-accent/5 p-4 sm:p-6 lg:p-8">
+        {/* Attendance Management Modal */}
+        <Dialog open={showAttendanceModal} onOpenChange={setShowAttendanceModal}>
+          <DialogContent className="max-w-6xl max-h-[90vh] border-2 border-black bg-white shadow-xl">
+            <DialogHeader className="border-b border-accent/10 bg-accent/5 p-4 sm:p-6">
               <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between space-y-4 lg:space-y-0">
                 <div>
-                  <CardTitle className="text-lg sm:text-xl lg:text-2xl font-bold text-black flex items-center">
+                  <DialogTitle className="text-lg sm:text-xl lg:text-2xl font-bold text-black flex items-center">
                     <Users className="h-5 w-5 sm:h-6 sm:w-6 mr-3 text-accent" />
                     Attendance Management
-                  </CardTitle>
-                  <CardDescription className="text-gray-600 text-sm sm:text-base">
-                    {formatDate(selectedSessionDetails.date)} • {selectedSessionDetails.branches.name}
-                  </CardDescription>
+                  </DialogTitle>
+                  {selectedSessionDetails && (
+                    <DialogDescription className="text-gray-600 text-sm sm:text-base">
+                      {formatDate(selectedSessionDetails.date)} • {selectedSessionDetails.branches.name}
+                    </DialogDescription>
+                  )}
                 </div>
                 
                 {/* Stats */}
@@ -368,9 +421,9 @@ export function AttendanceManager() {
                   </div>
                 </div>
               </div>
-            </CardHeader>
-            <CardContent className="p-4 sm:p-6 lg:p-8">
-              
+            </DialogHeader>
+            
+            <div className="p-4 sm:p-6 max-h-[60vh] overflow-y-auto">
               {/* Search for Attendance Records */}
               <div className="mb-6">
                 <div className="flex items-center mb-4">
@@ -477,11 +530,11 @@ export function AttendanceManager() {
                   </div>
                 )}
               </div>
-            </CardContent>
-          </Card>
-        )}
+            </div>
+          </DialogContent>
+        </Dialog>
         
-        {!selectedSession && (
+        {!selectedSession && !showAttendanceModal && (
           <div className="text-center py-12 sm:py-16">
             <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-full bg-accent flex items-center justify-center mx-auto mb-6">
               <Calendar className="w-10 h-10 sm:w-12 sm:h-12 text-white" />

@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
@@ -152,7 +153,7 @@ export function CalendarManager() {
   }) || [];
 
   const handleAttendanceRedirect = (sessionId: string) => {
-    navigate(`/dashboard/attendance/${sessionId}`);
+    navigate(`/dashboard/attendance?sessionId=${sessionId}`);
   };
 
   return (
