@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
@@ -6,6 +7,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { Calendar as CalendarIcon, Clock, MapPin, Users, Eye, ChevronLeft, ChevronRight } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/context/AuthContext";
@@ -24,6 +26,8 @@ type Session = {
 export function CoachCalendarManager() {
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [currentMonth, setCurrentMonth] = useState<Date>(new Date());
+  const [showUpcomingSessions, setShowUpcomingSessions] = useState(false);
+  const [showPastSessions, setShowPastSessions] = useState(false);
   const { coachData, loading } = useAuth();
   const navigate = useNavigate();
 
@@ -117,6 +121,10 @@ export function CoachCalendarManager() {
 
   const handlePrevMonth = () => setCurrentMonth(subMonths(currentMonth, 1));
   const handleNextMonth = () => setCurrentMonth(addMonths(currentMonth, 1));
+
+  const handleAttendanceRedirect = (sessionId: string) => {
+    navigate(`/dashboard/attendance/${sessionId}`);
+  };
 
   if (loading || sessionsLoading) {
     return (
@@ -268,7 +276,7 @@ export function CoachCalendarManager() {
 
           {/* Sessions - Right Side */}
           <div className="space-y-6">
-            {/* Upcoming Sessions */}
+            {/* Upcoming Sessions Button */}
             <Card className="border-2 border-black bg-gradient-to-br from-green-50 to-white shadow-lg">
               <CardHeader className="border-b border-black bg-gradient-to-r from-green-100/50 to-green-50 p-4 sm:p-6">
                 <CardTitle className="text-lg sm:text-xl font-bold text-green-800 flex items-center">
@@ -279,54 +287,17 @@ export function CoachCalendarManager() {
                   {upcomingSessions.length} upcoming session{upcomingSessions.length !== 1 ? 's' : ''}
                 </CardDescription>
               </CardHeader>
-              <CardContent className="p-4 max-h-96 overflow-y-auto">
-                {upcomingSessions.length > 0 ? (
-                  <div className="space-y-3">
-                    {upcomingSessions.slice(0, 5).map((session, index) => (
-                      <div 
-                        key={session.id} 
-                        className="border border-green-200 rounded-lg p-4 hover:border-green-400 hover:shadow-md transition-all duration-200 bg-white"
-                      >
-                        <div className="flex flex-col space-y-2">
-                          <div className="flex items-center justify-between">
-                            <div className="font-semibold text-black text-sm">
-                              {format(parseISO(session.date), 'MMM dd, yyyy')}
-                            </div>
-                            <Badge className={`${getStatusColor(session.status)} text-xs`}>
-                              {session.status.charAt(0).toUpperCase() + session.status.slice(1)}
-                            </Badge>
-                          </div>
-                          <div className="text-sm text-green-600 font-medium">
-                            {formatTime12Hour(session.start_time)} - {formatTime12Hour(session.end_time)}
-                          </div>
-                          <div className="flex items-center gap-2 text-sm">
-                            <MapPin className="h-3 w-3 text-green-600" />
-                            <span className="text-gray-700">{session.branches.name}</span>
-                          </div>
-                          <div className="flex items-center gap-2 text-sm">
-                            <Users className="h-3 w-3 text-green-600" />
-                            <span className="text-gray-700">{session.session_participants?.length || 0} players</span>
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                    {upcomingSessions.length > 5 && (
-                      <div className="text-center text-sm text-green-600 font-medium">
-                        +{upcomingSessions.length - 5} more upcoming sessions
-                      </div>
-                    )}
-                  </div>
-                ) : (
-                  <div className="text-center py-8">
-                    <Clock className="h-12 w-12 text-green-300 mx-auto mb-4" />
-                    <p className="text-lg text-green-600 mb-2">No upcoming sessions</p>
-                    <p className="text-green-500 text-sm">Schedule new training sessions to get started.</p>
-                  </div>
-                )}
+              <CardContent className="p-4 text-center">
+                <Button
+                  onClick={() => setShowUpcomingSessions(true)}
+                  className="bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white font-semibold py-4 px-8 rounded-xl transition-all duration-300 hover:scale-105 hover:shadow-lg"
+                >
+                  View {upcomingSessions.length} Upcoming Session{upcomingSessions.length !== 1 ? 's' : ''}
+                </Button>
               </CardContent>
             </Card>
 
-            {/* Past Sessions */}
+            {/* Past Sessions Button */}
             <Card className="border-2 border-black bg-gradient-to-br from-gray-50 to-white shadow-lg">
               <CardHeader className="border-b border-black bg-gradient-to-r from-gray-100/50 to-gray-50 p-4 sm:p-6">
                 <CardTitle className="text-lg sm:text-xl font-bold text-gray-800 flex items-center">
@@ -337,50 +308,13 @@ export function CoachCalendarManager() {
                   {pastSessions.length} past session{pastSessions.length !== 1 ? 's' : ''}
                 </CardDescription>
               </CardHeader>
-              <CardContent className="p-4 max-h-96 overflow-y-auto">
-                {pastSessions.length > 0 ? (
-                  <div className="space-y-3">
-                    {pastSessions.slice(0, 5).map((session, index) => (
-                      <div 
-                        key={session.id} 
-                        className="border border-gray-200 rounded-lg p-4 hover:border-gray-400 hover:shadow-md transition-all duration-200 bg-white"
-                      >
-                        <div className="flex flex-col space-y-2">
-                          <div className="flex items-center justify-between">
-                            <div className="font-semibold text-black text-sm">
-                              {format(parseISO(session.date), 'MMM dd, yyyy')}
-                            </div>
-                            <Badge className={`${getStatusColor(session.status)} text-xs`}>
-                              {session.status.charAt(0).toUpperCase() + session.status.slice(1)}
-                            </Badge>
-                          </div>
-                          <div className="text-sm text-gray-500 font-medium">
-                            {formatTime12Hour(session.start_time)} - {formatTime12Hour(session.end_time)}
-                          </div>
-                          <div className="flex items-center gap-2 text-sm">
-                            <MapPin className="h-3 w-3 text-gray-500" />
-                            <span className="text-gray-700">{session.branches.name}</span>
-                          </div>
-                          <div className="flex items-center gap-2 text-sm">
-                            <Users className="h-3 w-3 text-gray-500" />
-                            <span className="text-gray-700">{session.session_participants?.length || 0} players</span>
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                    {pastSessions.length > 5 && (
-                      <div className="text-center text-sm text-gray-600 font-medium">
-                        +{pastSessions.length - 5} more past sessions
-                      </div>
-                    )}
-                  </div>
-                ) : (
-                  <div className="text-center py-8">
-                    <CalendarIcon className="h-12 w-12 text-gray-300 mx-auto mb-4" />
-                    <p className="text-lg text-gray-500 mb-2">No past sessions</p>
-                    <p className="text-gray-400 text-sm">Completed sessions will appear here.</p>
-                  </div>
-                )}
+              <CardContent className="p-4 text-center">
+                <Button
+                  onClick={() => setShowPastSessions(true)}
+                  className="bg-gradient-to-r from-gray-600 to-gray-700 hover:from-gray-700 hover:to-gray-800 text-white font-semibold py-4 px-8 rounded-xl transition-all duration-300 hover:scale-105 hover:shadow-lg"
+                >
+                  View {pastSessions.length} Past Session{pastSessions.length !== 1 ? 's' : ''}
+                </Button>
               </CardContent>
             </Card>
           </div>
@@ -450,10 +384,13 @@ export function CoachCalendarManager() {
                         </div>
                         <div className="mt-4 flex justify-end">
                           <Button
-                            onClick={() => navigate(`/dashboard/attendance/${session.id}`)}
+                            onClick={() => {
+                              setSelectedDate(null);
+                              handleAttendanceRedirect(session.id);
+                            }}
                             className="bg-gradient-to-r from-[#fc7416] to-[#fe822d] hover:from-[#fe822d] hover:to-[#fc7416] text-white font-medium transition-all duration-300 hover:scale-105 hover:shadow-lg"
                           >
-                            Attendance
+                            Manage Attendance
                           </Button>
                         </div>
                       </CardContent>
@@ -481,6 +418,136 @@ export function CoachCalendarManager() {
                 </Button>
               </div>
             </div>
+          </DialogContent>
+        </Dialog>
+
+        {/* Upcoming Sessions Modal */}
+        <Dialog open={showUpcomingSessions} onOpenChange={setShowUpcomingSessions}>
+          <DialogContent className="max-w-6xl max-h-[80vh] border-2 border-green-200 bg-gradient-to-br from-green-50/30 to-white shadow-lg">
+            <DialogHeader>
+              <DialogTitle className="text-2xl font-bold text-green-800 flex items-center">
+                <Clock className="h-6 w-6 mr-3 text-green-600" />
+                Upcoming Sessions ({upcomingSessions.length})
+              </DialogTitle>
+              <DialogDescription className="text-green-600 text-base">
+                All scheduled sessions for today and future dates
+              </DialogDescription>
+            </DialogHeader>
+            <ScrollArea className="max-h-[60vh] pr-4">
+              {upcomingSessions.length > 0 ? (
+                <div className="space-y-4">
+                  {upcomingSessions.map((session) => (
+                    <Card key={session.id} className="border border-green-200 bg-gradient-to-r from-green-50/50 to-white hover:shadow-lg transition-all duration-300">
+                      <CardContent className="p-4">
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 items-center">
+                          <div>
+                            <p className="text-sm font-medium text-green-600">Date</p>
+                            <p className="font-semibold text-black">{format(parseISO(session.date), 'MMM dd, yyyy')}</p>
+                          </div>
+                          <div>
+                            <p className="text-sm font-medium text-green-600">Time</p>
+                            <p className="font-semibold text-black">
+                              {formatTime12Hour(session.start_time)} - {formatTime12Hour(session.end_time)}
+                            </p>
+                          </div>
+                          <div>
+                            <p className="text-sm font-medium text-green-600">Branch</p>
+                            <p className="font-semibold text-black">{session.branches.name}</p>
+                          </div>
+                          <div>
+                            <p className="text-sm font-medium text-green-600">Players</p>
+                            <p className="font-semibold text-black">{session.session_participants?.length || 0}</p>
+                          </div>
+                          <div className="flex justify-end">
+                            <Button
+                              onClick={() => {
+                                setShowUpcomingSessions(false);
+                                handleAttendanceRedirect(session.id);
+                              }}
+                              size="sm"
+                              className="bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white"
+                            >
+                              Manage Attendance
+                            </Button>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-12">
+                  <Clock className="h-12 w-12 text-green-300 mx-auto mb-4" />
+                  <p className="text-lg text-green-600 mb-2">No upcoming sessions</p>
+                  <p className="text-green-500 text-sm">Schedule new training sessions to get started.</p>
+                </div>
+              )}
+            </ScrollArea>
+          </DialogContent>
+        </Dialog>
+
+        {/* Past Sessions Modal */}
+        <Dialog open={showPastSessions} onOpenChange={setShowPastSessions}>
+          <DialogContent className="max-w-6xl max-h-[80vh] border-2 border-gray-200 bg-gradient-to-br from-gray-50/30 to-white shadow-lg">
+            <DialogHeader>
+              <DialogTitle className="text-2xl font-bold text-gray-800 flex items-center">
+                <CalendarIcon className="h-6 w-6 mr-3 text-gray-600" />
+                Past Sessions ({pastSessions.length})
+              </DialogTitle>
+              <DialogDescription className="text-gray-600 text-base">
+                All completed sessions and sessions before today
+              </DialogDescription>
+            </DialogHeader>
+            <ScrollArea className="max-h-[60vh] pr-4">
+              {pastSessions.length > 0 ? (
+                <div className="space-y-4">
+                  {pastSessions.map((session) => (
+                    <Card key={session.id} className="border border-gray-200 bg-gradient-to-r from-gray-50/50 to-white hover:shadow-lg transition-all duration-300">
+                      <CardContent className="p-4">
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 items-center">
+                          <div>
+                            <p className="text-sm font-medium text-gray-600">Date</p>
+                            <p className="font-semibold text-black">{format(parseISO(session.date), 'MMM dd, yyyy')}</p>
+                          </div>
+                          <div>
+                            <p className="text-sm font-medium text-gray-600">Time</p>
+                            <p className="font-semibold text-black">
+                              {formatTime12Hour(session.start_time)} - {formatTime12Hour(session.end_time)}
+                            </p>
+                          </div>
+                          <div>
+                            <p className="text-sm font-medium text-gray-600">Branch</p>
+                            <p className="font-semibold text-black">{session.branches.name}</p>
+                          </div>
+                          <div>
+                            <p className="text-sm font-medium text-gray-600">Players</p>
+                            <p className="font-semibold text-black">{session.session_participants?.length || 0}</p>
+                          </div>
+                          <div className="flex justify-end">
+                            <Button
+                              onClick={() => {
+                                setShowPastSessions(false);
+                                handleAttendanceRedirect(session.id);
+                              }}
+                              size="sm"
+                              className="bg-gradient-to-r from-gray-600 to-gray-700 hover:from-gray-700 hover:to-gray-800 text-white"
+                            >
+                              View Details
+                            </Button>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-12">
+                  <CalendarIcon className="h-12 w-12 text-gray-300 mx-auto mb-4" />
+                  <p className="text-lg text-gray-500 mb-2">No past sessions</p>
+                  <p className="text-gray-400 text-sm">Completed sessions will appear here.</p>
+                </div>
+              )}
+            </ScrollArea>
           </DialogContent>
         </Dialog>
       </div>

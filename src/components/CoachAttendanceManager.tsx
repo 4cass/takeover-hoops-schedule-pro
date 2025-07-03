@@ -4,6 +4,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { CheckCircle, XCircle, Clock, Calendar, MapPin, User, Users, Filter, Search } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -34,6 +35,7 @@ const formatDateTime = (dateString: string) => {
 
 export function CoachAttendanceManager() {
   const [selectedSession, setSelectedSession] = useState<string | null>(null);
+  const [selectedSessionModal, setSelectedSessionModal] = useState<any | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [sessionSearchTerm, setSessionSearchTerm] = useState("");
   const queryClient = useQueryClient();
@@ -142,6 +144,10 @@ export function CoachAttendanceManager() {
     }
   };
 
+  const handleSessionCardClick = (session: any) => {
+    setSelectedSessionModal(session);
+  };
+
   return (
     <div className="min-h-screen bg-white p-6">
       <div className="max-w-7xl mx-auto space-y-8">
@@ -197,7 +203,7 @@ export function CoachAttendanceManager() {
                       ? "border-accent bg-accent/10 shadow-lg scale-105"
                       : "border-accent/20 bg-white hover:border-accent/50"
                   }`}
-                  onClick={() => setSelectedSession(session.id)}
+                  onClick={() => handleSessionCardClick(session)}
                 >
                   <CardContent className="p-5 space-y-4">
                     <div className="flex items-center space-x-2">
@@ -240,6 +246,73 @@ export function CoachAttendanceManager() {
             )}
           </CardContent>
         </Card>
+
+        {/* Session Details Modal */}
+        <Dialog open={!!selectedSessionModal} onOpenChange={() => setSelectedSessionModal(null)}>
+          <DialogContent className="max-w-2xl border-2 border-accent/20 bg-gradient-to-br from-accent/5 to-white shadow-lg">
+            <DialogHeader>
+              <DialogTitle className="text-2xl font-bold text-black flex items-center">
+                <Calendar className="h-6 w-6 mr-3 text-accent" />
+                Session Details
+              </DialogTitle>
+              <DialogDescription className="text-gray-600 text-base">
+                {selectedSessionModal ? formatDate(selectedSessionModal.date) : ''}
+              </DialogDescription>
+            </DialogHeader>
+            {selectedSessionModal && (
+              <div className="space-y-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="flex items-center space-x-3">
+                    <Clock className="h-5 w-5 text-accent" />
+                    <div>
+                      <p className="text-sm font-medium text-gray-600">Time</p>
+                      <p className="font-semibold text-black">
+                        {formatTime12Hour(selectedSessionModal.start_time)} - {formatTime12Hour(selectedSessionModal.end_time)}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex items-center space-x-3">
+                    <MapPin className="h-5 w-5 text-accent" />
+                    <div>
+                      <p className="text-sm font-medium text-gray-600">Branch</p>
+                      <p className="font-semibold text-black">{selectedSessionModal.branches.name}</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center space-x-3">
+                    <Users className="h-5 w-5 text-accent" />
+                    <div>
+                      <p className="text-sm font-medium text-gray-600">Package Type</p>
+                      <p className="font-semibold text-black">{selectedSessionModal.package_type || 'N/A'}</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center space-x-3">
+                    <Badge className="bg-accent/10 text-accent border-accent/20 font-medium px-3 py-1">
+                      {selectedSessionModal.status.charAt(0).toUpperCase() + selectedSessionModal.status.slice(1)}
+                    </Badge>
+                  </div>
+                </div>
+                <div className="flex justify-between gap-4">
+                  <Button
+                    variant="outline"
+                    onClick={() => setSelectedSessionModal(null)}
+                    className="border-accent/30 text-accent hover:bg-accent hover:text-white transition-all duration-300"
+                  >
+                    Close
+                  </Button>
+                  <Button
+                    onClick={() => {
+                      setSelectedSession(selectedSessionModal.id);
+                      setSelectedSessionModal(null);
+                    }}
+                    className="bg-gradient-to-r from-accent to-accent/80 hover:from-accent/80 hover:to-accent text-white font-medium transition-all duration-300 hover:scale-105 hover:shadow-lg"
+                  >
+                    Manage Attendance
+                  </Button>
+                </div>
+              </div>
+            )}
+          </DialogContent>
+        </Dialog>
 
         {/* Attendance Management Card */}
         {selectedSessionDetails && attendanceRecords && (
