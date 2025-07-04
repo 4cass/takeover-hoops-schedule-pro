@@ -10,7 +10,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { format, parseISO } from "date-fns";
 import type { Database } from "@/integrations/supabase/types";
-import { Badge, Calendar, Clock, FileText, MapPin, Plus, Trash2, User, Users, Filter, Search } from "lucide-react";
+import { Badge, Calendar, Clock, Eye, MapPin, Plus, Trash2, User, Users, Filter, Search, ChevronLeft, ChevronRight, Pencil } from "lucide-react";
 
 type SessionStatus = Database['public']['Enums']['session_status'];
 
@@ -55,7 +55,6 @@ const formatDisplayDate = (dateString: string) => {
 // Helper function to format time for display
 const formatDisplayTime = (timeString: string) => {
   try {
-    // Create a date object with today's date and the provided time
     const today = new Date().toISOString().split('T')[0];
     const dateTimeString = `${today}T${timeString}`;
     const date = parseISO(dateTimeString);
@@ -78,13 +77,19 @@ const getTodayDate = () => {
 export function SessionsManager() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isParticipantsDialogOpen, setIsParticipantsDialogOpen] = useState(false);
+  const [isViewDialogOpen, setIsViewDialogOpen] = useState(false);
   const [editingSession, setEditingSession] = useState<TrainingSession | null>(null);
   const [selectedSession, setSelectedSession] = useState<TrainingSession | null>(null);
   const [selectedStudents, setSelectedStudents] = useState<string[]>([]);
   const [selectedCoaches, setSelectedCoaches] = useState<string[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [filterPackageType, setFilterPackageType] = useState<"All" | "Camp Training" | "Personal Training">("All");
+  const [branchFilter, setBranchFilter] = useState<string>("All");
+  const [coachFilter, setCoachFilter] = useState<string>("All");
   const [sortOrder, setSortOrder] = useState<"Newest to Oldest" | "Oldest to Newest">("Newest to Oldest");
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 6;
+
   const [formData, setFormData] = useState({
     date: "",
     start_time: "",
@@ -187,14 +192,12 @@ export function SessionsManager() {
         throw new Error('Package type is required');
       }
 
-      // Use the first selected coach for single coach sessions, or the selected coach for personal training
       const coachId = formData.package_type === "Personal Training" ? formData.coach_id : selectedCoaches[0];
       
       if (!coachId) {
         throw new Error('At least one coach must be selected');
       }
 
-      // For camp training, check conflicts for all selected coaches
       const coachesToCheck = formData.package_type === "Camp Training" ? selectedCoaches : [formData.coach_id];
       
       for (const checkCoachId of coachesToCheck) {
@@ -214,7 +217,6 @@ export function SessionsManager() {
 
       console.log('Creating session with data:', session);
       
-      // Create session with primary coach
       const { data, error } = await supabase
         .from('training_sessions')
         .insert([{ ...session, coach_id: coachId, package_type: session.package_type || null }])
@@ -273,7 +275,6 @@ export function SessionsManager() {
         throw new Error('Package type is required');
       }
 
-      // Use the first selected coach for camp training, or the selected coach for personal training
       const coachId = formData.package_type === "Personal Training" ? formData.coach_id : selectedCoaches[0];
       
       if (!coachId) {
@@ -353,6 +354,7 @@ export function SessionsManager() {
       queryClient.invalidateQueries({ queryKey: ['training-sessions'] });
       queryClient.invalidateQueries({ queryKey: ['dashboard-stats'] });
       toast.success('Training session deleted successfully');
+      setCurrentPage(1); // Reset to first page on delete
     },
     onError: (error) => {
       toast.error('Failed to delete session: ' + error.message);
@@ -375,6 +377,7 @@ export function SessionsManager() {
     setEditingSession(null);
     setIsDialogOpen(false);
     setIsParticipantsDialogOpen(false);
+    setIsViewDialogOpen(false);
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -390,7 +393,6 @@ export function SessionsManager() {
       return;
     }
 
-    // Validate coach selection based on package type
     if (formData.package_type === "Personal Training") {
       if (!formData.coach_id) {
         toast.error('Please select a coach');
@@ -415,7 +417,6 @@ export function SessionsManager() {
 
     console.log('Submitting form with data:', formData);
 
-    // Check conflicts based on package type
     const coachesToCheck = formData.package_type === "Personal Training" ? [formData.coach_id] : selectedCoaches;
     
     const hasConflict = sessions?.some(session =>
@@ -454,13 +455,17 @@ export function SessionsManager() {
       package_type: session.package_type || "",
     });
     setSelectedStudents(session.session_participants?.map(p => p.student_id) || []);
-    // For editing, set the current coach as selected for both package types
     if (session.package_type === "Personal Training") {
       setSelectedCoaches([]);
     } else {
       setSelectedCoaches([session.coach_id]);
     }
     setIsDialogOpen(true);
+  };
+
+  const handleView = (session: TrainingSession) => {
+    setSelectedSession(session);
+    setIsViewDialogOpen(true);
   };
 
   const handleManageParticipants = (session: TrainingSession) => {
@@ -477,11 +482,9 @@ export function SessionsManager() {
 
   const handleCoachToggle = (coachId: string) => {
     if (formData.package_type === "Personal Training") {
-      // For personal training, only allow one coach
       setFormData(prev => ({ ...prev, coach_id: coachId }));
       setSelectedCoaches([]);
     } else if (formData.package_type === "Camp Training") {
-      // For camp training, allow multiple coaches
       setSelectedCoaches(prev => {
         if (prev.includes(coachId)) {
           return prev.filter(id => id !== coachId);
@@ -506,7 +509,9 @@ export function SessionsManager() {
     ?.filter((session) =>
       (session.coaches.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
        session.branches.name.toLowerCase().includes(searchTerm.toLowerCase())) &&
-      (filterPackageType === "All" || session.package_type === filterPackageType)
+      (filterPackageType === "All" || session.package_type === filterPackageType) &&
+      (branchFilter === "All" || session.branch_id === branchFilter) &&
+      (coachFilter === "All" || session.coach_id === coachFilter)
     )
     .sort((a, b) => {
       const dateA = new Date(a.date).getTime();
@@ -514,28 +519,38 @@ export function SessionsManager() {
       return sortOrder === "Newest to Oldest" ? dateB - dateA : dateA - dateB;
     }) || [];
 
+  // Pagination logic
+  const totalPages = Math.ceil(filteredSessions.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const paginatedSessions = filteredSessions.slice(startIndex, endIndex);
+
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+  };
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center py-12" style={{ backgroundColor: 'white' }}>
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2" style={{ borderColor: '#fc7416' }}></div>
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2" style={{ borderColor: '#BEA877' }}></div>
         <span className="ml-3 text-gray-600">Loading sessions...</span>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-white pt-4 p-6">
+    <div className="min-h-screen bg-background pt-4 p-6">
       <div className="max-w-7xl mx-auto space-y-8 -mt-5">
         <div className="mb-8">
           <h1 className="text-4xl font-bold text-black mb-2 tracking-tight">Sessions Manager</h1>
           <p className="text-lg text-gray-700">Manage session information</p>
         </div>
-        <Card className="shadow-xl border-2 border-black" style={{ backgroundColor: '#fffefe' }}>
-          <CardHeader className="border-b border-black bg-black">
+        <Card className="shadow-xl border-2 border-foreground" style={{ backgroundColor: 'white' }}>
+          <CardHeader className="border-b border-[#181A18] bg-[#181A18]">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
               <div>
-                <CardTitle className="text-2xl font-bold text-white flex items-center">
-                  <Calendar className="h-6 w-6 mr-3 text-[#fc7416]" />
+                <CardTitle className="text-2xl font-bold text-[#efeff1] flex items-center">
+                  <Calendar className="h-6 w-6 mr-3 text-accent" style={{ color: '#BEA877' }} />
                   Training Sessions
                 </CardTitle>
                 <CardDescription className="text-gray-400 text-base">
@@ -548,7 +563,7 @@ export function SessionsManager() {
                     <Button 
                       onClick={() => resetForm()}
                       className="px-6 py-3 font-semibold shadow-lg hover:shadow-xl transition-all duration-200"
-                      style={{ backgroundColor: '#fc7416', color: 'white' }}
+                      style={{ backgroundColor: '#BEA877', color: '#efeff1' }}
                     >
                       <Plus className="w-5 h-5 mr-2" />
                       Schedule New Session
@@ -568,7 +583,7 @@ export function SessionsManager() {
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div className="space-y-2">
                           <Label htmlFor="branch" className="flex items-center text-sm font-medium text-gray-700">
-                            <MapPin className="w-4 h-4 mr-2" style={{ color: '#fc7416' }} />
+                            <MapPin className="w-4 h-4 mr-2" style={{ color: '#BEA877' }} />
                             Branch Location
                           </Label>
                           <Select 
@@ -579,7 +594,7 @@ export function SessionsManager() {
                               setSelectedCoaches([]);
                             }}
                           >
-                            <SelectTrigger className="border-2 focus:border-orange-500 rounded-lg">
+                            <SelectTrigger className="border-2 focus:border-accent rounded-lg">
                               <SelectValue placeholder="Select branch" />
                             </SelectTrigger>
                             <SelectContent>
@@ -593,7 +608,7 @@ export function SessionsManager() {
                         </div>
                         <div className="space-y-2">
                           <Label htmlFor="package_type" className="flex items-center text-sm font-medium text-gray-700">
-                            <Users className="w-4 h-4 mr-2" style={{ color: '#fc7416' }} />
+                            <Users className="w-4 h-4 mr-2" style={{ color: '#BEA877' }} />
                             Package Type
                           </Label>
                           <Select
@@ -605,7 +620,7 @@ export function SessionsManager() {
                             }}
                             disabled={!formData.branch_id}
                           >
-                            <SelectTrigger className="border-2 focus:border-orange-500 rounded-lg">
+                            <SelectTrigger className="border-2 focus:border-accent rounded-lg">
                               <SelectValue placeholder={formData.branch_id ? "Select package type" : "Select branch first"} />
                             </SelectTrigger>
                             <SelectContent>
@@ -618,7 +633,7 @@ export function SessionsManager() {
 
                       <div className="space-y-2">
                         <Label htmlFor="coach" className="flex items-center text-sm font-medium text-gray-700">
-                          <User className="w-4 h-4 mr-2" style={{ color: '#fc7416' }} />
+                          <User className="w-4 h-4 mr-2" style={{ color: '#BEA877' }} />
                           {formData.package_type === "Camp Training" ? "Select Coaches (Multiple)" : "Assigned Coach"}
                         </Label>
                         
@@ -631,7 +646,7 @@ export function SessionsManager() {
                             }}
                             disabled={!formData.package_type || coachesLoading}
                           >
-                            <SelectTrigger className="border-2 focus:border-orange-500 rounded-lg">
+                            <SelectTrigger className="border-2 focus:border-accent rounded-lg">
                               <SelectValue placeholder={
                                 coachesLoading ? "Loading coaches..." : 
                                 coachesError ? "Error loading coaches" : 
@@ -663,7 +678,7 @@ export function SessionsManager() {
                                       id={`coach-${coach.id}`}
                                       checked={selectedCoaches.includes(coach.id)}
                                       onChange={() => handleCoachToggle(coach.id)}
-                                      className="w-4 h-4 rounded border-2 border-orange-400 text-orange-500 focus:ring-orange-500"
+                                      className="w-4 h-4 rounded border-2 border-accent text-accent focus:ring-accent"
                                     />
                                     <Label htmlFor={`coach-${coach.id}`} className="flex-1 text-sm cursor-pointer">
                                       <span className="font-medium">{coach.name}</span>
@@ -690,7 +705,7 @@ export function SessionsManager() {
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div className="space-y-2">
                           <Label htmlFor="date" className="flex items-center text-sm font-medium text-gray-700">
-                            <Calendar className="w-4 h-4 mr-2" style={{ color: '#fc7416' }} />
+                            <Calendar className="w-4 h-4 mr-2" style={{ color: '#BEA877' }} />
                             Session Date
                           </Label>
                           <Input
@@ -703,7 +718,7 @@ export function SessionsManager() {
                             }}
                             required
                             min={getTodayDate()}
-                            className="border-2 focus:border-orange-500 rounded-lg"
+                            className="border-2 focus:border-accent rounded-lg"
                             disabled={!formData.branch_id}
                           />
                         </div>
@@ -714,7 +729,7 @@ export function SessionsManager() {
                             onValueChange={(value: SessionStatus) => setFormData(prev => ({ ...prev, status: value }))}
                             disabled={!formData.branch_id}
                           >
-                            <SelectTrigger className="border-2 focus:border-orange-500 rounded-lg">
+                            <SelectTrigger className="border-2 focus:border-accent rounded-lg">
                               <SelectValue />
                             </SelectTrigger>
                             <SelectContent>
@@ -729,7 +744,7 @@ export function SessionsManager() {
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div className="space-y-2">
                           <Label htmlFor="start_time" className="flex items-center text-sm font-medium text-gray-700">
-                            <Clock className="w-4 h-4 mr-2" style={{ color: '#fc7416' }} />
+                            <Clock className="w-4 h-4 mr-2" style={{ color: '#BEA877' }} />
                             Start Time
                           </Label>
                           <Input
@@ -741,13 +756,13 @@ export function SessionsManager() {
                               setFormData(prev => ({ ...prev, start_time: e.target.value }));
                             }}
                             required
-                            className="border-2 focus:border-orange-500 rounded-lg"
+                            className="border-2 focus:border-accent rounded-lg"
                             disabled={!formData.branch_id}
                           />
                         </div>
                         <div className="space-y-2">
                           <Label htmlFor="end_time" className="flex items-center text-sm font-medium text-gray-700">
-                            <Clock className="w-4 h-4 mr-2" style={{ color: '#fc7416' }} />
+                            <Clock className="w-4 h-4 mr-2" style={{ color: '#BEA877' }} />
                             End Time
                           </Label>
                           <Input
@@ -759,7 +774,7 @@ export function SessionsManager() {
                               setFormData(prev => ({ ...prev, end_time: e.target.value }));
                             }}
                             required
-                            className="border-2 focus:border-orange-500 rounded-lg"
+                            className="border-2 focus:border-accent rounded-lg"
                             disabled={!formData.branch_id}
                           />
                         </div>
@@ -767,7 +782,7 @@ export function SessionsManager() {
 
                       <div className="space-y-3">
                         <Label className="flex items-center text-sm font-medium text-gray-700">
-                          <Users className="w-4 h-4 mr-2" style={{ color: '#fc7416' }} />
+                          <Users className="w-4 h-4 mr-2" style={{ color: '#BEA877' }} />
                           Select Players ({selectedStudents.length} selected)
                         </Label>
                         <div className="border-2 rounded-lg p-4 max-h-48 overflow-y-auto" style={{ backgroundColor: '#faf0e8', borderColor: 'black' }}>
@@ -795,7 +810,7 @@ export function SessionsManager() {
                                           setSelectedStudents(prev => prev.filter(id => id !== student.id));
                                         }
                                       }}
-                                      className="w-4 h-4 rounded border-2 border-orange-400 text-orange-500 focus:ring-orange-500"
+                                      className="w-4 h-4 rounded border-2 border-accent text-accent focus:ring-accent"
                                     />
                                     <Label htmlFor={student.id} className="flex-1 text-sm cursor-pointer">
                                       <span className="font-medium">{student.name}</span>
@@ -813,7 +828,7 @@ export function SessionsManager() {
 
                       <div className="space-y-2">
                         <Label htmlFor="notes" className="flex items-center text-sm font-medium text-gray-700">
-                          <FileText className="w-4 h-4 mr-2" style={{ color: '#fc7416' }} />
+                          <Eye className="w-4 h-4 mr-2" style={{ color: '#BEA877' }} />
                           Session Notes (Optional)
                         </Label>
                         <Input
@@ -821,7 +836,7 @@ export function SessionsManager() {
                           value={formData.notes}
                           onChange={(e) => setFormData(prev => ({ ...prev, notes: e.target.value }))}
                           placeholder="Add any special notes or instructions for this session..."
-                          className="border-2 focus:border-orange-500 rounded-lg"
+                          className="border-2 focus:border-accent rounded-lg"
                           disabled={!formData.branch_id}
                         />
                       </div>
@@ -865,7 +880,7 @@ export function SessionsManager() {
                               !formData.date
                             }
                             className="flex-1 sm:flex-none font-semibold"
-                            style={{ backgroundColor: '#fc7416', color: 'white' }}
+                            style={{ backgroundColor: '#BEA877', color: 'white' }}
                           >
                             {editingSession ? 'Update Session' : 'Schedule Session'}
                           </Button>
@@ -877,33 +892,34 @@ export function SessionsManager() {
               </div>
             </div>
           </CardHeader>
-          <CardContent className="p-6 border-b border-[#fc7416]/10">
+          <CardContent className="p-6 border-b border-accent">
             <div className="mb-6">
               <div className="flex items-center mb-4">
-                <Filter className="h-5 w-5 text-[#fc7416] mr-2" />
+                <Filter className="h-5 w-5 text-[#BEA877] mr-2" />
                 <h3 className="text-lg font-semibold text-black">Filter Sessions</h3>
               </div>
-              <div className="flex flex-col sm:flex-row sm:items-end gap-4">
+              <div className="flex flex-col space-y-4 lg:flex-row lg:items-end lg:gap-4 lg:space-y-0">
                 <div className="relative flex-1">
                   <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
                   <input
                     type="text"
                     placeholder="Search by coach or branch..."
-                    className="pl-10 pr-4 py-3 w-full border-2 border-[#fc7416]/20 rounded-xl text-sm focus:border-[#fc7416] focus:ring-[#fc7416]/20 bg-white"
+                    className="pl-10 pr-4 py-3 w-full border-2 border-accent rounded-xl text-sm focus:border-accent focus:ring-accent bg-white"
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
+                    style={{ borderColor: '#BEA877' }}
                   />
                 </div>
                 <div className="flex-1">
                   <Label htmlFor="filter-package" className="flex items-center text-sm font-medium text-gray-700 mb-2">
-                    <Users className="w-4 h-4 mr-2" style={{ color: '#fc7416' }} />
+                    <Users className="w-4 h-4 mr-2" style={{ color: '#BEA877' }} />
                     Filter by Package Type
                   </Label>
                   <Select
                     value={filterPackageType}
                     onValueChange={(value: "All" | "Camp Training" | "Personal Training") => setFilterPackageType(value)}
                   >
-                    <SelectTrigger className="border-2 focus:border-[#fc7416] rounded-xl">
+                    <SelectTrigger className="border-2 focus:border-accent rounded-xl" style={{ borderColor: '#BEA877' }}>
                       <SelectValue placeholder="Select package type" />
                     </SelectTrigger>
                     <SelectContent>
@@ -914,15 +930,59 @@ export function SessionsManager() {
                   </Select>
                 </div>
                 <div className="flex-1">
+                  <Label htmlFor="filter-branch" className="flex items-center text-sm font-medium text-gray-700 mb-2">
+                    <MapPin className="w-4 h-4 mr-2" style={{ color: '#BEA877' }} />
+                    Filter by Branch
+                  </Label>
+                  <Select
+                    value={branchFilter}
+                    onValueChange={(value) => setBranchFilter(value)}
+                  >
+                    <SelectTrigger className="border-2 focus:border-accent rounded-xl" style={{ borderColor: '#BEA877' }}>
+                      <SelectValue placeholder="Select branch" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="All">All Branches</SelectItem>
+                      {branches?.map(branch => (
+                        <SelectItem key={branch.id} value={branch.id}>
+                          {branch.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="flex-1">
+                  <Label htmlFor="filter-coach" className="flex items-center text-sm font-medium text-gray-700 mb-2">
+                    <User className="w-4 h-4 mr-2" style={{ color: '#BEA877' }} />
+                    Filter by Coach
+                  </Label>
+                  <Select
+                    value={coachFilter}
+                    onValueChange={(value) => setCoachFilter(value)}
+                  >
+                    <SelectTrigger className="border-2 focus:border-accent rounded-xl" style={{ borderColor: '#BEA877' }}>
+                      <SelectValue placeholder="Select coach" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="All">All Coaches</SelectItem>
+                      {coaches?.map(coach => (
+                        <SelectItem key={coach.id} value={coach.id}>
+                          {coach.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="flex-1">
                   <Label htmlFor="sort-order" className="flex items-center text-sm font-medium text-gray-700 mb-2">
-                    <Calendar className="w-4 h-4 mr-2" style={{ color: '#fc7416' }} />
+                    <Calendar className="w-4 h-4 mr-2" style={{ color: '#BEA877' }} />
                     Sort Order
                   </Label>
                   <Select
                     value={sortOrder}
                     onValueChange={(value: "Newest to Oldest" | "Oldest to Newest") => setSortOrder(value)}
                   >
-                    <SelectTrigger className="border-2 focus:border-[#fc7416] rounded-xl">
+                    <SelectTrigger className="border-2 focus:border-accent rounded-xl" style={{ borderColor: '#BEA877' }}>
                       <SelectValue placeholder="Select sort order" />
                     </SelectTrigger>
                     <SelectContent>
@@ -941,94 +1001,229 @@ export function SessionsManager() {
               <div className="text-center py-16">
                 <Calendar className="w-16 h-16 mx-auto mb-4 text-gray-400" />
                 <h3 className="text-xl font-semibold text-gray-900 mb-2">
-                  {searchTerm || filterPackageType !== "All" ? `No ${filterPackageType === "All" ? "" : filterPackageType} sessions found` : "No Training Sessions"}
+                  {searchTerm || filterPackageType !== "All" || branchFilter !== "All" || coachFilter !== "All" ? `No sessions found` : "No Training Sessions"}
                 </h3>
                 <p className="text-gray-600 mb-6">
-                  {searchTerm || filterPackageType !== "All" ? "Try adjusting your search or filter." : "Get started by scheduling your first training session"}
+                  {searchTerm || filterPackageType !== "All" || branchFilter !== "All" || coachFilter !== "All" ? "Try adjusting your search or filter." : "Get started by scheduling your first training session"}
                 </p>
                 <Button 
                   onClick={() => setIsDialogOpen(true)}
                   className="font-semibold"
-                  style={{ backgroundColor: '#fc7416', color: 'white' }}
+                  style={{ backgroundColor: '#BEA877', color: 'white' }}
                 >
                   <Plus className="w-4 h-4 mr-2" />
                   Schedule First Session
                 </Button>
               </div>
             ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                {filteredSessions.map((session) => (
-                  <Card 
-                    key={session.id} 
-                    onClick={() => handleEdit(session)} 
-                    className="cursor-pointer border-2 transition-all duration-300 hover:scale-105 hover:shadow-lg rounded-xl border-[#fc7416]/20 hover:border-[#fc7416]/50"
-                  >
-                    <CardHeader className="pb-3">
-                      <div className="flex justify-between items-start mb-2">
-                        <div className="flex items-center space-x-2">
-                          <Calendar className="w-5 h-5" style={{ color: '#fc7416' }} />
-                          <h3 className="font-bold text-lg text-gray-900">
-                            {formatDisplayDate(session.date)}
-                          </h3>
+              <>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {paginatedSessions.map((session) => (
+                    <Card 
+                      key={session.id} 
+                      className="border-2 transition-all duration-300 hover:shadow-lg rounded-xl border-accent"
+                      style={{ borderColor: '#BEA877' }}
+                    >
+                      <CardHeader className="pb-3">
+                        <div className="flex justify-between items-start mb-2">
+                          <div className="flex items-center space-x-2">
+                            <Calendar className="w-5 h-5" style={{ color: '#BEA877' }} />
+                            <h3 className="font-bold text-lg text-gray-900">
+                              {formatDisplayDate(session.date)}
+                            </h3>
+                          </div>
+                          <Badge className={`font-medium ${getStatusBadgeColor(session.status)}`}>
+                            {session.status}
+                          </Badge>
                         </div>
-                        <Badge className={`font-medium ${getStatusBadgeColor(session.status)}`}>
-                          {session.status}
-                        </Badge>
-                      </div>
-                      <div className="flex items-center space-x-2 text-gray-600">
-                        <Clock className="w-4 h-4" />
-                        <span className="text-sm font-medium">
-                          {formatDisplayTime(session.start_time)} - {formatDisplayTime(session.end_time)}
-                        </span>
-                      </div>
-                    </CardHeader>
-                    
-                    <CardContent className="space-y-3">
-                      <div className="flex items-center space-x-2">
-                        <User className="w-4 h-4 text-gray-500" />
-                        <span className="text-sm"><span className="font-medium">Coach:</span> {session.coaches.name}</span>
-                      </div>
+                        <div className="flex items-center space-x-2 text-gray-600">
+                          <Clock className="w-4 h-4" />
+                          <span className="text-sm font-medium">
+                            {formatDisplayTime(session.start_time)} - {formatDisplayTime(session.end_time)}
+                          </span>
+                        </div>
+                      </CardHeader>
                       
-                      <div className="flex items-center space-x-2">
-                        <MapPin className="w-4 h-4 text-gray-500" />
-                        <span className="text-sm"><span className="font-medium">Branch:</span> {session.branches.name}</span>
-                      </div>
-                      
-                      <div className="flex items-center space-x-2">
-                        <Users className="w-4 h-4 text-gray-500" />
-                        <span className="text-sm"><span className="font-medium">Package:</span> {session.package_type || 'N/A'}</span>
-                      </div>
-                      
-                      <div className="flex items-center justify-between">
+                      <CardContent className="space-y-3">
+                        <div className="flex items-center space-x-2">
+                          <User className="w-4 h-4 text-gray-500" />
+                          <span className="text-sm"><span className="font-medium">Coach:</span> {session.coaches.name}</span>
+                        </div>
+                        
+                        <div className="flex items-center space-x-2">
+                          <MapPin className="w-4 h-4 text-gray-500" />
+                          <span className="text-sm"><span className="font-medium">Branch:</span> {session.branches.name}</span>
+                        </div>
+                        
                         <div className="flex items-center space-x-2">
                           <Users className="w-4 h-4 text-gray-500" />
-                          <span className="text-sm font-medium">{session.session_participants?.length || 0} Players</span>
+                          <span className="text-sm"><span className="font-medium">Package:</span> {session.package_type || 'N/A'}</span>
                         </div>
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleManageParticipants(session);
-                          }}
-                          className="text-xs border-[#fc7416] text-[#fc7416] hover:bg-orange-500 hover:text-white"
-                        >
-                          Manage
-                        </Button>
-                      </div>
-                      
-                      {session.notes && (
-                        <div className="mt-3 p-2 bg-white rounded-md border border-[#ffd3b4]">
-                          <p className="text-xs text-gray-600 italic">"{session.notes}"</p>
+                        
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center space-x-2">
+                            <Users className="w-4 h-4 text-gray-500" />
+                            <span className="text-sm font-medium">{session.session_participants?.length || 0} Players</span>
+                          </div>
+                          <div className="flex space-x-2">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => handleView(session)}
+                              className="bg-blue-600 text-white"
+                            >
+                              <Eye className="w-4 h-4" /> View
+                            </Button>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => handleEdit(session)}
+                              className="bg-yellow-600 text-white"
+                            >
+                              <Pencil className="w-4 h-4" /> Edit
+                            </Button>
+                          </div>
                         </div>
-                      )}
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
+                        
+                        {session.notes && (
+                          <div className="mt-3 p-2 bg-white rounded-md border border-accent" style={{ borderColor: '#BEA877' }}>
+                            <p className="text-xs text-gray-600 italic">"{session.notes}"</p>
+                          </div>
+                        )}
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+
+                {totalPages > 1 && (
+                  <div className="flex justify-center items-center mt-6 space-x-2">
+                    <Button
+                      variant="outline"
+                      onClick={() => handlePageChange(currentPage - 1)}
+                      disabled={currentPage === 1}
+                      className="border-2 border-accent text-accent hover:bg-accent hover:text-white"
+                      style={{ borderColor: '#BEA877', color: '#BEA877' }}
+                    >
+                      <ChevronLeft className="w-4 h-4 " />
+                    </Button>
+                    {Array.from({ length: totalPages }, (_, index) => index + 1).map((page) => (
+                      <Button
+                        key={page}
+                        variant={currentPage === page ? "default" : "outline"}
+                        onClick={() => handlePageChange(page)}
+                        className={`border-2 ${
+                          currentPage === page
+                            ? 'bg-accent text-white'
+                            : 'border-accent text-accent hover:bg-accent hover:text-white'
+                        }`}
+                        style={{ 
+                          backgroundColor: currentPage === page ? '#BEA877' : 'transparent',
+                          borderColor: '#BEA877',
+                          color: currentPage === page ? 'white' : '#BEA877'
+                        }}
+                      >
+                        {page}
+                      </Button>
+                    ))}
+                    <Button
+                      variant="outline"
+                      onClick={() => handlePageChange(currentPage + 1)}
+                      disabled={currentPage === totalPages}
+                      className="border-2 border-accent text-accent hover:bg-accent hover:text-white"
+                      style={{ borderColor: '#BEA877', color: '#BEA877' }}
+                    >
+                      <ChevronRight className="w-4 h-4" />
+                    </Button>
+                  </div>
+                )}
+              </>
             )}
           </CardContent>
         </Card>
+
+        <Dialog open={isViewDialogOpen} onOpenChange={setIsViewDialogOpen}>
+          <DialogContent className="max-w-lg" style={{ backgroundColor: '#fffefe' }}>
+            <DialogHeader className="pb-4">
+              <DialogTitle className="text-xl font-bold text-gray-900">Session Details</DialogTitle>
+              <DialogDescription className="text-gray-600">
+                View details of the selected training session
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4">
+              <div className="p-4 rounded-lg border border-gray-200 bg-gray-50">
+                <div className="space-y-2">
+                  <div className="flex items-center space-x-2">
+                    <Calendar className="w-4 h-4 text-accent" style={{ color: '#BEA877' }} />
+                    <span className="text-sm font-medium text-gray-700">
+                      Date: {selectedSession ? formatDisplayDate(selectedSession.date) : 'N/A'}
+                    </span>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <Clock className="w-4 h-4 text-gray-500" />
+                    <span className="text-sm font-medium text-gray-700">
+                      Time: {selectedSession ? `${formatDisplayTime(selectedSession.start_time)} - ${formatDisplayTime(selectedSession.end_time)}` : 'N/A'}
+                    </span>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <MapPin className="w-4 h-4 text-gray-500" />
+                    <span className="text-sm font-medium text-gray-700">
+                      Branch: {selectedSession?.branches.name || 'N/A'}
+                    </span>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <User className="w-4 h-4 text-gray-500" />
+                    <span className="text-sm font-medium text-gray-700">
+                      Coach: {selectedSession?.coaches.name || 'N/A'}
+                    </span>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <Users className="w-4 h-4 text-gray-500" />
+                    <span className="text-sm font-medium text-gray-700">
+                      Package: {selectedSession?.package_type || 'N/A'}
+                    </span>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <Users className="w-4 h-4 text-gray-500" />
+                    <span className="text-sm font-medium text-gray-700">
+                      Players: {selectedSession?.session_participants?.length || 0}
+                    </span>
+                  </div>
+                  {selectedSession?.notes && (
+                    <div className="flex items-start space-x-2">
+                      <Eye className="w-4 h-4 text-gray-500" />
+                      <span className="text-sm font-medium text-gray-700">
+                        Notes: {selectedSession.notes}
+                      </span>
+                    </div>
+                  )}
+                </div>
+              </div>
+              <div className="space-y-2">
+                <Label className="text-sm font-medium text-gray-700">Participants</Label>
+                <div className="border-2 rounded-lg p-3 max-h-60 overflow-y-auto" style={{ borderColor: '#BEA877', backgroundColor: '#faf0e8' }}>
+                  {selectedSession?.session_participants?.length === 0 ? (
+                    <p className="text-sm text-gray-600">No participants assigned.</p>
+                  ) : (
+                    selectedSession?.session_participants?.map(participant => (
+                      <div key={participant.id} className="flex items-center space-x-2 p-2">
+                        <span className="text-sm text-gray-700">{participant.students.name}</span>
+                      </div>
+                    ))
+                  )}
+                </div>
+              </div>
+              <div className="flex justify-end pt-4 border-t">
+                <Button
+                  variant="outline"
+                  onClick={() => setIsViewDialogOpen(false)}
+                  className="border-2 border-gray-300 text-gray-700 hover:bg-gray-100"
+                >
+                  Close
+                </Button>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
 
         <Dialog open={isParticipantsDialogOpen} onOpenChange={setIsParticipantsDialogOpen}>
           <DialogContent className="max-w-lg" style={{ backgroundColor: '#fffefe' }}>
@@ -1040,7 +1235,7 @@ export function SessionsManager() {
             </DialogHeader>
             
             <div className="space-y-4">
-              <div className="p-4 rounded-lg" style={{ backgroundColor: '#faf0e8' }}>
+              <div className="p-4 rounded-lg">
                 <p className="text-sm text-gray-700 mb-1">
                   <span className="font-medium">Session Date:</span>{' '}
                   {selectedSession?.date ? formatDisplayDate(selectedSession.date) : 'Invalid Date'}
@@ -1058,7 +1253,7 @@ export function SessionsManager() {
               
               <div className="space-y-2">
                 <Label className="text-sm font-medium text-gray-700">Available Players</Label>
-                <div className="border-2 rounded-lg p-3 max-h-60 overflow-y-auto space-y-2" style={{ borderColor: '#fc7416', backgroundColor: '#faf0e8' }}>
+                <div className="border-2 rounded-lg p-3 max-h-60 overflow-y-auto space-y-2" style={{ borderColor: '#BEA877', backgroundColor: '#faf0e8' }}>
                   {studentsLoading ? (
                     <p className="text-sm text-gray-600">Loading students...</p>
                   ) : studentsError ? (
@@ -1081,7 +1276,8 @@ export function SessionsManager() {
                               setSelectedStudents(prev => prev.filter(id => id !== student.id));
                             }
                           }}
-                          className="w-4 h-4 rounded border-2 border-orange-400 text-orange-500 focus:ring-orange-500"
+                          className="w-4 h-4 rounded border-2 border-accent text-accent focus:ring-accent"
+                          style={{ borderColor: '#BEA877', accentColor: '#BEA877' }}
                         />
                         <Label htmlFor={`participant-${student.id}`} className="flex-1 text-sm cursor-pointer">
                           <span className="font-medium">{student.name}</span>
@@ -1137,7 +1333,7 @@ export function SessionsManager() {
                     setIsParticipantsDialogOpen(false);
                   }}
                   className="font-semibold"
-                  style={{ backgroundColor: '#fc7416', color: 'white' }}
+                  style={{ backgroundColor: '#BEA877', color: 'white' }}
                 >
                   Save Changes
                 </Button>

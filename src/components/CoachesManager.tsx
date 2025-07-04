@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus, Edit, Trash2, Filter, Search, Users, Calendar, Clock, MapPin, User } from "lucide-react";
+import { Plus, Edit, Trash2, Filter, Search, Users, Calendar, Clock, MapPin, User, ChevronLeft, ChevronRight } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { format } from "date-fns";
@@ -19,16 +19,26 @@ type Coach = {
   created_at: string;
 };
 
+type Branch = {
+  id: string;
+  name: string;
+};
+
 type SessionRecord = {
   id: string;
   date: string;
   start_time: string;
   end_time: string;
   branch_id: string;
-  branches: { name: string };
   package_type: string | null;
+  branches: { name: string };
   session_participants: { students: { name: string } }[];
 };
+
+const PACKAGE_TYPES = [
+  "Personal Training",
+  "Camp Training"
+];
 
 export function CoachesManager() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -36,12 +46,13 @@ export function CoachesManager() {
   const [editingCoach, setEditingCoach] = useState<Coach | null>(null);
   const [selectedCoach, setSelectedCoach] = useState<Coach | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
-  const [filterSessionPackageType, setFilterSessionPackageType] = useState<"All" | "Personal Training" | "Camp Training">("All");
-  const [formData, setFormData] = useState({
-    name: "",
-    email: "",
-    phone: "",
-  });
+  const [branchFilter, setBranchFilter] = useState<string>("All");
+  const [coachPackageTypeFilter, setCoachPackageTypeFilter] = useState<string>("All");
+  const [recordsBranchFilter, setRecordsBranchFilter] = useState<string>("All");
+  const [recordsPackageTypeFilter, setRecordsPackageTypeFilter] = useState<string>("All");
+  const [currentPage, setCurrentPage] = useState(1);
+  const [recordsCurrentPage, setRecordsCurrentPage] = useState(1);
+  const itemsPerPage = 5;
 
   const queryClient = useQueryClient();
 
@@ -54,6 +65,18 @@ export function CoachesManager() {
         .order("created_at", { ascending: false });
       if (error) throw error;
       return data as Coach[];
+    },
+  });
+
+  const { data: branches } = useQuery({
+    queryKey: ["branches"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("branches")
+        .select("*")
+        .order("name");
+      if (error) throw error;
+      return data as Branch[];
     },
   });
 
@@ -86,12 +109,32 @@ export function CoachesManager() {
   ) || [];
 
   const filteredSessionRecords = sessionRecords?.filter((record) =>
-    filterSessionPackageType === "All" || record.package_type === filterSessionPackageType
+    (recordsBranchFilter === "All" || record.branch_id === recordsBranchFilter) &&
+    (recordsPackageTypeFilter === "All" || record.package_type === recordsPackageTypeFilter)
   ) || [];
+
+  // Pagination logic for coaches
+  const totalPages = Math.ceil(filteredCoaches.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const paginatedCoaches = filteredCoaches.slice(startIndex, endIndex);
+
+  // Pagination logic for session records
+  const recordsTotalPages = Math.ceil(filteredSessionRecords.length / itemsPerPage);
+  const recordsStartIndex = (recordsCurrentPage - 1) * itemsPerPage;
+  const recordsEndIndex = recordsStartIndex + itemsPerPage;
+  const paginatedSessionRecords = filteredSessionRecords.slice(recordsStartIndex, recordsEndIndex);
+
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+  };
+
+  const handleRecordsPageChange = (page: number) => {
+    setRecordsCurrentPage(page);
+  };
 
   const createMutation = useMutation({
     mutationFn: async (coach: typeof formData) => {
-      // Call the edge function to create coach account
       const { data, error } = await supabase.functions.invoke('create-coach-account', {
         body: {
           name: coach.name,
@@ -99,10 +142,8 @@ export function CoachesManager() {
           phone: coach.phone || null
         }
       });
-
       if (error) throw error;
       if (!data.success) throw new Error(data.error);
-      
       return data.coach;
     },
     onSuccess: (data) => {
@@ -178,9 +219,17 @@ export function CoachesManager() {
 
   const handleShowRecords = (coach: Coach) => {
     setSelectedCoach(coach);
-    setFilterSessionPackageType("All"); // Reset filter when opening modal
+    setRecordsBranchFilter("All");
+    setRecordsPackageTypeFilter("All");
+    setRecordsCurrentPage(1);
     setIsRecordsDialogOpen(true);
   };
+
+  const [formData, setFormData] = useState({
+    name: "",
+    email: "",
+    phone: "",
+  });
 
   if (isLoading) {
     return (
@@ -197,19 +246,17 @@ export function CoachesManager() {
   return (
     <div className="min-h-screen bg-background pt-4 responsive-padding">
       <div className="max-w-7xl mx-auto responsive-spacing -mt-5">
-        {/* Header */}
         <div className="mb-8">
           <h1 className="responsive-heading font-bold text-foreground mb-2 tracking-tight">Coaches Manager</h1>
           <p className="responsive-body text-muted-foreground">Manage coach information and session history</p>
         </div>
 
-        {/* Coaches Card */}
-        <Card className="border-2 border-primary bg-card backdrop-blur-sm shadow-xl">
-          <CardHeader className="border-b border-primary bg-primary">
+        <Card className="border-2 border-[#181818] bg-card backdrop-blur-sm shadow-xl">
+          <CardHeader className="border-b border-[#181818] bg-[#181818]">
             <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between space-y-4 lg:space-y-0">
               <div>
                 <CardTitle className="responsive-subheading font-bold text-primary-foreground flex items-center">
-                  <Users className="h-6 w-6 mr-3 text-accent" />
+                  <Users className="h-6 w-6 mr-3 text-accent" style={{ color: '#BEA877' }} />
                   Coach Management
                 </CardTitle>
                 <CardDescription className="text-primary-foreground/80 responsive-body">
@@ -221,6 +268,7 @@ export function CoachesManager() {
                   <Button
                     onClick={() => resetForm()}
                     className="bg-accent hover:bg-secondary text-accent-foreground transition-all duration-300 hover:scale-105 responsive-button"
+                    style={{ backgroundColor: '#BEA877', color: 'white' }}
                   >
                     <Plus className="w-4 h-4 mr-2" />
                     Add Coach
@@ -244,6 +292,7 @@ export function CoachesManager() {
                         onChange={(e) => setFormData((prev) => ({ ...prev, name: e.target.value }))}
                         required
                         className="mt-1 responsive-button border-2 border-accent/20 rounded-xl focus:border-accent focus:ring-accent/20 bg-background"
+                        style={{ borderColor: '#BEA877' }}
                       />
                     </div>
                     <div>
@@ -255,6 +304,7 @@ export function CoachesManager() {
                         onChange={(e) => setFormData((prev) => ({ ...prev, email: e.target.value }))}
                         required
                         className="mt-1 responsive-button border-2 border-accent/20 rounded-xl focus:border-accent focus:ring-accent/20 bg-background"
+                        style={{ borderColor: '#BEA877' }}
                       />
                     </div>
                     <div>
@@ -264,6 +314,7 @@ export function CoachesManager() {
                         value={formData.phone}
                         onChange={(e) => setFormData((prev) => ({ ...prev, phone: e.target.value }))}
                         className="mt-1 responsive-button border-2 border-accent/20 rounded-xl focus:border-accent focus:ring-accent/20 bg-background"
+                        style={{ borderColor: '#BEA877' }}
                       />
                     </div>
                     {!editingCoach && (
@@ -280,6 +331,7 @@ export function CoachesManager() {
                         variant="outline"
                         onClick={resetForm}
                         className="border-accent/30 text-accent hover:bg-accent hover:text-accent-foreground transition-all duration-300 hover:scale-105 responsive-button mobile-full-width"
+                        style={{ borderColor: '#BEA877', color: '#BEA877' }}
                       >
                         Cancel
                       </Button>
@@ -287,6 +339,7 @@ export function CoachesManager() {
                         type="submit"
                         disabled={createMutation.isPending || updateMutation.isPending}
                         className="bg-accent hover:bg-secondary text-accent-foreground transition-all duration-300 hover:scale-105 responsive-button mobile-full-width"
+                        style={{ backgroundColor: '#BEA877', color: 'white' }}
                       >
                         {createMutation.isPending || updateMutation.isPending ? "Processing..." : editingCoach ? "Update" : "Create Account"}
                       </Button>
@@ -297,29 +350,77 @@ export function CoachesManager() {
             </div>
           </CardHeader>
           <CardContent className="responsive-padding">
-            {/* Search and Filter */}
             <div className="mb-6">
               <div className="flex items-center mb-4">
-                <Filter className="h-5 w-5 text-accent mr-2" />
+                <Filter className="h-5 w-5 text-accent mr-2" style={{ color: '#BEA877' }} />
                 <h3 className="responsive-body font-semibold text-foreground">Filter Coaches</h3>
               </div>
-              <div className="relative max-w-md">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                <input
-                  type="text"
-                  placeholder="Search coaches..."
-                  className="pl-10 pr-4 py-3 w-full border-2 border-accent/40 rounded-xl responsive-small focus:border-accent focus:ring-accent/20 bg-background"
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                />
+              <div className="flex flex-col space-y-4 lg:flex-row lg:items-end lg:gap-4 lg:space-y-0">
+                <div className="relative flex-1">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                  <input
+                    type="text"
+                    placeholder="Search coaches..."
+                    className="pl-10 pr-4 py-3 w-full border-2 border-accent/40 rounded-xl responsive-small focus:border-accent focus:ring-accent/20 bg-background"
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    style={{ borderColor: '#BEA877' }}
+                  />
+                </div>
+                <div className="flex-1">
+                  <Label htmlFor="filter-branch" className="flex items-center text-sm font-medium text-gray-700 mb-2">
+                    <MapPin className="w-4 h-4 mr-2 text-accent" style={{ color: '#BEA877' }} />
+                    Branch
+                  </Label>
+                  <Select
+                    value={branchFilter}
+                    onValueChange={(value) => setBranchFilter(value)}
+                  >
+                    <SelectTrigger className="border-2 focus:border-accent rounded-xl" style={{ borderColor: '#BEA877' }}>
+                      <SelectValue placeholder="Select Branch" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="All">All Branches</SelectItem>
+                      {branches?.map((branch) => (
+                        <SelectItem key={branch.id} value={branch.id}>
+                          {branch.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="flex-1">
+                  <Label htmlFor="filter-package-type" className="flex items-center text-sm font-medium text-gray-700 mb-2">
+                    <Users className="w-4 h-4 mr-2 text-accent" style={{ color: '#BEA877' }} />
+                    Package Type
+                  </Label>
+                  <Select
+                    value={coachPackageTypeFilter}
+                    onValueChange={(value) => setCoachPackageTypeFilter(value)}
+                  >
+                    <SelectTrigger className="border-2 focus:border-accent rounded-xl" style={{ borderColor: '#BEA877' }}>
+                      <SelectValue placeholder="Select Package Type" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="All">All Package Types</SelectItem>
+                      {PACKAGE_TYPES.map((packageType) => (
+                        <SelectItem key={packageType} value={packageType}>
+                          {packageType}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
+              <p className="text-sm text-muted-foreground mt-3">
+                Showing {filteredCoaches.length} coach{filteredCoaches.length === 1 ? '' : 'es'}
+              </p>
             </div>
 
-            {/* Coaches Table */}
-            <div className="border-2 border-primary rounded-2xl bg-gradient-to-br from-accent/5 to-card shadow-lg overflow-hidden">
+            <div className="rounded-2xl bg-gradient-to-br from-accent/5  overflow-hidden">
               <div className="overflow-x-auto">
                 <table className="w-full responsive-table">
-                  <thead className="bg-primary text-primary-foreground">
+                  <thead className="bg-[#181818] text-primary-foreground">
                     <tr>
                       <th className="py-4 px-6 text-left font-semibold">Coach Name</th>
                       <th className="py-4 px-6 text-left font-semibold">Email</th>
@@ -328,7 +429,7 @@ export function CoachesManager() {
                     </tr>
                   </thead>
                   <tbody>
-                    {filteredCoaches.map((coach, index) => (
+                    {paginatedCoaches.map((coach, index) => (
                       <tr
                         key={coach.id}
                         onClick={() => handleShowRecords(coach)}
@@ -352,7 +453,8 @@ export function CoachesManager() {
                               size="sm"
                               variant="outline"
                               onClick={() => handleEdit(coach)}
-                              className="border-accent/30 text-accent hover:bg-accent hover:text-accent-foreground transition-all duration-300 hover:scale-105"
+                              className=" text-accent hover:bg-accent hover:text-accent-foreground transition-all duration-300 hover:scale-105"
+                              style={{  color: '#BEA877' }}
                             >
                               <Edit className="w-4 h-4 mr-1" />
                               <span className="hidden sm:inline">Edit</span>
@@ -373,22 +475,61 @@ export function CoachesManager() {
                   </tbody>
                 </table>
               </div>
-              {filteredCoaches.length === 0 && (
+              {filteredCoaches.length === 0 ? (
                 <div className="py-12 text-center">
                   <Users className="w-16 h-16 text-muted mx-auto mb-4" />
                   <h3 className="responsive-body font-semibold text-foreground mb-2">
-                    {searchTerm ? "No coaches found" : "No coaches"}
+                    {searchTerm || branchFilter !== "All" || coachPackageTypeFilter !== "All" ? "No coaches found" : "No coaches"}
                   </h3>
                   <p className="text-muted-foreground responsive-small">
-                    {searchTerm ? "Try adjusting your search terms." : "Add a new coach to get started."}
+                    {searchTerm || branchFilter !== "All" || coachPackageTypeFilter !== "All" ? "Try adjusting your search or filters." : "Add a new coach to get started."}
                   </p>
+                </div>
+              ) : totalPages > 1 && (
+                <div className="flex justify-center items-center mt-6 space-x-2">
+                  <Button
+                    variant="outline"
+                    onClick={() => handlePageChange(currentPage - 1)}
+                    disabled={currentPage === 1}
+                    className="border-2 border-accent text-accent hover:bg-accent hover:text-white"
+                    style={{ borderColor: '#BEA877', color: '#BEA877' }}
+                  >
+                    <ChevronLeft className="w-4 h-4" />
+                  </Button>
+                  {Array.from({ length: totalPages }, (_, index) => index + 1).map((page) => (
+                    <Button
+                      key={page}
+                      variant={currentPage === page ? "default" : "outline"}
+                      onClick={() => handlePageChange(page)}
+                      className={`border-2 ${
+                        currentPage === page
+                          ? 'bg-accent text-white'
+                          : 'border-accent text-accent hover:bg-accent hover:text-white'
+                      }`}
+                      style={{ 
+                        backgroundColor: currentPage === page ? '#BEA877' : 'transparent',
+                        borderColor: '#BEA877',
+                        color: currentPage === page ? 'white' : '#BEA877'
+                      }}
+                    >
+                      {page}
+                    </Button>
+                  ))}
+                  <Button
+                    variant="outline"
+                    onClick={() => handlePageChange(currentPage + 1)}
+                    disabled={currentPage === totalPages}
+                    className="border-2 border-accent text-accent hover:bg-accent hover:text-white"
+                    style={{ borderColor: '#BEA877', color: '#BEA877' }}
+                  >
+                    <ChevronRight className="w-4 h-4" />
+                  </Button>
                 </div>
               )}
             </div>
           </CardContent>
         </Card>
 
-        {/* Session Records Modal */}
         <Dialog open={isRecordsDialogOpen} onOpenChange={setIsRecordsDialogOpen}>
           <DialogContent className="max-w-[95vw] sm:max-w-4xl border-2 border-accent/20 bg-gradient-to-br from-accent/5 to-card shadow-lg">
             <DialogHeader>
@@ -400,8 +541,7 @@ export function CoachesManager() {
               </DialogDescription>
             </DialogHeader>
             <div className="responsive-spacing">
-              {/* Coach Details */}
-              <div className="border-b border-primary pb-4">
+              <div className="border-b border-[#181818] pb-4">
                 <h3 className="responsive-body font-semibold text-foreground mb-3">Coach Details</h3>
                 <div className="responsive-grid-2">
                   <div>
@@ -412,34 +552,60 @@ export function CoachesManager() {
                 </div>
               </div>
 
-              {/* Session Records */}
               <div>
                 <div className="flex items-center mb-4">
-                  <Filter className="h-5 w-5 text-accent mr-2" />
+                  <Filter className="h-5 w-5 text-accent mr-2" style={{ color: '#BEA877' }} />
                   <h3 className="responsive-body font-semibold text-foreground">Session Records</h3>
                 </div>
-                <div className="mb-4 max-w-md">
-                  <Label htmlFor="filter-session-package" className="flex items-center responsive-small font-medium text-foreground mb-2">
-                    <Users className="w-4 h-4 mr-2 text-accent" />
-                    Filter by Package Type
-                  </Label>
-                  <Select
-                    value={filterSessionPackageType}
-                    onValueChange={(value: "All" | "Personal Training" | "Camp Training") => setFilterSessionPackageType(value)}
-                  >
-                    <SelectTrigger className="border-2 focus:border-accent rounded-xl">
-                      <SelectValue placeholder="Select package type" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="All">All Sessions</SelectItem>
-                      <SelectItem value="Personal Training">Personal Training</SelectItem>
-                      <SelectItem value="Camp Training">Camp Training</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  <p className="responsive-small text-muted-foreground mt-2">
-                    Showing {filteredSessionRecords.length} session{filteredSessionRecords.length === 1 ? '' : 's'}
-                  </p>
+                <div className="flex flex-col sm:flex-row sm:items-end gap-4 mb-4">
+                  <div className="flex-1">
+                    <Label htmlFor="filter-records-branch" className="flex items-center text-sm font-medium text-gray-700 mb-2">
+                      <MapPin className="w-4 h-4 mr-2 text-accent" style={{ color: '#BEA877' }} />
+                      Branch
+                    </Label>
+                    <Select
+                      value={recordsBranchFilter}
+                      onValueChange={(value) => setRecordsBranchFilter(value)}
+                    >
+                      <SelectTrigger className="border-2 focus:border-accent rounded-xl" style={{ borderColor: '#BEA877' }}>
+                        <SelectValue placeholder="Select Branch" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="All">All Branches</SelectItem>
+                        {branches?.map((branch) => (
+                          <SelectItem key={branch.id} value={branch.id}>
+                            {branch.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="flex-1">
+                    <Label htmlFor="filter-records-package-type" className="flex items-center text-sm font-medium text-gray-700 mb-2">
+                      <Users className="w-4 h-4 mr-2 text-accent" style={{ color: '#BEA877' }} />
+                      Package Type
+                    </Label>
+                    <Select
+                      value={recordsPackageTypeFilter}
+                      onValueChange={(value) => setRecordsPackageTypeFilter(value)}
+                    >
+                      <SelectTrigger className="border-2 focus:border-accent rounded-xl" style={{ borderColor: '#BEA877' }}>
+                        <SelectValue placeholder="Select Package Type" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="All">All Package Types</SelectItem>
+                        {PACKAGE_TYPES.map((packageType) => (
+                          <SelectItem key={packageType} value={packageType}>
+                            {packageType}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
                 </div>
+                <p className="text-sm text-muted-foreground mb-4">
+                  Showing {filteredSessionRecords.length} session{filteredSessionRecords.length === 1 ? '' : 's'}
+                </p>
                 {recordsLoading ? (
                   <div className="text-center py-4">
                     <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-accent mx-auto"></div>
@@ -449,14 +615,14 @@ export function CoachesManager() {
                   <p className="text-destructive responsive-small">Error loading records: {(recordsError as Error).message}</p>
                 ) : filteredSessionRecords.length === 0 ? (
                   <p className="text-muted-foreground responsive-small">
-                    {filterSessionPackageType !== "All" ? 
-                      `No ${filterSessionPackageType} sessions found for this coach.` : 
+                    {recordsBranchFilter !== "All" || recordsPackageTypeFilter !== "All" ? 
+                      "No sessions found with the selected filters." : 
                       "No session records found for this coach."}
                   </p>
                 ) : (
                   <div className="overflow-x-auto">
-                    <table className="w-full border-2 border-primary rounded-xl responsive-table">
-                      <thead className="bg-primary text-primary-foreground">
+                    <table className="w-full border-2 border-[#181818] rounded-xl responsive-table">
+                      <thead className="bg-[#181818] text-primary-foreground">
                         <tr>
                           <th className="py-3 px-4 text-left font-semibold"><Calendar className="w-4 h-4 inline mr-2" />Date</th>
                           <th className="py-3 px-4 text-left font-semibold"><Clock className="w-4 h-4 inline mr-2" />Time</th>
@@ -466,7 +632,7 @@ export function CoachesManager() {
                         </tr>
                       </thead>
                       <tbody>
-                        {filteredSessionRecords.map((record, index) => (
+                        {paginatedSessionRecords.map((record, index) => (
                           <tr
                             key={record.id}
                             className={`transition-all duration-300 ${index % 2 === 0 ? "bg-background" : "bg-accent/5"}`}
@@ -487,15 +653,58 @@ export function CoachesManager() {
                         ))}
                       </tbody>
                     </table>
+                    {recordsTotalPages > 1 && (
+                      <div className="flex justify-center items-center mt-6 space-x-2">
+                        <Button
+                          variant="outline"
+                          onClick={() => handleRecordsPageChange(recordsCurrentPage - 1)}
+                          disabled={recordsCurrentPage === 1}
+                          className="border-2 border-accent text-accent hover:bg-accent hover:text-white"
+                          style={{ borderColor: '#BEA877', color: '#BEA877' }}
+                        >
+                          <ChevronLeft className="w-4 h-4 mr-2" />
+                          Previous
+                        </Button>
+                        {Array.from({ length: recordsTotalPages }, (_, index) => index + 1).map((page) => (
+                          <Button
+                            key={page}
+                            variant={recordsCurrentPage === page ? "default" : "outline"}
+                            onClick={() => handleRecordsPageChange(page)}
+                            className={`border-2 ${
+                              recordsCurrentPage === page
+                                ? 'bg-accent text-white'
+                                : 'border-accent text-accent hover:bg-accent hover:text-white'
+                            }`}
+                            style={{ 
+                              backgroundColor: recordsCurrentPage === page ? '#BEA877' : 'transparent',
+                              borderColor: '#BEA877',
+                              color: recordsCurrentPage === page ? 'white' : '#BEA877'
+                            }}
+                          >
+                            {page}
+                          </Button>
+                        ))}
+                        <Button
+                          variant="outline"
+                          onClick={() => handleRecordsPageChange(recordsCurrentPage + 1)}
+                          disabled={recordsCurrentPage === recordsTotalPages}
+                          className="border-2 border-accent text-accent hover:bg-accent hover:text-white"
+                          style={{ borderColor: '#BEA877', color: '#BEA877' }}
+                        >
+                          Next
+                          <ChevronRight className="w-4 h-4 ml-2" />
+                        </Button>
+                      </div>
+                    )}
                   </div>
                 )}
               </div>
-
               <div className="flex justify-end">
                 <Button
                   variant="outline"
                   onClick={() => setIsRecordsDialogOpen(false)}
                   className="border-accent/30 text-accent hover:bg-accent hover:text-accent-foreground transition-all duration-300 hover:scale-105 responsive-button"
+                  style={{ borderColor: '#BEA877', color: '#BEA877' }}
                 >
                   Close
                 </Button>
