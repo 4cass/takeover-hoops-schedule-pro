@@ -81,6 +81,7 @@ export function SessionsManager() {
   const [editingSession, setEditingSession] = useState<TrainingSession | null>(null);
   const [selectedSession, setSelectedSession] = useState<TrainingSession | null>(null);
   const [selectedStudents, setSelectedStudents] = useState<string[]>([]);
+  const [selectedCoaches, setSelectedCoaches] = useState<string[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [filterPackageType, setFilterPackageType] = useState<"All" | "Camp Training" | "Personal Training">("All");
   const [sortOrder, setSortOrder] = useState<"Newest to Oldest" | "Oldest to Newest">("Newest to Oldest");
@@ -186,23 +187,37 @@ export function SessionsManager() {
         throw new Error('Package type is required');
       }
 
-      const { data: conflicts } = await supabase
-        .from('training_sessions')
-        .select('id')
-        .eq('coach_id', session.coach_id)
-        .eq('date', session.date)
-        .lte('start_time', session.end_time)
-        .gte('end_time', session.start_time);
+      // Use the first selected coach for single coach sessions, or the selected coach for personal training
+      const coachId = formData.package_type === "Personal Training" ? formData.coach_id : selectedCoaches[0];
+      
+      if (!coachId) {
+        throw new Error('At least one coach must be selected');
+      }
 
-      if (conflicts && conflicts.length > 0) {
-        throw new Error('This coach is already scheduled for a session on this date/time.');
+      // For camp training, check conflicts for all selected coaches
+      const coachesToCheck = formData.package_type === "Camp Training" ? selectedCoaches : [formData.coach_id];
+      
+      for (const checkCoachId of coachesToCheck) {
+        const { data: conflicts } = await supabase
+          .from('training_sessions')
+          .select('id')
+          .eq('coach_id', checkCoachId)
+          .eq('date', session.date)
+          .lte('start_time', session.end_time)
+          .gte('end_time', session.start_time);
+
+        if (conflicts && conflicts.length > 0) {
+          const coachName = coaches?.find(c => c.id === checkCoachId)?.name;
+          throw new Error(`Coach ${coachName} is already scheduled for a session on this date/time.`);
+        }
       }
 
       console.log('Creating session with data:', session);
       
+      // Create session with primary coach
       const { data, error } = await supabase
         .from('training_sessions')
-        .insert([{ ...session, package_type: session.package_type || null }])
+        .insert([{ ...session, coach_id: coachId, package_type: session.package_type || null }])
         .select()
         .single();
       
@@ -258,11 +273,18 @@ export function SessionsManager() {
         throw new Error('Package type is required');
       }
 
+      // Use the first selected coach for camp training, or the selected coach for personal training
+      const coachId = formData.package_type === "Personal Training" ? formData.coach_id : selectedCoaches[0];
+      
+      if (!coachId) {
+        throw new Error('At least one coach must be selected');
+      }
+
       console.log('Updating session with data:', session);
 
       const { data, error } = await supabase
         .from('training_sessions')
-        .update({ ...session, package_type: session.package_type || null })
+        .update({ ...session, coach_id: coachId, package_type: session.package_type || null })
         .eq('id', id)
         .select()
         .single();
@@ -349,6 +371,7 @@ export function SessionsManager() {
       package_type: "",
     });
     setSelectedStudents([]);
+    setSelectedCoaches([]);
     setEditingSession(null);
     setIsDialogOpen(false);
     setIsParticipantsDialogOpen(false);
@@ -367,9 +390,17 @@ export function SessionsManager() {
       return;
     }
 
-    if (!formData.coach_id) {
-      toast.error('Please select a coach');
-      return;
+    // Validate coach selection based on package type
+    if (formData.package_type === "Personal Training") {
+      if (!formData.coach_id) {
+        toast.error('Please select a coach');
+        return;
+      }
+    } else if (formData.package_type === "Camp Training") {
+      if (selectedCoaches.length === 0) {
+        toast.error('Please select at least one coach for camp training');
+        return;
+      }
     }
 
     if (!formData.date) {
@@ -384,8 +415,11 @@ export function SessionsManager() {
 
     console.log('Submitting form with data:', formData);
 
+    // Check conflicts based on package type
+    const coachesToCheck = formData.package_type === "Personal Training" ? [formData.coach_id] : selectedCoaches;
+    
     const hasConflict = sessions?.some(session =>
-      session.coach_id === formData.coach_id &&
+      coachesToCheck.includes(session.coach_id) &&
       session.date === formData.date &&
       (
         (formData.start_time < session.end_time) &&
@@ -395,7 +429,7 @@ export function SessionsManager() {
     );
 
     if (hasConflict) {
-      toast.error('This coach is already scheduled for a session on this date/time.');
+      toast.error('One or more selected coaches are already scheduled for a session on this date/time.');
       return;
     }
 
@@ -420,6 +454,12 @@ export function SessionsManager() {
       package_type: session.package_type || "",
     });
     setSelectedStudents(session.session_participants?.map(p => p.student_id) || []);
+    // For editing, set the current coach as selected for both package types
+    if (session.package_type === "Personal Training") {
+      setSelectedCoaches([]);
+    } else {
+      setSelectedCoaches([session.coach_id]);
+    }
     setIsDialogOpen(true);
   };
 
@@ -433,6 +473,24 @@ export function SessionsManager() {
     }));
     setSelectedStudents(session.session_participants?.map(p => p.student_id) || []);
     setIsParticipantsDialogOpen(true);
+  };
+
+  const handleCoachToggle = (coachId: string) => {
+    if (formData.package_type === "Personal Training") {
+      // For personal training, only allow one coach
+      setFormData(prev => ({ ...prev, coach_id: coachId }));
+      setSelectedCoaches([]);
+    } else if (formData.package_type === "Camp Training") {
+      // For camp training, allow multiple coaches
+      setSelectedCoaches(prev => {
+        if (prev.includes(coachId)) {
+          return prev.filter(id => id !== coachId);
+        } else {
+          return [...prev, coachId];
+        }
+      });
+      setFormData(prev => ({ ...prev, coach_id: "" }));
+    }
   };
 
   const getStatusBadgeColor = (status: string) => {
@@ -518,6 +576,7 @@ export function SessionsManager() {
                             onValueChange={(value) => {
                               setFormData(prev => ({ ...prev, branch_id: value, package_type: "", coach_id: "" }));
                               setSelectedStudents([]);
+                              setSelectedCoaches([]);
                             }}
                           >
                             <SelectTrigger className="border-2 focus:border-orange-500 rounded-lg">
@@ -542,6 +601,7 @@ export function SessionsManager() {
                             onValueChange={(value: "Camp Training" | "Personal Training") => {
                               setFormData(prev => ({ ...prev, package_type: value, coach_id: "" }));
                               setSelectedStudents([]);
+                              setSelectedCoaches([]);
                             }}
                             disabled={!formData.branch_id}
                           >
@@ -559,31 +619,69 @@ export function SessionsManager() {
                       <div className="space-y-2">
                         <Label htmlFor="coach" className="flex items-center text-sm font-medium text-gray-700">
                           <User className="w-4 h-4 mr-2" style={{ color: '#fc7416' }} />
-                          Assigned Coach
+                          {formData.package_type === "Camp Training" ? "Select Coaches (Multiple)" : "Assigned Coach"}
                         </Label>
-                        <Select 
-                          value={formData.coach_id} 
-                          onValueChange={(value) => {
-                            setFormData(prev => ({ ...prev, coach_id: value }));
-                            setSelectedStudents([]);
-                          }}
-                          disabled={!formData.package_type || coachesLoading}
-                        >
-                          <SelectTrigger className="border-2 focus:border-orange-500 rounded-lg">
-                            <SelectValue placeholder={
-                              coachesLoading ? "Loading coaches..." : 
-                              coachesError ? "Error loading coaches" : 
-                              formData.package_type ? "Select coach" : "Select package type first"
-                            } />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {coaches?.map(coach => (
-                              <SelectItem key={coach.id} value={coach.id}>
-                                {coach.name} 
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
+                        
+                        {formData.package_type === "Personal Training" ? (
+                          <Select 
+                            value={formData.coach_id} 
+                            onValueChange={(value) => {
+                              setFormData(prev => ({ ...prev, coach_id: value }));
+                              setSelectedCoaches([]);
+                            }}
+                            disabled={!formData.package_type || coachesLoading}
+                          >
+                            <SelectTrigger className="border-2 focus:border-orange-500 rounded-lg">
+                              <SelectValue placeholder={
+                                coachesLoading ? "Loading coaches..." : 
+                                coachesError ? "Error loading coaches" : 
+                                formData.package_type ? "Select coach" : "Select package type first"
+                              } />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {coaches?.map(coach => (
+                                <SelectItem key={coach.id} value={coach.id}>
+                                  {coach.name} 
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        ) : formData.package_type === "Camp Training" ? (
+                          <div className="border-2 rounded-lg p-4 max-h-48 overflow-y-auto" style={{ backgroundColor: '#faf0e8', borderColor: 'black' }}>
+                            {coachesLoading ? (
+                              <p className="text-sm text-gray-600">Loading coaches...</p>
+                            ) : coachesError ? (
+                              <p className="text-sm text-red-600">Error loading coaches: {(coachesError as Error).message}</p>
+                            ) : coaches?.length === 0 ? (
+                              <p className="text-sm text-gray-600">No coaches available.</p>
+                            ) : (
+                              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                {coaches?.map(coach => (
+                                  <div key={coach.id} className="flex items-center space-x-3 p-2 rounded-md hover:bg-white transition-colors">
+                                    <input
+                                      type="checkbox"
+                                      id={`coach-${coach.id}`}
+                                      checked={selectedCoaches.includes(coach.id)}
+                                      onChange={() => handleCoachToggle(coach.id)}
+                                      className="w-4 h-4 rounded border-2 border-orange-400 text-orange-500 focus:ring-orange-500"
+                                    />
+                                    <Label htmlFor={`coach-${coach.id}`} className="flex-1 text-sm cursor-pointer">
+                                      <span className="font-medium">{coach.name}</span>
+                                    </Label>
+                                  </div>
+                                ))}
+                              </div>
+                            )}
+                            <p className="text-xs text-gray-600 mt-2">
+                              Selected: {selectedCoaches.length} coach{selectedCoaches.length === 1 ? '' : 'es'}
+                            </p>
+                          </div>
+                        ) : (
+                          <div className="border-2 rounded-lg p-4 text-center text-gray-500">
+                            Please select a package type first
+                          </div>
+                        )}
+                        
                         {coachesError && (
                           <p className="text-sm text-red-600 mt-1">Error loading coaches: {(coachesError as Error).message}</p>
                         )}
@@ -757,7 +855,15 @@ export function SessionsManager() {
                           </Button>
                           <Button 
                             type="submit" 
-                            disabled={createMutation.isPending || updateMutation.isPending || !formData.branch_id || !formData.package_type || !formData.coach_id || !formData.date}
+                            disabled={
+                              createMutation.isPending || 
+                              updateMutation.isPending || 
+                              !formData.branch_id || 
+                              !formData.package_type || 
+                              (formData.package_type === "Personal Training" && !formData.coach_id) ||
+                              (formData.package_type === "Camp Training" && selectedCoaches.length === 0) ||
+                              !formData.date
+                            }
                             className="flex-1 sm:flex-none font-semibold"
                             style={{ backgroundColor: '#fc7416', color: 'white' }}
                           >
