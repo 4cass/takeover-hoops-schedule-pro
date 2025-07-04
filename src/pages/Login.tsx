@@ -147,6 +147,18 @@ export default function Login() {
                 : "Login"}
             </Button>
 
+            {!isSignUp && (
+              <div className="text-center mt-3">
+                <button
+                  type="button"
+                  className="text-secondary hover:underline responsive-small"
+                  onClick={() => navigate("/forgot-password")}
+                >
+                  Forgot your password?
+                </button>
+              </div>
+            )}
+
             <div className="text-center mt-3">
               <button
                 type="button"
