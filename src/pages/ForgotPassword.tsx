@@ -1,6 +1,6 @@
 
-import { useState } from "react";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -11,15 +11,54 @@ import { ArrowLeft, Mail, Lock } from "lucide-react";
 
 export default function ForgotPassword() {
   const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
   const [email, setEmail] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [loading, setLoading] = useState(false);
+  const [isResettingPassword, setIsResettingPassword] = useState(false);
   
-  // Check if this is a password reset (has access_token in URL)
-  const accessToken = searchParams.get('access_token');
-  const isResettingPassword = !!accessToken;
+  useEffect(() => {
+    // Check for hash parameters (Supabase uses hash fragments)
+    const hashParams = new URLSearchParams(window.location.hash.substring(1));
+    const accessToken = hashParams.get('access_token');
+    const refreshToken = hashParams.get('refresh_token');
+    const error = hashParams.get('error');
+    const errorDescription = hashParams.get('error_description');
+
+    console.log('Hash params:', { accessToken, refreshToken, error, errorDescription });
+
+    if (error) {
+      if (error === 'access_denied' && errorDescription?.includes('expired')) {
+        toast.error("Password reset link has expired. Please request a new one.");
+      } else {
+        toast.error(`Error: ${errorDescription || error}`);
+      }
+      // Clean up the URL
+      window.history.replaceState({}, document.title, window.location.pathname);
+      return;
+    }
+
+    if (accessToken && refreshToken) {
+      // Set the session with the tokens from the email link
+      supabase.auth.setSession({
+        access_token: accessToken,
+        refresh_token: refreshToken
+      }).then(({ data, error }) => {
+        if (error) {
+          console.error('Error setting session:', error);
+          toast.error("Invalid or expired reset link. Please request a new one.");
+          // Clean up the URL
+          window.history.replaceState({}, document.title, window.location.pathname);
+        } else if (data.session) {
+          console.log('Session set successfully');
+          setIsResettingPassword(true);
+          toast.success("Ready to reset your password!");
+          // Clean up the URL
+          window.history.replaceState({}, document.title, window.location.pathname);
+        }
+      });
+    }
+  }, []);
 
   const handleForgotPassword = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -67,7 +106,9 @@ export default function ForgotPassword() {
         toast.error("Error updating password: " + error.message);
       } else {
         toast.success("Password updated successfully!");
-        navigate("/dashboard");
+        // Sign out to ensure clean state, then redirect to login
+        await supabase.auth.signOut();
+        navigate("/login");
       }
     } catch (error: any) {
       toast.error("An unexpected error occurred: " + error.message);
