@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -86,17 +87,20 @@ export default function Login() {
       <div className="relative z-10 w-full max-w-sm sm:max-w-md p-4">
         <Card className="shadow-xl border-2 border-border bg-card/80 backdrop-blur-md">
           <CardHeader className="text-center">
-            {/* Logo Placeholder */}
-          <div className="flex justify-center">
-            <img
-              src="/logo.jpg"
-              alt="Coach Logo"
-              className="w-16 h-16 object-contain rounded-full"
-            />
-          </div>
-            <CardTitle className="text-primary">
-              {isSignUp ? "Sign Up" : "Login"}
+            {/* Logo */}
+            <div className="flex justify-center mb-4">
+              <img
+                src="/lovable-uploads/599e456c-7d01-4d0c-a68c-b753300de7de.png"
+                alt="Coach Logo"
+                className="w-24 h-24 object-contain"
+              />
+            </div>
+            <CardTitle className="text-primary text-2xl font-bold">
+              {isSignUp ? "Create Account" : "Welcome Back"}
             </CardTitle>
+            <p className="text-muted-foreground mt-2">
+              {isSignUp ? "Join our coaching platform" : "Sign in to your account"}
+            </p>
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-4">
@@ -109,6 +113,7 @@ export default function Login() {
                       value={name}
                       required
                       onChange={(e) => setName(e.target.value)}
+                      className="mt-1"
                     />
                   </div>
                   <div>
@@ -117,6 +122,7 @@ export default function Login() {
                       type="text"
                       value={phone}
                       onChange={(e) => setPhone(e.target.value)}
+                      className="mt-1"
                     />
                   </div>
                 </>
@@ -128,6 +134,7 @@ export default function Login() {
                   value={email}
                   required
                   onChange={(e) => setEmail(e.target.value)}
+                  className="mt-1"
                 />
               </div>
               <div>
@@ -137,24 +144,25 @@ export default function Login() {
                   value={password}
                   required
                   onChange={(e) => setPassword(e.target.value)}
+                  className="mt-1"
                 />
               </div>
               <Button
                 type="submit"
-                className="w-full bg-accent hover:bg-secondary text-accent-foreground"
+                className="w-full bg-accent hover:bg-secondary text-accent-foreground mt-6"
                 disabled={loading}
               >
                 {loading
                   ? isSignUp
-                    ? "Signing up..."
-                    : "Logging in..."
+                    ? "Creating Account..."
+                    : "Signing In..."
                   : isSignUp
-                  ? "Sign Up"
-                  : "Login"}
+                  ? "Create Account"
+                  : "Sign In"}
               </Button>
 
               {!isSignUp && (
-                <div className="text-center text-sm mt-2">
+                <div className="text-center text-sm mt-4">
                   <button
                     type="button"
                     className="text-secondary hover:underline"
@@ -165,14 +173,14 @@ export default function Login() {
                 </div>
               )}
 
-              <div className="text-center text-sm mt-2">
+              <div className="text-center text-sm mt-4 pt-4 border-t border-border">
                 <button
                   type="button"
                   className="text-secondary hover:underline"
                   onClick={() => setIsSignUp(!isSignUp)}
                 >
                   {isSignUp
-                    ? "Already have an account? Log in"
+                    ? "Already have an account? Sign in"
                     : "Don't have an account? Sign up"}
                 </button>
               </div>
