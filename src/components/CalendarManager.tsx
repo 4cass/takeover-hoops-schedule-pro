@@ -162,7 +162,7 @@ export function CalendarManager() {
         
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-4xl font-bold text-black mb-2 tracking-tight">
+          <h1 className="text-4xl font-bold text-[#181A18] mb-2 tracking-tight">
             Calendar
           </h1>
           <p className="text-lg text-gray-700">
@@ -171,10 +171,10 @@ export function CalendarManager() {
         </div>
 
         {/* Main Calendar Card */}
-        <Card className="border-2 border-black bg-white/90 backdrop-blur-sm shadow-xl">
-          <CardHeader className="border-b border-black bg-black">
-            <CardTitle className="text-2xl font-bold text-white flex items-center">
-              <CalendarIcon className="h-6 w-6 mr-3 text-[#fc7416]" />
+        <Card className="border-2 border-[#181A18] bg-white/90 backdrop-blur-sm shadow-xl">
+          <CardHeader className="border-b border-[#181A18] bg-[#181A18]">
+            <CardTitle className="text-2xl font-bold text-[#efeff1] flex items-center">
+              <CalendarIcon className="h-6 w-6 mr-3 text-accent" />
               Monthly Overview
             </CardTitle>
             <CardDescription className="text-gray-400 text-base">
@@ -186,14 +186,14 @@ export function CalendarManager() {
             {/* Filters */}
             <div className="mb-8">
               <div className="flex items-center mb-4">
-                <Filter className="h-5 w-5 text-[#fc7416] mr-2" />
-                <h3 className="text-lg font-semibold text-black">Filter Sessions</h3>
+                <Filter className="h-5 w-5 text-accent mr-2" />
+                <h3 className="text-lg font-semibold text-foreground">Filter Sessions</h3>
               </div>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div className="space-y-2">
                   <label className="text-sm font-medium text-gray-700">Coach</label>
                   <Select value={selectedCoach} onValueChange={setSelectedCoach}>
-                    <SelectTrigger className="border-[#fc7416]/40 focus:border-[#fc7416] focus:ring-[#fc7416]/20">
+                    <SelectTrigger className="border-accent focus:border-[#fc7416] focus:ring-[#fc7416]/20">
                       <SelectValue placeholder="Select coach" />
                     </SelectTrigger>
                     <SelectContent>
@@ -207,7 +207,7 @@ export function CalendarManager() {
                 <div className="space-y-2">
                   <label className="text-sm font-medium text-gray-700">Branch</label>
                   <Select value={selectedBranch} onValueChange={setSelectedBranch}>
-                    <SelectTrigger className="border-[#fc7416]/40 focus:border-[#fc7416] focus:ring-[#fc7416]/20">
+                    <SelectTrigger className="border-accent focus:border-[#fc7416] focus:ring-[#fc7416]/20">
                       <SelectValue placeholder="Select branch" />
                     </SelectTrigger>
                     <SelectContent>
@@ -224,7 +224,7 @@ export function CalendarManager() {
                     value={filterPackageType}
                     onValueChange={(value: "All" | "Camp Training" | "Personal Training") => setFilterPackageType(value)}
                   >
-                    <SelectTrigger className="border-[#fc7416]/40 focus:border-[#fc7416] focus:ring-[#fc7416]/20">
+                    <SelectTrigger className="border-accent focus:border-[#fc7416] focus:ring-[#fc7416]/20">
                       <SelectValue placeholder="Select package type" />
                     </SelectTrigger>
                     <SelectContent>
@@ -264,7 +264,7 @@ export function CalendarManager() {
             </div>
 
             {/* Calendar Grid */}
-            <div className="border-2 border-black rounded-2xl p-6 bg-gradient-to-br from-[#faf0e8]/30 to-white shadow-lg">
+            <div className="border-2 border-foreground rounded-2xl p-6 bg-gradient-to-br from-[#faf0e8]/30 to-white shadow-lg">
               
               {/* Calendar Navigation */}
               <div className="flex justify-between items-center mb-6">
@@ -272,7 +272,7 @@ export function CalendarManager() {
                   onClick={handlePrevMonth}
                   variant="outline"
                   size="sm"
-                  className="border-[#fc7416]/40 text-[#fc7416] hover:bg-[#fc7416] hover:text-white transition-all duration-300"
+                  className="border-[#8e7a3f] text-[#8e7a3f] hover:bg-[#8e7a3f] hover:text-white transition-all duration-300"
                 >
                   <ChevronLeft className="h-4 w-4" />
                 </Button>
@@ -283,7 +283,7 @@ export function CalendarManager() {
                   onClick={handleNextMonth}
                   variant="outline"
                   size="sm"
-                  className="border-[#fc7416]/30 text-[#fc7416] hover:bg-[#fc7416] hover:text-white transition-all duration-300"
+                  className="border-[#8e7a3f] text-[#8e7a3f] hover:bg-[#8e7a3f] hover:text-white transition-all duration-300"
                 >
                   <ChevronRight className="h-4 w-4" />
                 </Button>
@@ -292,7 +292,7 @@ export function CalendarManager() {
               {/* Days of Week Header */}
               <div className="grid grid-cols-7 gap-2 mb-4">
                 {['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'].map(day => (
-                  <div key={day} className="text-center py-3 bg-black text-white font-semibold rounded-lg text-sm">
+                  <div key={day} className="text-center py-3 bg-foreground text-white font-semibold rounded-lg text-sm">
                     {day.slice(0, 3)}
                   </div>
                 ))}
@@ -315,11 +315,11 @@ export function CalendarManager() {
                       className={`
                         relative p-3 h-20 rounded-xl text-left transition-all duration-300 hover:scale-105 hover:shadow-lg
                         ${isSelected 
-                          ? 'bg-gradient-to-br from-[#fc7416] to-[#fe822d] text-white shadow-lg scale-105' 
+                          ? 'bg-accent text-white shadow-lg scale-105' 
                           : isToday
-                            ? 'bg-gradient-to-br from-[#fc7416]/20 to-[#fe822d]/20 border-2 border-[#fc7416] text-black'
+                            ? 'bg-accent border-2 border-[#8e7a3f] text-white'
                             : daySessions.length > 0
-                              ? 'bg-gradient-to-br from-[#faf0e8] to-white border border-[#fc7416]/30 text-black hover:border-[#fc7416]'
+                              ? 'bg-gradient-to-br from-[#faf0e8] to-white border border-accent text-black hover:border-[#8e7a3f]'
                               : 'bg-white border border-gray-200 text-gray-700 hover:bg-[#faf0e8]/50'
                         }
                       `}
@@ -365,10 +365,10 @@ export function CalendarManager() {
 
         {/* Sessions Modal */}
         <Dialog open={!!selectedDate} onOpenChange={() => setSelectedDate(null)}>
-          <DialogContent className="max-w-5xl border-2 border-[#fc7416]/20 bg-gradient-to-br from-[#faf0e8]/30 to-white shadow-lg">
+          <DialogContent className="max-w-6xl border-2 border-foreground bg-gradient-to-br from-[#faf0e8]/30 to-white shadow-lg">
             <DialogHeader>
-              <DialogTitle className="text-2xl font-bold text-black flex items-center">
-                <Eye className="h-5 w-5 mr-3 text-[#fc7416]" />
+              <DialogTitle className="text-2xl font-bold text-foreground flex items-center">
+                <Eye className="h-5 w-5 mr-3 text-accent" />
                 Sessions on {selectedDate ? format(selectedDate, 'EEEE, MMMM dd, yyyy') : ''}
               </DialogTitle>
               <DialogDescription className="text-gray-600 text-base">
@@ -383,7 +383,7 @@ export function CalendarManager() {
                       <CardContent className="p-6">
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-7 gap-4 items-center">
                           <div className="flex items-center space-x-2">
-                            <Clock className="h-4 w-4 text-[#fc7416]" />
+                            <Clock className="h-4 w-4 text-accent" />
                             <div>
                               <p className="text-sm font-medium text-gray-600">Time</p>
                               <p className="font-semibold text-black">
@@ -392,28 +392,28 @@ export function CalendarManager() {
                             </div>
                           </div>
                           <div className="flex items-center space-x-2">
-                            <MapPin className="h-4 w-4 text-[#fc7416]" />
+                            <MapPin className="h-4 w-4 text-accent" />
                             <div>
                               <p className="text-sm font-medium text-gray-600">Branch</p>
                               <p className="font-semibold text-black">{session.branches.name}</p>
                             </div>
                           </div>
                           <div className="flex items-center space-x-2">
-                            <User className="h-4 w-4 text-[#fc7416]" />
+                            <User className="h-4 w-4 text-accent" />
                             <div>
-                              <p className="text-sm font-medium text-gray-600">Coach</p>
+                              <p className="text-sm font-medium text-foreground">Coach</p>
                               <p className="font-semibold text-black">{session.coaches.name}</p>
                             </div>
                           </div>
                           <div className="flex items-center space-x-2">
-                            <Users className="h-4 w-4 text-[#fc7416]" />
+                            <Users className="h-4 w-4 text-accent" />
                             <div>
                               <p className="text-sm font-medium text-gray-600">Players</p>
                               <p className="font-semibold text-black">{session.session_participants?.length || 0}</p>
                             </div>
                           </div>
                           <div className="flex items-center space-x-2">
-                            <Users className="h-4 w-4 text-[#fc7416]" />
+                            <Users className="h-4 w-4 text-accent" />
                             <div>
                               <p className="text-sm font-medium text-gray-600">Package</p>
                               <p className="font-semibold text-black">{session.package_type || 'N/A'}</p>
@@ -427,7 +427,7 @@ export function CalendarManager() {
                           <div className="flex justify-end">
                             <Button
                               onClick={() => handleAttendanceRedirect(session.id)}
-                              className="bg-gradient-to-r from-[#fc7416] to-[#fe822d] hover:from-[#fe822d] hover:to-[#fc7416] text-white font-medium transition-all duration-300 hover:scale-105 hover:shadow-lg"
+                              className="bg-accent hover:from-[#fe822d] hover:to-[#fc7416] text-white font-medium transition-all duration-300 hover:scale-105 hover:shadow-lg"
                             >
                               Manage Attendance
                             </Button>
@@ -448,15 +448,7 @@ export function CalendarManager() {
                   </p>
                 </div>
               )}
-              <div className="flex justify-end">
-                <Button
-                  variant="outline"
-                  onClick={() => setSelectedDate(null)}
-                  className="border-[#fc7416]/30 text-[#fc7416] hover:bg-[#fc7416] hover:text-white transition-all duration-300 hover:scale-105"
-                >
-                  Close
-                </Button>
-              </div>
+              
             </div>
           </DialogContent>
         </Dialog>

@@ -126,7 +126,7 @@ export function AdminDashboardStats() {
       icon: Users,
       color: "text-accent",
       bgGradient: "from-accent/10 to-accent/5",
-      borderColor: "border-accent/20"
+      borderColor: "border-foreground"
     },
     {
       title: "Active Coaches",
@@ -134,7 +134,7 @@ export function AdminDashboardStats() {
       icon: UserCheck,
       color: "text-accent",
       bgGradient: "from-accent/10 to-accent/5",
-      borderColor: "border-accent/20"
+      borderColor: "border-foreground"
     },
     {
       title: "Training Branches",
@@ -142,7 +142,7 @@ export function AdminDashboardStats() {
       icon: MapPin,
       color: "text-accent",
       bgGradient: "from-accent/10 to-accent/5",
-      borderColor: "border-accent/20"
+      borderColor: "border-foreground"
     },
     {
       title: "Scheduled Sessions",
@@ -150,7 +150,7 @@ export function AdminDashboardStats() {
       icon: Calendar,
       color: "text-accent",
       bgGradient: "from-accent/10 to-accent/5",
-      borderColor: "border-accent/20"
+      borderColor: "border-foreground"
     }
   ];
 
@@ -180,7 +180,7 @@ export function AdminDashboardStats() {
         
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-4xl font-bold text-foreground mb-2 tracking-tight">
+          <h1 className="text-4xl font-bold text-[#181A18] mb-2 tracking-tight">
             Admin Dashboard
           </h1>
           <p className="text-lg text-muted-foreground">
@@ -224,8 +224,8 @@ export function AdminDashboardStats() {
         </div>
 
         {/* Quick Actions */}
-        <Card className="border-2 border-foreground bg-white shadow-xl">
-          <CardHeader className="border-b border-foreground bg-foreground">
+        <Card className="border-2 border-[#181A18] bg-white shadow-xl">
+          <CardHeader className="border-b border-foreground bg-[#181A18]">
             <CardTitle className="text-2xl font-bold text-primary-foreground flex items-center">
               <Calendar className="h-6 w-6 mr-3 text-accent" />
               Quick Actions
@@ -265,8 +265,8 @@ export function AdminDashboardStats() {
         <div className="grid gap-8 lg:grid-cols-2">
           
           {/* Upcoming Sessions */}
-          <Card className="border-2 border-foreground bg-white shadow-xl">
-            <CardHeader className="border-b border-foreground bg-foreground">
+          <Card className="border-2 border-[#181A18] bg-white shadow-xl">
+            <CardHeader className="border-b border-[#181A18] bg-[#181A18]">
               <div className="flex items-center justify-between">
                 <div>
                   <CardTitle className="text-xl font-bold text-primary-foreground flex items-center">
@@ -331,8 +331,8 @@ export function AdminDashboardStats() {
           </Card>
 
           {/* Recent Activity */}
-          <Card className="border-2 border-foreground bg-white shadow-xl">
-            <CardHeader className="border-b border-foreground bg-foreground">
+          <Card className="border-2 border-[#181A18] bg-white shadow-xl">
+            <CardHeader className="border-b border-[#181A18] bg-[#181A18]">
               <CardTitle className="text-xl font-bold text-primary-foreground flex items-center">
                 <Activity className="h-5 w-5 mr-3 text-accent" />
                 Recent Activity
