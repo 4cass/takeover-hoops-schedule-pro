@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -23,7 +22,6 @@ export default function Login() {
 
     try {
       if (isSignUp) {
-        // Sign Up Flow
         const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
           email,
           password,
@@ -35,7 +33,6 @@ export default function Login() {
           return;
         }
 
-        // Insert into coaches table
         const userId = signUpData.user?.id;
         if (userId) {
           const { error: insertError } = await supabase.from("coaches").insert({
@@ -43,7 +40,7 @@ export default function Login() {
             name,
             email,
             phone,
-            role: 'coach', // Default role
+            role: 'coach',
             auth_id: userId,
           });
 
@@ -57,17 +54,12 @@ export default function Login() {
           }
         }
       } else {
-        // Login Flow
-        const { data, error } = await supabase.auth.signInWithPassword({ 
-          email, 
-          password 
-        });
+        const { data, error } = await supabase.auth.signInWithPassword({ email, password });
 
         if (error) {
           toast.error("Login failed: " + error.message);
         } else if (data.user) {
           toast.success("Logged in successfully!");
-          // Navigate to dashboard instead of index
           navigate("/dashboard");
         }
       }
@@ -79,100 +71,115 @@ export default function Login() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background responsive-padding">
-      <Card className="w-full max-w-sm sm:max-w-md shadow-lg border-2 border-border bg-card">
-        <CardHeader className="text-center">
-          <CardTitle className="responsive-subheading text-primary">
-            {isSignUp ? "Coach Sign Up" : "Coach Login"}
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="responsive-padding">
-          <form onSubmit={handleSubmit} className="responsive-spacing">
-            {isSignUp && (
-              <>
-                <div>
-                  <Label className="block responsive-small font-medium text-foreground mb-1">Name</Label>
-                  <Input
-                    type="text"
-                    value={name}
-                    required
-                    onChange={(e) => setName(e.target.value)}
-                    className="w-full"
-                  />
+    <div className="relative min-h-screen flex items-center justify-center bg-background">
+      {/* 🔹 Blurred Background Image */}
+      <div
+        className="absolute inset-0 bg-cover bg-center blur-sm brightness-75"
+        style={{ backgroundColor: "#000" }}
+        aria-hidden="true"
+      />
+
+      {/* 🔹 Overlay to darken a bit (optional) */}
+      <div className="absolute inset-0 bg-black/40 z-0" />
+
+      {/* 🔹 Login Card */}
+      <div className="relative z-10 w-full max-w-sm sm:max-w-md p-4">
+        <Card className="shadow-xl border-2 border-border bg-card/80 backdrop-blur-md">
+          <CardHeader className="text-center">
+            {/* Logo Placeholder */}
+          <div className="flex justify-center">
+            <img
+              src="/logo.jpg"
+              alt="Coach Logo"
+              className="w-16 h-16 object-contain rounded-full"
+            />
+          </div>
+            <CardTitle className="text-primary">
+              {isSignUp ? "Sign Up" : "Login"}
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <form onSubmit={handleSubmit} className="space-y-4">
+              {isSignUp && (
+                <>
+                  <div>
+                    <Label>Name</Label>
+                    <Input
+                      type="text"
+                      value={name}
+                      required
+                      onChange={(e) => setName(e.target.value)}
+                    />
+                  </div>
+                  <div>
+                    <Label>Phone</Label>
+                    <Input
+                      type="text"
+                      value={phone}
+                      onChange={(e) => setPhone(e.target.value)}
+                    />
+                  </div>
+                </>
+              )}
+              <div>
+                <Label>Email</Label>
+                <Input
+                  type="email"
+                  value={email}
+                  required
+                  onChange={(e) => setEmail(e.target.value)}
+                />
+              </div>
+              <div>
+                <Label>Password</Label>
+                <Input
+                  type="password"
+                  value={password}
+                  required
+                  onChange={(e) => setPassword(e.target.value)}
+                />
+              </div>
+              <Button
+                type="submit"
+                className="w-full bg-accent hover:bg-secondary text-accent-foreground"
+                disabled={loading}
+              >
+                {loading
+                  ? isSignUp
+                    ? "Signing up..."
+                    : "Logging in..."
+                  : isSignUp
+                  ? "Sign Up"
+                  : "Login"}
+              </Button>
+
+              {!isSignUp && (
+                <div className="text-center text-sm mt-2">
+                  <button
+                    type="button"
+                    className="text-secondary hover:underline"
+                    onClick={() => navigate("/forgot-password")}
+                  >
+                    Forgot your password?
+                  </button>
                 </div>
-                <div>
-                  <Label className="block responsive-small font-medium text-foreground mb-1">Phone</Label>
-                  <Input
-                    type="text"
-                    value={phone}
-                    onChange={(e) => setPhone(e.target.value)}
-                    className="w-full"
-                  />
-                </div>
-              </>
-            )}
+              )}
 
-            <div>
-              <Label className="block responsive-small font-medium text-foreground mb-1">Email</Label>
-              <Input
-                type="email"
-                value={email}
-                required
-                onChange={(e) => setEmail(e.target.value)}
-                className="w-full"
-              />
-            </div>
-            <div>
-              <Label className="block responsive-small font-medium text-foreground mb-1">Password</Label>
-              <Input
-                type="password"
-                value={password}
-                required
-                onChange={(e) => setPassword(e.target.value)}
-                className="w-full"
-              />
-            </div>
-
-            <Button
-              type="submit"
-              className="w-full bg-accent hover:bg-secondary text-accent-foreground responsive-button"
-              disabled={loading}
-            >
-              {loading
-                ? isSignUp
-                  ? "Signing up..."
-                  : "Logging in..."
-                : isSignUp
-                ? "Sign Up"
-                : "Login"}
-            </Button>
-
-            {!isSignUp && (
-              <div className="text-center mt-3">
+              <div className="text-center text-sm mt-2">
                 <button
                   type="button"
-                  className="text-secondary hover:underline responsive-small"
-                  onClick={() => navigate("/forgot-password")}
+                  className="text-secondary hover:underline"
+                  onClick={() => setIsSignUp(!isSignUp)}
                 >
-                  Forgot your password?
+                  {isSignUp
+                    ? "Already have an account? Log in"
+                    : "Don't have an account? Sign up"}
                 </button>
               </div>
-            )}
-
-            <div className="text-center mt-3">
-              <button
-                type="button"
-                className="text-secondary hover:underline responsive-small"
-                onClick={() => setIsSignUp(!isSignUp)}
-              >
-                {isSignUp
-                  ? "Already have an account? Log in"
-                  : "Don't have an account? Sign up"}
-              </button>
-            </div>
-          </form>
-        </CardContent>
-      </Card>
+            </form>
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
 }

@@ -453,8 +453,7 @@ export function CoachesManager() {
                               size="sm"
                               variant="outline"
                               onClick={() => handleEdit(coach)}
-                              className=" text-accent hover:bg-accent hover:text-accent-foreground transition-all duration-300 hover:scale-105"
-                              style={{  color: '#BEA877' }}
+                              className=" text-accent hover:bg-accent hover:text-white transition-all duration-300 hover:scale-105"
                             >
                               <Edit className="w-4 h-4 mr-1" />
                               <span className="hidden sm:inline">Edit</span>
@@ -545,9 +544,9 @@ export function CoachesManager() {
                 <h3 className="responsive-body font-semibold text-foreground mb-3">Coach Details</h3>
                 <div className="responsive-grid-2">
                   <div>
-                    <p className="responsive-small text-muted-foreground"><span className="font-medium">Name:</span> {selectedCoach?.name}</p>
-                    <p className="responsive-small text-muted-foreground"><span className="font-medium">Email:</span> {selectedCoach?.email}</p>
-                    <p className="responsive-small text-muted-foreground"><span className="font-medium">Phone:</span> {selectedCoach?.phone || "N/A"}</p>
+                    <p className="responsive-small text-foreground"><span className="font-medium">Name:</span> {selectedCoach?.name}</p>
+                    <p className="responsive-small text-foreground"><span className="font-medium">Email:</span> {selectedCoach?.email}</p>
+                    <p className="responsive-small text-foreground"><span className="font-medium">Phone:</span> {selectedCoach?.phone || "N/A"}</p>
                   </div>
                 </div>
               </div>
@@ -703,8 +702,7 @@ export function CoachesManager() {
                 <Button
                   variant="outline"
                   onClick={() => setIsRecordsDialogOpen(false)}
-                  className="border-accent/30 text-accent hover:bg-accent hover:text-accent-foreground transition-all duration-300 hover:scale-105 responsive-button"
-                  style={{ borderColor: '#BEA877', color: '#BEA877' }}
+                  className="border-accent/30 text-accent hover:bg-accent hover:text-white transition-all duration-300 hover:scale-105 responsive-button"
                 >
                   Close
                 </Button>

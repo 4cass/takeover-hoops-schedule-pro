@@ -1,13 +1,14 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Progress } from "@/components/ui/progress";
-import { Plus, Edit, Trash2, Filter, Search, Users, Calendar, Clock, MapPin, User, ChevronLeft, ChevronRight } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { Plus, Edit, Trash2, Filter, Search, Users, Calendar, Clock, MapPin, User, ChevronLeft, ChevronRight, Eye } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { format } from "date-fns";
@@ -39,7 +40,7 @@ export function StudentsManager() {
   const [recordsPackageTypeFilter, setRecordsPackageTypeFilter] = useState<string>("All");
   const [currentPage, setCurrentPage] = useState(1);
   const [recordsCurrentPage, setRecordsCurrentPage] = useState(1);
-  const itemsPerPage = 5;
+  const itemsPerPage = 6;
 
   const queryClient = useQueryClient();
 
@@ -250,8 +251,8 @@ export function StudentsManager() {
   const handleShowRecords = (student: Student) => {
     setSelectedStudent(student);
     setIsRecordsDialogOpen(true);
-    setRecordsCurrentPage(1); // Reset to first page when opening records
-    setRecordsBranchFilter("All"); // Reset filters when opening records
+    setRecordsCurrentPage(1);
+    setRecordsBranchFilter("All");
     setRecordsPackageTypeFilter("All");
   };
 
@@ -265,12 +266,21 @@ export function StudentsManager() {
     package_type: null as string | null,
   });
 
+  const getPackageBadgeColor = (packageType: string | null) => {
+    switch (packageType) {
+      case 'Camp Training': return 'bg-blue-50 text-blue-700 border-blue-200';
+      case 'Personal Training': return 'bg-green-50 text-green-700 border-green-200';
+      default: return 'bg-gray-50 text-gray-700 border-gray-200';
+    }
+  };
+
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-background p-6">
+      <div className="min-h-screen bg-white p-6">
         <div className="max-w-7xl mx-auto text-center py-16">
-          <h3 className="text-2xl font-bold text-foreground mb-3">Loading players...</h3>
-          <p className="text-lg text-muted-foreground">Please wait while we fetch the player data.</p>
+          <Users className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+          <h3 className="text-2xl font-bold text-black mb-3">Loading players...</h3>
+          <p className="text-lg text-gray-600">Please wait while we fetch the player data.</p>
         </div>
       </div>
     );
@@ -280,18 +290,18 @@ export function StudentsManager() {
     <div className="min-h-screen bg-background pt-4 p-6">
       <div className="max-w-7xl mx-auto space-y-8 -mt-5">
         <div className="mb-8">
-          <h1 className="text-4xl font-bold text-foreground mb-2 tracking-tight">Players Manager</h1>
-          <p className="text-lg text-muted-foreground">Manage player information and session quotas</p>
+          <h1 className="text-4xl font-bold text-[#181818] mb-2 tracking-tight">Players Manager</h1>
+          <p className="text-lg text-gray-700">Manage player information and session quotas</p>
         </div>
-        <Card className="border-2 border-[#181818] bg-card shadow-xl">
-          <CardHeader className="border-b border-primary bg-[#181818]">
+        <Card className="border-2 border-black bg-white shadow-xl">
+          <CardHeader className="border-b border-[#181A18] bg-[#181A18]">
             <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between space-y-4 lg:space-y-0">
               <div>
-                <CardTitle className="text-2xl font-bold text-primary-foreground flex items-center">
+                <CardTitle className="text-2xl font-bold text-[#efeff1] flex items-center">
                   <Users className="h-6 w-6 mr-3 text-accent" style={{ color: '#BEA877' }} />
-                  Player profiles
+                  Player Profiles
                 </CardTitle>
-                <CardDescription className="text-primary-foreground/80 text-base">
+                <CardDescription className="text-gray-400 text-base">
                   View and manage player profiles
                 </CardDescription>
               </div>
@@ -300,62 +310,65 @@ export function StudentsManager() {
                   <Button
                     onClick={() => resetForm()}
                     className="bg-accent hover:bg-[#8e7a3f] text-white transition-all duration-300 hover:scale-105"
+                    style={{ backgroundColor: '#BEA877' }}
                   >
                     <Plus className="w-4 h-4 mr-2" />
                     Add Player
                   </Button>
                 </DialogTrigger>
-                <DialogContent className="border-2 border-border bg-card shadow-lg max-w-2xl">
+                <DialogContent className="border-2 border-gray-200 bg-white shadow-lg max-w-2xl">
                   <DialogHeader>
-                    <DialogTitle className="text-2xl font-bold text-foreground">
+                    <DialogTitle className="text-2xl font-bold text-gray-900">
                       {editingStudent ? "Edit Player" : "Add New Player"}
                     </DialogTitle>
-                    <DialogDescription className="text-muted-foreground text-base">
+                    <DialogDescription className="text-gray-600 text-base">
                       {editingStudent ? "Update player information" : "Add a new player to the system"}
                     </DialogDescription>
                   </DialogHeader>
                   <form onSubmit={handleSubmit} className="space-y-4">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div>
-                        <Label htmlFor="name" className="text-foreground font-medium">Name</Label>
+                        <Label htmlFor="name" className="text-gray-700 font-medium">Name</Label>
                         <Input
                           id="name"
                           value={formData.name}
                           onChange={(e) => setFormData((prev) => ({ ...prev, name: e.target.value }))}
                           required
-                          className="mt-1 border-2 border-border rounded-xl focus:border-accent focus:ring-accent/20"
+                          className="mt-1 border-2 border-gray-200 rounded-xl focus:border-accent focus:ring-accent/20"
+                          style={{ borderColor: '#BEA877' }}
                         />
                       </div>
                       <div>
-                        <Label htmlFor="email" className="text-foreground font-medium">Email</Label>
+                        <Label htmlFor="email" className="text-gray-700 font-medium">Email</Label>
                         <Input
                           id="email"
                           type="email"
                           value={formData.email}
                           onChange={(e) => setFormData((prev) => ({ ...prev, email: e.target.value }))}
                           required
-                          className="mt-1 border-2 border-border rounded-xl focus:border-accent focus:ring-accent/20"
+                          className="mt-1 border-2 border-gray-200 rounded-xl focus:border-accent focus:ring-accent/20"
+                          style={{ borderColor: '#BEA877' }}
                         />
                       </div>
                     </div>
-                    
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div>
-                        <Label htmlFor="phone" className="text-foreground font-medium">Phone</Label>
+                        <Label htmlFor="phone" className="text-gray-700 font-medium">Phone</Label>
                         <Input
                           id="phone"
                           value={formData.phone}
                           onChange={(e) => setFormData((prev) => ({ ...prev, phone: e.target.value }))}
-                          className="mt-1 border-2 border-border rounded-xl focus:border-accent focus:ring-accent/20"
+                          className="mt-1 border-2 border-gray-200 rounded-xl focus:border-accent focus:ring-accent/20"
+                          style={{ borderColor: '#BEA877' }}
                         />
                       </div>
                       <div>
-                        <Label htmlFor="branch_id" className="text-foreground font-medium">Branch</Label>
+                        <Label htmlFor="branch_id" className="text-gray-700 font-medium">Branch</Label>
                         <Select
                           value={formData.branch_id ?? undefined}
                           onValueChange={(value) => setFormData((prev) => ({ ...prev, branch_id: value }))}
                         >
-                          <SelectTrigger className="mt-1 border-2 border-border rounded-xl focus:border-accent focus:ring-accent/20">
+                          <SelectTrigger className="mt-1 border-2 border-gray-200 rounded-xl focus:border-accent focus:ring-accent/20" style={{ borderColor: '#BEA877' }}>
                             <SelectValue placeholder="Select Branch" />
                           </SelectTrigger>
                           <SelectContent>
@@ -368,14 +381,13 @@ export function StudentsManager() {
                         </Select>
                       </div>
                     </div>
-
                     <div>
-                      <Label htmlFor="package_type" className="text-foreground font-medium">Package Type</Label>
+                      <Label htmlFor="package_type" className="text-gray-700 font-medium">Package Type</Label>
                       <Select
                         value={formData.package_type ?? undefined}
                         onValueChange={(value) => setFormData((prev) => ({ ...prev, package_type: value }))}
                       >
-                        <SelectTrigger className="mt-1 border-2 border-border rounded-xl focus:border-accent focus:ring-accent/20">
+                        <SelectTrigger className="mt-1 border-2 border-gray-200 rounded-xl focus:border-accent focus:ring-accent/20" style={{ borderColor: '#BEA877' }}>
                           <SelectValue placeholder="Select Package Type" />
                         </SelectTrigger>
                         <SelectContent>
@@ -387,21 +399,21 @@ export function StudentsManager() {
                         </SelectContent>
                       </Select>
                     </div>
-                    
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div>
-                        <Label htmlFor="sessions" className="text-foreground font-medium">Total Sessions</Label>
+                        <Label htmlFor="sessions" className="text-gray-700 font-medium">Total Sessions</Label>
                         <Input
                           id="sessions"
                           type="number"
                           min="0"
                           value={formData.sessions}
                           onChange={(e) => setFormData((prev) => ({ ...prev, sessions: parseInt(e.target.value) || 0 }))}
-                          className="mt-1 border-2 border-border rounded-xl focus:border-accent focus:ring-accent/20"
+                          className="mt-1 border-2 border-gray-200 rounded-xl focus:border-accent focus:ring-accent/20"
+                          style={{ borderColor: '#BEA877' }}
                         />
                       </div>
                       <div>
-                        <Label htmlFor="remaining_sessions" className="text-foreground font-medium">Remaining Sessions</Label>
+                        <Label htmlFor="remaining_sessions" className="text-gray-700 font-medium">Remaining Sessions</Label>
                         <Input
                           id="remaining_sessions"
                           type="number"
@@ -410,17 +422,17 @@ export function StudentsManager() {
                           onChange={(e) =>
                             setFormData((prev) => ({ ...prev, remaining_sessions: parseInt(e.target.value) || 0 }))
                           }
-                          className="mt-1 border-2 border-border rounded-xl focus:border-accent focus:ring-accent/20"
+                          className="mt-1 border-2 border-gray-200 rounded-xl focus:border-accent focus:ring-accent/20"
+                          style={{ borderColor: '#BEA877' }}
                         />
                       </div>
                     </div>
-                    
                     <div className="flex justify-end space-x-3 pt-4">
                       <Button
                         type="button"
                         variant="outline"
                         onClick={resetForm}
-                        className="border-border text-muted-foreground hover:bg-muted hover:text-foreground transition-all duration-300 hover:scale-105"
+                        className="border-2 border-gray-300 text-gray-700 hover:bg-gray-100 transition-all duration-300 hover:scale-105"
                       >
                         Cancel
                       </Button>
@@ -441,15 +453,15 @@ export function StudentsManager() {
             <div className="mb-6">
               <div className="flex items-center mb-4">
                 <Filter className="h-5 w-5 text-accent mr-2" style={{ color: '#BEA877' }} />
-                <h3 className="text-lg font-semibold text-foreground">Filter Players</h3>
+                <h3 className="text-lg font-semibold text-gray-900">Filter Players</h3>
               </div>
               <div className="flex flex-col space-y-4 lg:flex-row lg:items-end lg:gap-4 lg:space-y-0">
                 <div className="relative flex-1">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
                   <input
                     type="text"
                     placeholder="Search players..."
-                    className="pl-10 pr-4 py-3 w-full border-2 border-border rounded-xl text-sm focus:border-accent focus:ring-accent/20 bg-background text-foreground"
+                    className="pl-10 pr-4 py-3 w-full border-2 border-accent rounded-xl text-sm focus:border-accent focus:ring-accent/20 bg-white"
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
                     style={{ borderColor: '#BEA877' }}
@@ -500,173 +512,170 @@ export function StudentsManager() {
                   </Select>
                 </div>
               </div>
-              <p className="text-sm text-muted-foreground mt-3">
+              <p className="text-sm text-gray-600 mt-3">
                 Showing {filteredStudents.length} player{filteredStudents.length === 1 ? '' : 's'}
               </p>
             </div>
-            <div className="border border-transparent rounded-2xl">
-              <div className="overflow-x-auto rounded-t-2xl">
-                <table className="w-full">
-                  <thead className="bg-[#181818] text-primary-foreground rounded-t-2xl">
-                    <tr>
-                      <th className="py-4 px-6 text-left font-semibold">Player Name</th>
-                      <th className="py-4 px-6 text-left font-semibold">Email</th>
-                      <th className="py-4 px-6 text-left font-semibold">Branch</th>
-                      <th className="py-4 px-6 text-left font-semibold">Package Type</th>
-                      <th className="py-4 px-6 text-left font-semibold">Session Progress</th>
-                      <th className="py-4 px-6 text-left font-semibold">Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {paginatedStudents.map((student, index) => {
-                      const attended = (student.sessions || 0) - student.remaining_sessions;
-                      const total = student.sessions || 0;
-                      const progressPercentage = total > 0 ? (attended / total) * 100 : 0;
-                      const branch = branches?.find(b => b.id === student.branch_id);
-                      return (
-                        <tr
-                          key={student.id}
-                          onClick={() => handleShowRecords(student)}
-                          className={`transition-all duration-300 hover:bg-accent/10 cursor-pointer ${
-                            index % 2 === 0 ? "bg-card" : "bg-muted/20"
-                          }`}
-                        >
-                          <td className="py-4 px-6">
-                            <div className="flex items-center space-x-3">
-                              <div className="w-10 h-10 rounded-full bg-gradient-to-br from-secondary to-accent flex items-center justify-center text-white font-semibold">
-                                {student.name.split(" ").map((n) => n[0]).join("").toUpperCase()}
-                              </div>
-                              <span className="font-semibold text-foreground">{student.name}</span>
-                            </div>
-                          </td>
-                          <td className="py-4 px-6 text-muted-foreground font-medium">{student.email}</td>
-                          <td className="py-4 px-6 text-muted-foreground font-medium">
-                            {branch?.name || "N/A"}
-                          </td>
-                          <td className="py-4 px-6 text-muted-foreground font-medium">
-                            {student.package_type || "N/A"}
-                          </td>
-                          <td className="py-4 px-6">
-                            <div className="space-y-2">
-                              <p className="text-muted-foreground font-medium">{attended} of {total} sessions attended</p>
-                              <Progress value={progressPercentage} className="h-2 mt-1" />
-                            </div>
-                          </td>
-                          <td className="py-4 px-6" onClick={(e) => e.stopPropagation()}>
-                            <div className="flex items-center space-x-2">
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                onClick={() => handleEdit(student)}
-                                className="border-yellow-600 text-yellow-600 hover:bg-yellow-600 hover:text-white transition-all duration-300 hover:scale-105"
-                              >
-                                <Edit className="w-4 h-4 mr-1" />
-                                <span className="hidden sm:inline">Edit</span>
-                              </Button>
-                              <Button
-                                size="sm"
-                                variant="destructive"
-                                onClick={() => deleteMutation.mutate(student.id)}
-                                className="bg-red-600 hover:bg-red-700 text-white transition-all duration-300 hover:scale-105"
-                              >
-                                <Trash2 className="w-4 h-4 mr-1" />
-                                <span className="hidden sm:inline">Delete</span>
-                              </Button>
-                            </div>
-                          </td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
+            {filteredStudents.length === 0 ? (
+              <div className="text-center py-16">
+                <Users className="w-16 h-16 mx-auto mb-4 text-gray-400" />
+                <h3 className="text-xl font-semibold text-gray-900 mb-2">
+                  {searchTerm || branchFilter !== "All" || packageTypeFilter !== "All" ? "No players found" : "No players"}
+                </h3>
+                <p className="text-gray-600">
+                  {searchTerm || branchFilter !== "All" || packageTypeFilter !== "All" ? "Try adjusting your search or filters." : "Add a new player to get started."}
+                </p>
               </div>
-              {filteredStudents.length === 0 ? (
-                <div className="py-12 text-center">
-                  <Users className="w-16 h-16 text-muted-foreground/50 mx-auto mb-4" />
-                  <h3 className="text-lg font-semibold text-foreground mb-2">
-                    {searchTerm || branchFilter !== "All" || packageTypeFilter !== "All" ? "No players found" : "No players"}
-                  </h3>
-                  <p className="text-muted-foreground">
-                    {searchTerm || branchFilter !== "All" || packageTypeFilter !== "All" ? "Try adjusting your search or filters." : "Add a new player to get started."}
-                  </p>
+            ) : (
+              <>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {paginatedStudents.map((student) => {
+                    const attended = (student.sessions || 0) - student.remaining_sessions;
+                    const total = student.sessions || 0;
+                    const progressPercentage = total > 0 ? (attended / total) * 100 : 0;
+                    const branch = branches?.find(b => b.id === student.branch_id);
+                    return (
+                      <Card 
+                        key={student.id} 
+                        className="border-2 transition-all duration-300 hover:shadow-lg rounded-xl border-accent"
+                        style={{ borderColor: '#BEA877' }}
+                      >
+                        <CardHeader className="pb-3">
+                          <div className="flex justify-between items-start mb-2">
+                            <div className="flex items-center space-x-2">
+                              <Users className="w-5 h-5 text-accent" style={{ color: '#BEA877' }} />
+                              <h3 className="font-bold text-lg text-gray-900">
+                                {student.name}
+                              </h3>
+                            </div>
+                            <Badge className={`font-medium ${getPackageBadgeColor(student.package_type)}`}>
+                              {student.package_type || 'N/A'}
+                            </Badge>
+                          </div>
+                          <div className="flex items-center space-x-2 text-gray-600">
+                            <User className="w-4 h-4" />
+                            <span className="text-sm font-medium">{student.email}</span>
+                          </div>
+                        </CardHeader>
+                        <CardContent className="space-y-3">
+                          <div className="flex items-center space-x-2">
+                            <MapPin className="w-4 h-4 text-gray-500" />
+                            <span className="text-sm"><span className="font-medium">Branch:</span> {branch?.name || 'N/A'}</span>
+                          </div>
+                          <div className="flex items-center space-x-2">
+                            <Users className="w-4 h-4 text-gray-500" />
+                            <span className="text-sm"><span className="font-medium">Sessions:</span> {attended} of {total} attended</span>
+                          </div>
+                          <div>
+                            <Progress value={progressPercentage} className="h-2 mt-1" />
+                          </div>
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center space-x-2">
+                              <Users className="w-4 h-4 text-gray-500" />
+                              <span className="text-sm font-medium">{total} Total Sessions</span>
+                            </div>
+                            <div className="flex space-x-2">
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => handleShowRecords(student)}
+                                className="bg-blue-600 text-white"
+                              >
+                                <Eye className="w-4 h-4" /> View
+                              </Button>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => handleEdit(student)}
+                                className="bg-yellow-600 text-white"
+                              >
+                                <Edit className="w-4 h-4" /> Edit
+                              </Button>
+                            </div>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    );
+                  })}
                 </div>
-              ) : totalPages > 1 && (
-                <div className="flex justify-center items-center mt-6 space-x-2">
-                  <Button
-                    variant="outline"
-                    onClick={() => handlePageChange(currentPage - 1)}
-                    disabled={currentPage === 1}
-                    className="border-2 border-accent text-accent hover:bg-accent hover:text-white"
-                    style={{ borderColor: '#BEA877', color: '#BEA877' }}
-                  >
-                    <ChevronLeft className="w-4 h-4 " />
-                  </Button>
-                  {Array.from({ length: totalPages }, (_, index) => index + 1).map((page) => (
+                {totalPages > 1 && (
+                  <div className="flex justify-center items-center mt-6 space-x-2">
                     <Button
-                      key={page}
-                      variant={currentPage === page ? "default" : "outline"}
-                      onClick={() => handlePageChange(page)}
-                      className={`border-2 ${
-                        currentPage === page
-                          ? 'bg-accent text-white'
-                          : 'border-accent text-accent hover:bg-accent hover:text-white'
-                      }`}
-                      style={{ 
-                        backgroundColor: currentPage === page ? '#BEA877' : 'transparent',
-                        borderColor: '#BEA877',
-                        color: currentPage === page ? 'white' : '#BEA877'
-                      }}
+                      variant="outline"
+                      onClick={() => handlePageChange(currentPage - 1)}
+                      disabled={currentPage === 1}
+                      className="border-2 border-accent text-accent hover:bg-accent hover:text-white"
+                      style={{ borderColor: '#BEA877', color: '#BEA877' }}
                     >
-                      {page}
+                      <ChevronLeft className="w-4 h-4" />
                     </Button>
-                  ))}
-                  <Button
-                    variant="outline"
-                    onClick={() => handlePageChange(currentPage + 1)}
-                    disabled={currentPage === totalPages}
-                    className="border-2 border-accent text-accent hover:bg-accent hover:text-white"
-                    style={{ borderColor: '#BEA877', color: '#BEA877' }}
-                  >
-                    <ChevronRight className="w-4 h-4 " />
-                  </Button>
-                </div>
-              )}
-            </div>
+                    {Array.from({ length: totalPages }, (_, index) => index + 1).map((page) => (
+                      <Button
+                        key={page}
+                        variant={currentPage === page ? "default" : "outline"}
+                        onClick={() => handlePageChange(page)}
+                        className={`border-2 ${
+                          currentPage === page
+                            ? 'bg-accent text-white'
+                            : 'border-accent text-accent hover:bg-accent hover:text-white'
+                        }`}
+                        style={{ 
+                          backgroundColor: currentPage === page ? '#BEA877' : 'transparent',
+                          borderColor: '#BEA877',
+                          color: currentPage === page ? 'white' : '#BEA877'
+                        }}
+                      >
+                        {page}
+                      </Button>
+                    ))}
+                    <Button
+                      variant="outline"
+                      onClick={() => handlePageChange(currentPage + 1)}
+                      disabled={currentPage === totalPages}
+                      className="border-2 border-accent text-accent hover:bg-accent hover:text-white"
+                      style={{ borderColor: '#BEA877', color: '#BEA877' }}
+                    >
+                      <ChevronRight className="w-4 h-4" />
+                    </Button>
+                  </div>
+                )}
+              </>
+            )}
           </CardContent>
         </Card>
         <Dialog open={isRecordsDialogOpen} onOpenChange={setIsRecordsDialogOpen}>
-          <DialogContent className="max-w-4xl border-2 border-primary bg-card shadow-lg">
+          <DialogContent className="max-w-4xl border-2 border-gray-200 bg-white shadow-lg">
             <DialogHeader>
-              <DialogTitle className="text-2xl font-bold text-foreground">
+              <DialogTitle className="text-2xl font-bold text-gray-900">
                 History Records for {selectedStudent?.name}
               </DialogTitle>
-              <DialogDescription className="text-muted-foreground text-base">
+              <DialogDescription className="text-gray-600 text-base">
                 View session attendance and details for this player
               </DialogDescription>
             </DialogHeader>
             <div className="space-y-6">
-              <div className="border-b border-border pb-4">
-                <h3 className="text-lg font-semibold text-foreground mb-3">Player Details</h3>
+              <div className="border-b border-gray-200 pb-4">
+                <h3 className="text-lg font-semibold text-gray-900 mb-3">Player Details</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <p className="text-sm text-muted-foreground"><span className="font-medium text-foreground">Name:</span> {selectedStudent?.name}</p>
-                    <p className="text-sm text-muted-foreground"><span className="font-medium text-foreground">Email:</span> {selectedStudent?.email}</p>
-                    <p className="text-sm text-muted-foreground"><span className="font-medium text-foreground">Phone:</span> {selectedStudent?.phone || "N/A"}</p>
+                    <p className="text-sm text-gray-600"><span className="font-medium text-gray-900">Name:</span> {selectedStudent?.name}</p>
+                    <p className="text-sm text-gray-600"><span className="font-medium text-gray-900">Email:</span> {selectedStudent?.email}</p>
+                    <p className="text-sm text-gray-600"><span className="font-medium text-gray-900">Phone:</span> {selectedStudent?.phone || "N/A"}</p>
                   </div>
                   <div>
-                    <p className="text-sm text-muted-foreground"><span className="font-medium text-foreground">Branch:</span> {branches?.find(b => b.id === selectedStudent?.branch_id)?.name || "N/A"}</p>
-                    <p className="text-sm text-muted-foreground"><span className="font-medium text-foreground">Package Type:</span> {selectedStudent?.package_type || "N/A"}</p>
-                    <p className="text-sm text-muted-foreground"><span className="font-medium text-foreground">Total Sessions:</span> {selectedStudent?.sessions || 0}</p>
-                    <p className="text-sm text-muted-foreground"><span className="font-medium text-foreground">Remaining Sessions:</span> {selectedStudent?.remaining_sessions}</p>
+                    <p className="text-sm text-gray-600"><span className="font-medium text-gray-900">Branch:</span> {branches?.find(b => b.id === selectedStudent?.branch_id)?.name || "N/A"}</p>
+                    <p className="text-sm text-gray-600"><span className="font-medium text-gray-900">Package Type:</span> {selectedStudent?.package_type || "N/A"}</p>
+                    <p className="text-sm text-gray-600"><span className="font-medium text-gray-900">Total Sessions:</span> {selectedStudent?.sessions || 0}</p>
+                    <p className="text-sm text-gray-600"><span className="font-medium text-gray-900">Remaining Sessions:</span> {selectedStudent?.remaining_sessions}</p>
                   </div>
                 </div>
               </div>
               <div>
-                <h3 className="text-lg font-semibold text-foreground mb-3">Session Records</h3>
+                <h3 className="text-lg font-semibold text-gray-900 mb-3">Session Records</h3>
                 <div className="mb-4">
                   <div className="flex items-center mb-4">
                     <Filter className="h-5 w-5 text-accent mr-2" style={{ color: '#BEA877' }} />
-                    <h4 className="text-md font-semibold text-foreground">Filter Records</h4>
+                    <h4 className="text-md font-semibold text-gray-900">Filter Records</h4>
                   </div>
                   <div className="flex flex-col sm:flex-row sm:items-end gap-4">
                     <div className="flex-1">
@@ -714,23 +723,23 @@ export function StudentsManager() {
                       </Select>
                     </div>
                   </div>
-                  <p className="text-sm text-muted-foreground mt-3">
+                  <p className="text-sm text-gray-600 mt-3">
                     Showing {filteredAttendanceRecords.length} record{filteredAttendanceRecords.length === 1 ? '' : 's'}
                   </p>
                 </div>
                 {recordsLoading ? (
                   <div className="text-center py-4">
                     <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-accent mx-auto"></div>
-                    <p className="text-muted-foreground mt-2">Loading attendance records...</p>
+                    <p className="text-gray-600 mt-2">Loading attendance records...</p>
                   </div>
                 ) : recordsError ? (
                   <p className="text-red-600 text-sm">Error loading records: {(recordsError as Error).message}</p>
                 ) : filteredAttendanceRecords.length === 0 ? (
-                  <p className="text-muted-foreground text-sm">No attendance records found for this player.</p>
+                  <p className="text-gray-600 text-sm">No attendance records found for this player.</p>
                 ) : (
                   <div className="overflow-x-auto">
-                    <table className="w-full  rounded-xl">
-                      <thead className="bg-primary text-primary-foreground">
+                    <table className="w-full rounded-xl">
+                      <thead className="bg-[#181A18] text-[#efeff1]">
                         <tr>
                           <th className="py-3 px-4 text-left font-semibold"><Calendar className="w-4 h-4 inline mr-2" />Date</th>
                           <th className="py-3 px-4 text-left font-semibold"><Clock className="w-4 h-4 inline mr-2" />Time</th>
@@ -743,25 +752,25 @@ export function StudentsManager() {
                         {paginatedRecords.map((record, index) => (
                           <tr
                             key={record.session_id}
-                            className={`transition-all duration-300 ${index % 2 === 0 ? "bg-card" : "bg-muted/20"}`}
+                            className={`transition-all duration-300 ${index % 2 === 0 ? "bg-white" : "bg-gray-50"}`}
                           >
-                            <td className="py-3 px-4 text-muted-foreground">
+                            <td className="py-3 px-4 text-gray-600">
                               {format(new Date(record.training_sessions.date), "MMM dd, yyyy")}
                             </td>
-                            <td className="py-3 px-4 text-muted-foreground">
+                            <td className="py-3 px-4 text-gray-600">
                               {format(new Date(`1970-01-01T${record.training_sessions.start_time}`), "hh:mm a")} - 
                               {format(new Date(`1970-01-01T${record.training_sessions.end_time}`), "hh:mm a")}
                             </td>
-                            <td className="py-3 px-4 text-muted-foreground">{record.training_sessions.branches.name}</td>
-                            <td className="py-3 px-4 text-muted-foreground">{record.training_sessions.coaches.name}</td>
+                            <td className="py-3 px-4 text-gray-600">{record.training_sessions.branches.name}</td>
+                            <td className="py-3 px-4 text-gray-600">{record.training_sessions.coaches.name}</td>
                             <td className="py-3 px-4">
                               <span
                                 className={`px-2 py-1 rounded-full text-xs font-medium ${
                                   record.status === "present"
-                                    ? "bg-green-100 text-green-800"
+                                    ? "bg-green-50 text-green-700 border-green-200"
                                     : record.status === "absent"
-                                    ? "bg-red-100 text-red-800"
-                                    : "bg-yellow-100 text-yellow-800"
+                                    ? "bg-red-50 text-red-700 border-red-200"
+                                    : "bg-amber-50 text-amber-700 border-amber-200"
                                 }`}
                               >
                                 {record.status}
@@ -808,7 +817,7 @@ export function StudentsManager() {
                           className="border-2 border-accent text-accent hover:bg-accent hover:text-white"
                           style={{ borderColor: '#BEA877', color: '#BEA877' }}
                         >
-                          <ChevronRight className="w-4 h-4 " />
+                          <ChevronRight className="w-4 h-4" />
                         </Button>
                       </div>
                     )}
@@ -819,7 +828,7 @@ export function StudentsManager() {
                 <Button
                   variant="outline"
                   onClick={() => setIsRecordsDialogOpen(false)}
-                  className="border-border text-muted-foreground hover:bg-muted hover:text-foreground transition-all duration-300 hover:scale-105"
+                  className="border-2 border-gray-300 text-gray-700 hover:bg-gray-100 transition-all duration-300 hover:scale-105"
                 >
                   Close
                 </Button>

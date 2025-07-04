@@ -43,16 +43,7 @@ export default function Settings() {
             <div className="max-w-6xl mx-auto">
               {/* Page Header */}
               <div className="mb-8">
-                <div className="flex items-center gap-4 mb-6">
-                  <Button
-                    variant="ghost"
-                    onClick={() => navigate("/dashboard")}
-                    className="flex items-center gap-2 text-slate-600 hover:text-slate-900 hover:bg-slate-100 transition-colors"
-                  >
-                    <ArrowLeft className="h-4 w-4" />
-                    Back to Dashboard
-                  </Button>
-                </div>
+               
                 
                 <div className="flex items-center gap-4 mb-4">
                   <div className="p-3 bg-gradient-to-r from-blue-600 to-indigo-600 rounded-xl shadow-lg">
