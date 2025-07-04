@@ -13,6 +13,8 @@ import { CoachesManager } from "@/components/CoachesManager";
 import { BranchesManager } from "@/components/BranchesManager";
 import { useEffect } from "react";
 import { useAuth } from "@/context/AuthContext";
+import { Settings } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 export default function Dashboard() {
   const location = useLocation();
@@ -85,6 +87,15 @@ export default function Dashboard() {
         <SidebarInset className="flex-1 min-w-0">
           <header className="sticky top-0 z-50 bg-card flex h-12 sm:h-16 shrink-0 items-center gap-2 px-3 sm:px-4 border-b">
             <SidebarTrigger className="text-foreground hover:text-accent hover:bg-muted" />
+            <div className="flex-1" />
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              onClick={() => navigate("/settings")} 
+              className="text-foreground hover:text-accent hover:bg-muted"
+            >
+              <Settings className="h-5 w-5" />
+            </Button>
           </header>
           <main className="flex-1 responsive-padding bg-background overflow-x-hidden">
             <Routes>
