@@ -71,93 +71,93 @@ export default function Login() {
   };
 
   return (
-    <div className="relative min-h-screen flex items-center justify-center bg-background">
-      {/* 🔹 Blurred Background Image */}
-      <div
-        className="absolute inset-0 bg-cover bg-center blur-sm brightness-75"
-        style={{ backgroundColor: "#000" }}
-        aria-hidden="true"
-      />
-
-      {/* 🔹 Overlay to darken a bit (optional) */}
-      <div className="absolute inset-0 bg-black/40 z-0" />
+    <div className="relative min-h-screen flex items-center justify-center bg-gray-400">
+      {/* 🔹 Background Overlay */}
+      <div className="absolute inset-0 bg-gray-400 z-0" />
 
       {/* 🔹 Login Card */}
       <div className="relative z-10 w-full max-w-sm sm:max-w-md p-4">
-        <Card className="shadow-xl border-2 border-border bg-card/80 backdrop-blur-md">
+        <Card className="shadow-xl border-2 border-gray-600 bg-black/90 backdrop-blur-md">
           <CardHeader className="text-center">
-            {/* Logo Placeholder */}
-          <div className="flex justify-center">
-            <img
-              src="/logo.jpg"
-              alt="Coach Logo"
-              className="w-16 h-16 object-contain rounded-full"
-            />
-          </div>
-            <CardTitle className="text-primary">
-              {isSignUp ? "Sign Up" : "Login"}
+            {/* Logo - Made Much Bigger */}
+            <div className="flex justify-center mb-6">
+              <img
+                src="/lovable-uploads/599e456c-7d01-4d0c-a68c-b753300de7de.png"
+                alt="Coach Logo"
+                className="w-40 h-40 object-contain"
+              />
+            </div>
+            <CardTitle className="text-white text-lg font-semibold">
+              {isSignUp ? "Create Account" : "Welcome Back"}
             </CardTitle>
+            <p className="text-gray-300 mt-2 text-sm">
+              {isSignUp ? "Join our coaching platform" : "Sign in to your account"}
+            </p>
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-4">
               {isSignUp && (
                 <>
                   <div>
-                    <Label>Name</Label>
+                    <Label className="text-white">Name</Label>
                     <Input
                       type="text"
                       value={name}
                       required
                       onChange={(e) => setName(e.target.value)}
+                      className="mt-1 bg-gray-800 border-gray-600 text-white placeholder:text-gray-400"
                     />
                   </div>
                   <div>
-                    <Label>Phone</Label>
+                    <Label className="text-white">Phone</Label>
                     <Input
                       type="text"
                       value={phone}
                       onChange={(e) => setPhone(e.target.value)}
+                      className="mt-1 bg-gray-800 border-gray-600 text-white placeholder:text-gray-400"
                     />
                   </div>
                 </>
               )}
               <div>
-                <Label>Email</Label>
+                <Label className="text-white">Email</Label>
                 <Input
                   type="email"
                   value={email}
                   required
                   onChange={(e) => setEmail(e.target.value)}
+                  className="mt-1 bg-gray-800 border-gray-600 text-white placeholder:text-gray-400"
                 />
               </div>
               <div>
-                <Label>Password</Label>
+                <Label className="text-white">Password</Label>
                 <Input
                   type="password"
                   value={password}
                   required
                   onChange={(e) => setPassword(e.target.value)}
+                  className="mt-1 bg-gray-800 border-gray-600 text-white placeholder:text-gray-400"
                 />
               </div>
               <Button
                 type="submit"
-                className="w-full bg-accent hover:bg-secondary text-accent-foreground"
+                className="w-full bg-white hover:bg-gray-100 text-black mt-6 font-semibold"
                 disabled={loading}
               >
                 {loading
                   ? isSignUp
-                    ? "Signing up..."
-                    : "Logging in..."
+                    ? "Creating Account..."
+                    : "Signing In..."
                   : isSignUp
-                  ? "Sign Up"
-                  : "Login"}
+                  ? "Create Account"
+                  : "Sign In"}
               </Button>
 
               {!isSignUp && (
-                <div className="text-center text-sm mt-2">
+                <div className="text-center text-sm mt-4">
                   <button
                     type="button"
-                    className="text-secondary hover:underline"
+                    className="text-gray-300 hover:text-white hover:underline"
                     onClick={() => navigate("/forgot-password")}
                   >
                     Forgot your password?
@@ -165,14 +165,14 @@ export default function Login() {
                 </div>
               )}
 
-              <div className="text-center text-sm mt-2">
+              <div className="text-center text-sm mt-4 pt-4 border-t border-gray-600">
                 <button
                   type="button"
-                  className="text-secondary hover:underline"
+                  className="text-gray-300 hover:text-white hover:underline"
                   onClick={() => setIsSignUp(!isSignUp)}
                 >
                   {isSignUp
-                    ? "Already have an account? Log in"
+                    ? "Already have an account? Sign in"
                     : "Don't have an account? Sign up"}
                 </button>
               </div>

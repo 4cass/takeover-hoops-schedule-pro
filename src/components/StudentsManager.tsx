@@ -1,4 +1,4 @@
-import { useState } from "react";
+ import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -672,61 +672,9 @@ export function StudentsManager() {
               </div>
               <div>
                 <h3 className="text-lg font-semibold text-gray-900 mb-3">Session Records</h3>
-                <div className="mb-4">
-                  <div className="flex items-center mb-4">
-                    <Filter className="h-5 w-5 text-accent mr-2" style={{ color: '#BEA877' }} />
-                    <h4 className="text-md font-semibold text-gray-900">Filter Records</h4>
-                  </div>
-                  <div className="flex flex-col sm:flex-row sm:items-end gap-4">
-                    <div className="flex-1">
-                      <Label htmlFor="filter-records-branch" className="flex items-center text-sm font-medium text-gray-700 mb-2">
-                        <MapPin className="w-4 h-4 mr-2 text-accent" style={{ color: '#BEA877' }} />
-                        Branch
-                      </Label>
-                      <Select
-                        value={recordsBranchFilter}
-                        onValueChange={(value) => setRecordsBranchFilter(value)}
-                      >
-                        <SelectTrigger className="border-2 focus:border-accent rounded-xl" style={{ borderColor: '#BEA877' }}>
-                          <SelectValue placeholder="Select Branch" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="All">All Branches</SelectItem>
-                          {branches?.map((branch) => (
-                            <SelectItem key={branch.id} value={branch.id}>
-                              {branch.name}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div className="flex-1">
-                      <Label htmlFor="filter-records-package-type" className="flex items-center text-sm font-medium text-gray-700 mb-2">
-                        <Users className="w-4 h-4 mr-2 text-accent" style={{ color: '#BEA877' }} />
-                        Package Type
-                      </Label>
-                      <Select
-                        value={recordsPackageTypeFilter}
-                        onValueChange={(value) => setRecordsPackageTypeFilter(value)}
-                      >
-                        <SelectTrigger className="border-2 focus:border-accent rounded-xl" style={{ borderColor: '#BEA877' }}>
-                          <SelectValue placeholder="Select Package Type" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="All">All Package Types</SelectItem>
-                          {PACKAGE_TYPES.map((packageType) => (
-                            <SelectItem key={packageType} value={packageType}>
-                              {packageType}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  </div>
-                  <p className="text-sm text-gray-600 mt-3">
-                    Showing {filteredAttendanceRecords.length} record{filteredAttendanceRecords.length === 1 ? '' : 's'}
-                  </p>
-                </div>
+                <p className="text-sm text-gray-600 mb-3">
+                  Showing {attendanceRecords?.length || 0} record{attendanceRecords?.length === 1 ? '' : 's'}
+                </p>
                 {recordsLoading ? (
                   <div className="text-center py-4">
                     <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-accent mx-auto"></div>
@@ -734,7 +682,7 @@ export function StudentsManager() {
                   </div>
                 ) : recordsError ? (
                   <p className="text-red-600 text-sm">Error loading records: {(recordsError as Error).message}</p>
-                ) : filteredAttendanceRecords.length === 0 ? (
+                ) : !attendanceRecords || attendanceRecords.length === 0 ? (
                   <p className="text-gray-600 text-sm">No attendance records found for this player.</p>
                 ) : (
                   <div className="overflow-x-auto">
@@ -749,7 +697,7 @@ export function StudentsManager() {
                         </tr>
                       </thead>
                       <tbody>
-                        {paginatedRecords.map((record, index) => (
+                        {(attendanceRecords || []).slice(recordsStartIndex, recordsEndIndex).map((record, index) => (
                           <tr
                             key={record.session_id}
                             className={`transition-all duration-300 ${index % 2 === 0 ? "bg-white" : "bg-gray-50"}`}
