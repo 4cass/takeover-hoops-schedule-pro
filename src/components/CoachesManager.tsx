@@ -251,7 +251,7 @@ export function CoachesManager() {
   }
 
   return (
-    <div className="min-h-screen bg-white pt-4 p-6">
+    <div className="min-h-screen bg-background pt-4 p-6">
       <div className="max-w-7xl mx-auto space-y-8 -mt-5">
         <div className="mb-8">
           <h1 className="text-4xl font-bold text-[#181818] mb-2 tracking-tight">Coaches Manager</h1>
@@ -362,18 +362,25 @@ export function CoachesManager() {
                 <h3 className="text-lg font-semibold text-gray-900">Filter Coaches</h3>
               </div>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div className="relative">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
-                  <input
-                    type="text"
-                    placeholder="Search coaches..."
-                    className="pl-10 pr-4 py-3 w-full border-2 border-accent rounded-lg text-sm focus:border-accent focus:ring-accent/20 bg-white"
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    style={{ borderColor: '#BEA877' }}
-                  />
+                <div className="space-y-2 flex flex-col">
+                  <Label htmlFor="search-coaches" className="flex items-center text-sm font-medium text-gray-700">
+                    <Search className="w-4 h-4 mr-2 text-accent" style={{ color: '#BEA877' }} />
+                    Search
+                  </Label>
+                  <div className="relative">
+                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+                    <Input
+                      id="search-coaches"
+                      type="text"
+                      placeholder="Search coaches..."
+                      className="pl-10 pr-4 py-3 w-full max-w-md border-2 border-accent rounded-lg text-sm focus:border-accent focus:ring-accent/20 bg-white"
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                      style={{ borderColor: '#BEA877' }}
+                    />
+                  </div>
                 </div>
-                <div className="space-y-2">
+                <div className="space-y-2 flex flex-col">
                   <Label htmlFor="filter-branch" className="flex items-center text-sm font-medium text-gray-700">
                     <MapPin className="w-4 h-4 mr-2 text-accent" style={{ color: '#BEA877' }} />
                     Branch
@@ -382,7 +389,7 @@ export function CoachesManager() {
                     value={branchFilter}
                     onValueChange={(value) => setBranchFilter(value)}
                   >
-                    <SelectTrigger className="border-2 focus:border-accent rounded-lg" style={{ borderColor: '#BEA877' }}>
+                    <SelectTrigger className="border-2 focus:border-accent rounded-lg py-3 text-sm" style={{ borderColor: '#BEA877' }}>
                       <SelectValue placeholder="Select Branch" />
                     </SelectTrigger>
                     <SelectContent>
@@ -395,7 +402,7 @@ export function CoachesManager() {
                     </SelectContent>
                   </Select>
                 </div>
-                <div className="space-y-2">
+                <div className="space-y-2 flex flex-col">
                   <Label htmlFor="filter-package-type" className="flex items-center text-sm font-medium text-gray-700">
                     <Users className="w-4 h-4 mr-2 text-accent" style={{ color: '#BEA877' }} />
                     Package Type
@@ -404,7 +411,7 @@ export function CoachesManager() {
                     value={coachPackageTypeFilter}
                     onValueChange={(value) => setCoachPackageTypeFilter(value)}
                   >
-                    <SelectTrigger className="border-2 focus:border-accent rounded-lg" style={{ borderColor: '#BEA877' }}>
+                    <SelectTrigger className="border-2 focus:border-accent rounded-lg py-3 text-sm" style={{ borderColor: '#BEA877' }}>
                       <SelectValue placeholder="Select Package Type" />
                     </SelectTrigger>
                     <SelectContent>
@@ -453,9 +460,9 @@ export function CoachesManager() {
                           variant="outline"
                           size="sm"
                           onClick={() => deleteMutation.mutate(coach.id)}
-                          className="bg-red-500 text-white hover:bg-accent"
+                          className="bg-red-600 text-white hover:bg-accent"
                         >
-                          <Trash2 className="w-4 h-4 " />
+                          <Trash2 className="w-4 h-4 mr-1" />
                           <span className="hidden sm:inline">Delete</span>
                         </Button>
                         <Button
@@ -464,7 +471,7 @@ export function CoachesManager() {
                           onClick={() => handleEdit(coach)}
                           className="bg-yellow-600 text-white hover:bg-accent"
                         >
-                          <Edit className="w-4 h-4 " />
+                          <Edit className="w-4 h-4 mr-1" />
                           <span className="hidden sm:inline">Edit</span>
                         </Button>
                         
@@ -474,7 +481,7 @@ export function CoachesManager() {
                           onClick={() => handleShowRecords(coach)}
                           className="bg-blue-600 text-white hover:bg-accent"
                         >
-                          <Eye className="w-4 h-4" />
+                          <Eye className="w-4 h-4 " />
                           <span className="hidden sm:inline">View</span>
                         </Button>
                       </div>
@@ -565,7 +572,7 @@ export function CoachesManager() {
                   <h3 className="text-lg font-semibold text-gray-900">Session Records</h3>
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                  <div className="space-y-2">
+                  <div className="space-y-2 flex flex-col">
                     <Label htmlFor="filter-records-branch" className="flex items-center text-sm font-medium text-gray-700">
                       <MapPin className="w-4 h-4 mr-2 text-accent" style={{ color: '#BEA877' }} />
                       Branch
@@ -574,7 +581,7 @@ export function CoachesManager() {
                       value={recordsBranchFilter}
                       onValueChange={(value) => setRecordsBranchFilter(value)}
                     >
-                      <SelectTrigger className="border-2 focus:border-accent rounded-lg" style={{ borderColor: '#BEA877' }}>
+                      <SelectTrigger className="border-2 focus:border-accent rounded-lg py-3 text-sm" style={{ borderColor: '#BEA877' }}>
                         <SelectValue placeholder="Select Branch" />
                       </SelectTrigger>
                       <SelectContent>
@@ -587,7 +594,7 @@ export function CoachesManager() {
                       </SelectContent>
                     </Select>
                   </div>
-                  <div className="space-y-2">
+                  <div className="space-y-2 flex flex-col">
                     <Label htmlFor="filter-records-package-type" className="flex items-center text-sm font-medium text-gray-700">
                       <Users className="w-4 h-4 mr-2 text-accent" style={{ color: '#BEA877' }} />
                       Package Type
@@ -596,7 +603,7 @@ export function CoachesManager() {
                       value={recordsPackageTypeFilter}
                       onValueChange={(value) => setRecordsPackageTypeFilter(value)}
                     >
-                      <SelectTrigger className="border-2 focus:border-accent rounded-lg" style={{ borderColor: '#BEA877' }}>
+                      <SelectTrigger className="border-2 focus:border-accent rounded-lg py-3 text-sm" style={{ borderColor: '#BEA877' }}>
                         <SelectValue placeholder="Select Package Type" />
                       </SelectTrigger>
                       <SelectContent>

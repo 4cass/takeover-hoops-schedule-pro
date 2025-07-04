@@ -162,7 +162,7 @@ export function BranchesManager() {
   }
 
   return (
-    <div className="min-h-screen bg-white pt-4 p-6">
+    <div className="min-h-screen bg-background pt-4 p-6">
       <div className="max-w-7xl mx-auto space-y-8 -mt-5">
         <div className="mb-8">
           <h1 className="text-4xl font-bold text-[#181818] mb-2 tracking-tight">Branches Manager</h1>
