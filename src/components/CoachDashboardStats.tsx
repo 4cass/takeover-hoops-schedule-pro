@@ -128,9 +128,9 @@ export function CoachDashboardStats() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-[#faf0e8] to-[#fffefe] pt-4 p-6">
+      <div className="min-h-screen bg-white p-6">
         <div className="max-w-7xl mx-auto text-center py-16">
-          <Users className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+          <Users className="w-16 h-16 text-gray-400 mx-auto mb-4" />
           <h3 className="text-2xl font-bold text-black mb-3">Loading your dashboard...</h3>
           <p className="text-lg text-gray-600">Please wait while we fetch your data.</p>
         </div>
@@ -143,9 +143,9 @@ export function CoachDashboardStats() {
       title: "My Scheduled Sessions",
       value: stats?.sessions || 0,
       icon: Calendar,
-      color: "text-[#fe822d]",
-      bgGradient: "from-[#fe822d]/10 to-[#fc7416]/10",
-      borderColor: "border-black"
+      color: "text-accent",
+      bgGradient: "from-accent/10 to-accent/5",
+      borderColor: "border-foreground"
     }
   ];
 
@@ -161,19 +161,18 @@ export function CoachDashboardStats() {
       case 'attendance':
         return <CheckCircle className="h-5 w-5 text-green-600" />;
       case 'session':
-        return <Calendar className="h-5 w-5 text-[#fc7416]" />;
+        return <Calendar className="h-5 w-5 text-accent" style={{ color: '#BEA877' }} />;
       default:
-        return <Activity className="h-5 w-5 text-gray-600" />;
+        return <Activity className="h-5 w-5 text-muted-foreground" />;
     }
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#faf0e8] to-[#fffefe] pt-4 p-6">
+    <div className="min-h-screen bg-white pt-4 p-6">
       <div className="max-w-7xl mx-auto space-y-8 -mt-5">
-        
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-4xl font-bold text-black mb-2 tracking-tight">
+          <h1 className="text-4xl font-bold text-[#181818] mb-2 tracking-tight">
             Coach Dashboard
           </h1>
           <p className="text-lg text-gray-700">
@@ -181,98 +180,93 @@ export function CoachDashboardStats() {
           </p>
         </div>
 
-        {/* Stat Cards */}
-        <div className="grid gap-6 md:grid-cols-2">
-          {statCards.map((stat, index) => {
-            const IconComponent = stat.icon;
-            return (
-              <Card 
-                key={index} 
-                className={`
-                  relative overflow-hidden border-2 ${stat.borderColor} bg-gradient-to-br ${stat.bgGradient} 
-                  backdrop-blur-sm shadow-lg hover:shadow-xl transition-all duration-300 
-                  hover:-translate-y-1 hover:scale-105 cursor-pointer group
-                `}
-              >
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-semibold text-black uppercase tracking-wider">
-                    {stat.title}
-                  </CardTitle>
-                  <div className={`
-                    p-2 rounded-lg bg-white/80 shadow-sm group-hover:scale-110 transition-transform duration-300
-                  `}>
-                    <IconComponent className={`h-5 w-5 ${stat.color}`} />
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  <div className="text-3xl font-bold text-black mb-1">{stat.value}</div>
-                  <div className="flex items-center text-xs text-gray-600">
-                    <TrendingUp className="h-3 w-3 mr-1" />
-                    Active
-                  </div>
-                </CardContent>
-              </Card>
-            );
-          })}
-        </div>
-
-        {/* Quick Actions */}
-        <Card className="border-2 border-black bg-white/80 backdrop-blur-sm shadow-lg">
-          <CardHeader className="border-b border-black bg-gradient-to-r from-[#fc7416]/5 to-[#fe822d]/5">
-            <CardTitle className="text-2xl font-bold text-black flex items-center">
-              <Calendar className="h-6 w-6 mr-3 text-[#fc7416]" />
-              Quick Actions
+    <div className="grid lg:grid-cols-[300px_1fr] gap-4 items-stretch">
+  {/* Stat Cards Column */}
+  <div className="flex flex-col gap-4 h-full">
+    {statCards.map((stat, index) => {
+      const IconComponent = stat.icon;
+      return (
+        <Card
+          key={index}
+          className="flex-1 border-2 border-[#181A18] bg-white shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-1 hover:scale-105 cursor-pointer group"
+        >
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle className="text-sm font-semibold text-foreground uppercase tracking-wider">
+              {stat.title}
             </CardTitle>
-            <CardDescription className="text-gray-600 text-base">
-              Manage your coaching activities
-            </CardDescription>
+            <div className="p-2 rounded-lg bg-accent/10 shadow-sm group-hover:scale-110 transition-transform duration-300">
+              <IconComponent className="h-5 w-5" style={{ color: '#BEA877' }} />
+            </div>
           </CardHeader>
-          <CardContent className="pt-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {[
-                { label: "View Calendar", icon: Calendar, route: "/dashboard/calendar" },
-                { label: "Track Attendance", icon: UserCheck, route: "/dashboard/attendance" }
-              ].map((action, index) => {
-                const IconComponent = action.icon;
-                return (
-                  <Button 
-                    key={index}
-                    onClick={() => navigate(action.route)}
-                    className="
-                      h-auto p-4 bg-gradient-to-r from-[#fc7416] to-[#fe822d] 
-                      hover:from-[#fe822d] hover:to-[#fc7416] text-white font-semibold
-                      transition-all duration-300 hover:scale-105 hover:shadow-lg
-                      flex flex-col items-center gap-2 border-none
-                    "
-                  >
-                    <IconComponent className="h-5 w-5" />
-                    <span className="text-sm text-center">{action.label}</span>
-                  </Button>
-                );
-              })}
+          <CardContent>
+            <div className="text-3xl font-bold text-foreground mb-1">{stat.value}</div>
+            <div className="flex items-center text-xs text-muted-foreground">
+              <TrendingUp className="h-3 w-3 mr-1" />
+              Active
             </div>
           </CardContent>
         </Card>
+      );
+    })}
+  </div>
 
+  {/* Quick Actions */}
+  <Card className="h-full border-2 border-[#181A18] bg-white shadow-xl flex flex-col">
+    <CardHeader className="border-b border-[#181A18] bg-[#181A18]">
+      <CardTitle className="text-2xl font-bold text-[#efeff1] flex items-center">
+        <Calendar className="h-6 w-6 mr-3 text-accent" style={{ color: '#BEA877' }} />
+        Quick Actions
+      </CardTitle>
+      <CardDescription className="text-gray-400 text-base">
+        Manage your coaching activities
+      </CardDescription>
+    </CardHeader>
+    <CardContent className="p-8 flex-1">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+        {[
+          { label: "View Calendar", icon: Calendar, route: "/dashboard/calendar" },
+          { label: "Track Attendance", icon: UserCheck, route: "/dashboard/attendance" }
+        ].map((action, index) => {
+          const IconComponent = action.icon;
+          return (
+            <Button 
+              key={index}
+              onClick={() => navigate(action.route)}
+              className="h-auto p-4 bg-accent hover:bg-accent/90 text-white font-semibold transition-all duration-300 hover:scale-105 hover:shadow-lg flex flex-col items-center gap-2 border-none"
+              style={{ backgroundColor: '#BEA877' }}
+            >
+              <IconComponent className="h-5 w-5" />
+              <span className="text-sm text-center">{action.label}</span>
+            </Button>
+          );
+        })}
+      </div>
+    </CardContent>
+  </Card>
+</div>
+
+
+
+        {/* Upcoming Sessions and Recent Activity Row */}
         <div className="grid gap-8 lg:grid-cols-2">
-          
           {/* My Upcoming Sessions */}
-          <Card className="border-2 border-black bg-white/80 backdrop-blur-sm shadow-lg">
-            <CardHeader className="border-b border-black bg-gradient-to-r from-[#fc7416]/5 to-[#fe822d]/5">
+          <Card className="border-2 border-[#181A18] bg-white shadow-xl">
+            <CardHeader className="border-b border-[#181A18] bg-[#181A18]">
               <div className="flex items-center justify-between">
                 <div>
-                  <CardTitle className="text-xl font-bold text-black flex items-center">
-                    <Clock className="h-5 w-5 mr-3 text-[#fc7416]" />
+                  <CardTitle className="text-xl font-bold text-[#efeff1] flex items-center">
+                    <Clock className="h-5 w-5 mr-3 text-accent" style={{ color: '#BEA877' }} />
                     My Upcoming Sessions
                   </CardTitle>
-                  <CardDescription className="text-gray-600 mt-1">
+                  <CardDescription className="text-gray-400 mt-1">
                     Your scheduled training sessions
                   </CardDescription>
                 </div>
                 <Button 
                   variant="outline" 
                   onClick={() => navigate('/dashboard/calendar')}
-                  className="border-[#fc7416] text-[#fc7416] hover:bg-[#fc7416] hover:text-white transition-colors"
+                  className="border-accent text-accent hover:bg-accent hover:text-white transition-colors"
+                  style={{ borderColor: '#BEA877', color: '#BEA877' }}
                 >
                   View Calendar
                 </Button>
@@ -283,10 +277,10 @@ export function CoachDashboardStats() {
                 <div className="overflow-hidden">
                   <Table>
                     <TableHeader>
-                      <TableRow className="bg-gradient-to-r from-[#fc7416]/5 to-[#fe822d]/5 border-b border-[#fc7416]/10">
-                        <TableHead className="font-semibold text-black">Date & Time</TableHead>
-                        <TableHead className="font-semibold text-black">Branch</TableHead>
-                        <TableHead className="font-semibold text-black">Players</TableHead>
+                      <TableRow className="bg-accent/5 border-b border-accent/10" style={{ backgroundColor: '#BEA8770D' }}>
+                        <TableHead className="font-semibold text-foreground">Date & Time</TableHead>
+                        <TableHead className="font-semibold text-foreground">Branch</TableHead>
+                        <TableHead className="font-semibold text-foreground">Players</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -294,21 +288,21 @@ export function CoachDashboardStats() {
                         <TableRow 
                           key={session.id} 
                           className={`
-                            hover:bg-[#fc7416]/5 transition-colors border-b border-gray-100
-                            ${index % 2 === 0 ? 'bg-[#faf0e8]/30' : 'bg-white'}
+                            hover:bg-accent/5 transition-colors border-b border-muted/20
+                            ${index % 2 === 0 ? 'bg-background' : 'bg-muted/10'}
                           `}
                         >
                           <TableCell className="py-4">
-                            <div className="font-semibold text-black">
+                            <div className="font-semibold text-foreground">
                               {format(new Date(session.date), 'MMM dd, yyyy')}
                             </div>
-                            <div className="text-sm text-[#fc7416] font-medium">
+                            <div className="text-sm text-accent font-medium" style={{ color: '#BEA877' }}>
                               {formatTime12Hour(session.start_time)} - {formatTime12Hour(session.end_time)}
                             </div>
                           </TableCell>
-                          <TableCell className="text-gray-700 font-medium">{session.branches?.name}</TableCell>
+                          <TableCell className="text-muted-foreground font-medium">{session.branches?.name}</TableCell>
                           <TableCell>
-                            <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-[#fc7416]/10 text-[#fc7416]">
+                            <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-accent/10 text-accent" style={{ backgroundColor: '#BEA8771A', color: '#BEA877' }}>
                               {session.session_participants?.[0]?.count || 0} players
                             </span>
                           </TableCell>
@@ -319,21 +313,20 @@ export function CoachDashboardStats() {
                 </div>
               ) : (
                 <div className="p-8 text-center">
-                  <Clock className="h-12 w-12 text-gray-300 mx-auto mb-4" />
-                  <p className="text-gray-500 text-lg">No upcoming sessions scheduled</p>
+                  <Clock className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                  <p className="text-muted-foreground text-lg">No upcoming sessions scheduled</p>
                 </div>
               )}
             </CardContent>
           </Card>
 
-          {/* Recent Activity */}
-          <Card className="border-2 border-black bg-white/80 backdrop-blur-sm shadow-lg">
-            <CardHeader className="border-b border-black bg-gradient-to-r from-[#fc7416]/5 to-[#fe822d]/5">
-              <CardTitle className="text-xl font-bold text-black flex items-center">
-                <Activity className="h-5 w-5 mr-3 text-[#fc7416]" />
+          <Card className="border-2 border-[#181A18] bg-white shadow-xl">
+            <CardHeader className="border-b border-[#181A18] bg-[#181A18]">
+              <CardTitle className="text-xl font-bold text-[#efeff1] flex items-center">
+                <Activity className="h-5 w-5 mr-3 text-accent" style={{ color: '#BEA877' }} />
                 Recent Activity
               </CardTitle>
-              <CardDescription className="text-gray-600 mt-1">
+              <CardDescription className="text-gray-400 mt-1">
                 Your latest coaching activities
               </CardDescription>
             </CardHeader>
@@ -345,16 +338,16 @@ export function CoachDashboardStats() {
                       key={activity.id} 
                       className={`
                         flex items-start space-x-4 p-3 rounded-lg transition-colors
-                        ${index % 2 === 0 ? 'bg-[#faf0e8]/30' : 'bg-white'}
-                        hover:bg-[#fc7416]/5
+                        ${index % 2 === 0 ? 'bg-background' : 'bg-muted/10'}
+                        hover:bg-accent/5
                       `}
                     >
                       <div className="flex-shrink-0 mt-1">
                         {getActivityIcon(activity.type)}
                       </div>
                       <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium text-black leading-5">{activity.description}</p>
-                        <p className="text-xs text-gray-500 mt-1 flex items-center">
+                        <p className="text-sm font-medium text-foreground leading-5">{activity.description}</p>
+                        <p className="text-xs text-muted-foreground mt-1 flex items-center">
                           <Clock className="h-3 w-3 mr-1" />
                           {formatDistanceToNow(new Date(activity.created_at), { addSuffix: true })}
                         </p>
@@ -364,15 +357,13 @@ export function CoachDashboardStats() {
                 </div>
               ) : (
                 <div className="text-center py-8">
-                  <Activity className="h-12 w-12 text-gray-300 mx-auto mb-4" />
-                  <p className="text-gray-500 text-lg">No recent activity</p>
+                  <Activity className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                  <p className="text-muted-foreground text-lg">No recent activity</p>
                 </div>
               )}
             </CardContent>
           </Card>
-
         </div>
-
       </div>
     </div>
   );

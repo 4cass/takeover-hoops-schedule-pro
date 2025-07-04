@@ -1,12 +1,12 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus, Edit, Trash2, Filter, Search, Users, Calendar, Clock, MapPin, User, ChevronLeft, ChevronRight } from "lucide-react";
+import { Plus, Edit, Trash2, Filter, Search, Users, Calendar, Clock, MapPin, User, ChevronLeft, ChevronRight, Mail, Phone, Eye } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { format } from "date-fns";
@@ -40,6 +40,13 @@ const PACKAGE_TYPES = [
   "Camp Training"
 ];
 
+const formatTime12Hour = (timeString: string) => {
+  const [hours, minutes] = timeString.split(":").map(Number);
+  const period = hours >= 12 ? "PM" : "AM";
+  const displayHours = hours % 12 || 12;
+  return `${displayHours}:${minutes.toString().padStart(2, "0")} ${period}`;
+};
+
 export function CoachesManager() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isRecordsDialogOpen, setIsRecordsDialogOpen] = useState(false);
@@ -52,7 +59,7 @@ export function CoachesManager() {
   const [recordsPackageTypeFilter, setRecordsPackageTypeFilter] = useState<string>("All");
   const [currentPage, setCurrentPage] = useState(1);
   const [recordsCurrentPage, setRecordsCurrentPage] = useState(1);
-  const itemsPerPage = 5;
+  const itemsPerPage = 6;
 
   const queryClient = useQueryClient();
 
@@ -233,33 +240,33 @@ export function CoachesManager() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-background responsive-padding">
+      <div className="min-h-screen bg-white p-6">
         <div className="max-w-7xl mx-auto text-center py-16">
-          <Users className="w-16 h-16 text-muted mx-auto mb-4" />
-          <h3 className="responsive-subheading font-bold text-foreground mb-3">Loading coaches...</h3>
-          <p className="responsive-body text-muted-foreground">Please wait while we fetch the coach data.</p>
+          <Users className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+          <h3 className="text-2xl font-bold text-black mb-3">Loading coaches...</h3>
+          <p className="text-lg text-gray-600">Please wait while we fetch the coach data.</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-background pt-4 responsive-padding">
-      <div className="max-w-7xl mx-auto responsive-spacing -mt-5">
+    <div className="min-h-screen bg-white pt-4 p-6">
+      <div className="max-w-7xl mx-auto space-y-8 -mt-5">
         <div className="mb-8">
-          <h1 className="responsive-heading font-bold text-foreground mb-2 tracking-tight">Coaches Manager</h1>
-          <p className="responsive-body text-muted-foreground">Manage coach information and session history</p>
+          <h1 className="text-4xl font-bold text-[#181818] mb-2 tracking-tight">Coaches Manager</h1>
+          <p className="text-lg text-gray-700">Manage coach information and session history</p>
         </div>
 
-        <Card className="border-2 border-[#181818] bg-card backdrop-blur-sm shadow-xl">
-          <CardHeader className="border-b border-[#181818] bg-[#181818]">
+        <Card className="border-2 border-black bg-white shadow-xl">
+          <CardHeader className="border-b border-[#181A18] bg-[#181A18]">
             <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between space-y-4 lg:space-y-0">
               <div>
-                <CardTitle className="responsive-subheading font-bold text-primary-foreground flex items-center">
+                <CardTitle className="text-2xl font-bold text-[#efeff1] flex items-center">
                   <Users className="h-6 w-6 mr-3 text-accent" style={{ color: '#BEA877' }} />
                   Coach Management
                 </CardTitle>
-                <CardDescription className="text-primary-foreground/80 responsive-body">
+                <CardDescription className="text-gray-400 text-base">
                   View and manage coach profiles
                 </CardDescription>
               </div>
@@ -267,53 +274,53 @@ export function CoachesManager() {
                 <DialogTrigger asChild>
                   <Button
                     onClick={() => resetForm()}
-                    className="bg-accent hover:bg-secondary text-accent-foreground transition-all duration-300 hover:scale-105 responsive-button"
-                    style={{ backgroundColor: '#BEA877', color: 'white' }}
+                    className="bg-accent text-white hover:bg-accent/90 transition-all duration-300"
+                    style={{ backgroundColor: '#BEA877' }}
                   >
                     <Plus className="w-4 h-4 mr-2" />
                     Add Coach
                   </Button>
                 </DialogTrigger>
-                <DialogContent className="border-2 border-accent/20 bg-gradient-to-br from-accent/5 to-card shadow-lg max-w-[95vw] sm:max-w-md">
+                <DialogContent className="max-w-[95vw] sm:max-w-md bg-white border-2 border-black">
                   <DialogHeader>
-                    <DialogTitle className="responsive-subheading font-bold text-foreground">
+                    <DialogTitle className="text-2xl font-bold text-gray-900">
                       {editingCoach ? "Edit Coach" : "Create Coach Account"}
                     </DialogTitle>
-                    <DialogDescription className="text-muted-foreground responsive-body">
+                    <DialogDescription className="text-gray-600 text-base">
                       {editingCoach ? "Update coach information" : "Create a new coach account with login credentials"}
                     </DialogDescription>
                   </DialogHeader>
-                  <form onSubmit={handleSubmit} className="responsive-spacing">
+                  <form onSubmit={handleSubmit} className="space-y-4">
                     <div>
-                      <Label htmlFor="name" className="text-foreground font-medium responsive-small">Name</Label>
+                      <Label htmlFor="name" className="text-gray-700 font-medium text-sm">Name</Label>
                       <Input
                         id="name"
                         value={formData.name}
                         onChange={(e) => setFormData((prev) => ({ ...prev, name: e.target.value }))}
                         required
-                        className="mt-1 responsive-button border-2 border-accent/20 rounded-xl focus:border-accent focus:ring-accent/20 bg-background"
+                        className="mt-1 border-2 border-accent rounded-lg focus:border-accent focus:ring-accent/20 bg-white"
                         style={{ borderColor: '#BEA877' }}
                       />
                     </div>
                     <div>
-                      <Label htmlFor="email" className="text-foreground font-medium responsive-small">Email</Label>
+                      <Label htmlFor="email" className="text-gray-700 font-medium text-sm">Email</Label>
                       <Input
                         id="email"
                         type="email"
                         value={formData.email}
                         onChange={(e) => setFormData((prev) => ({ ...prev, email: e.target.value }))}
                         required
-                        className="mt-1 responsive-button border-2 border-accent/20 rounded-xl focus:border-accent focus:ring-accent/20 bg-background"
+                        className="mt-1 border-2 border-accent rounded-lg focus:border-accent focus:ring-accent/20 bg-white"
                         style={{ borderColor: '#BEA877' }}
                       />
                     </div>
                     <div>
-                      <Label htmlFor="phone" className="text-foreground font-medium responsive-small">Phone</Label>
+                      <Label htmlFor="phone" className="text-gray-700 font-medium text-sm">Phone</Label>
                       <Input
                         id="phone"
                         value={formData.phone}
                         onChange={(e) => setFormData((prev) => ({ ...prev, phone: e.target.value }))}
-                        className="mt-1 responsive-button border-2 border-accent/20 rounded-xl focus:border-accent focus:ring-accent/20 bg-background"
+                        className="mt-1 border-2 border-accent rounded-lg focus:border-accent focus:ring-accent/20 bg-white"
                         style={{ borderColor: '#BEA877' }}
                       />
                     </div>
@@ -330,16 +337,15 @@ export function CoachesManager() {
                         type="button"
                         variant="outline"
                         onClick={resetForm}
-                        className="border-accent/30 text-accent hover:bg-accent hover:text-accent-foreground transition-all duration-300 hover:scale-105 responsive-button mobile-full-width"
-                        style={{ borderColor: '#BEA877', color: '#BEA877' }}
+                        className="border-2 border-gray-300 text-gray-700 hover:bg-gray-100 transition-all duration-300"
                       >
                         Cancel
                       </Button>
                       <Button
                         type="submit"
                         disabled={createMutation.isPending || updateMutation.isPending}
-                        className="bg-accent hover:bg-secondary text-accent-foreground transition-all duration-300 hover:scale-105 responsive-button mobile-full-width"
-                        style={{ backgroundColor: '#BEA877', color: 'white' }}
+                        className="bg-accent text-white hover:bg-accent/90 transition-all duration-300"
+                        style={{ backgroundColor: '#BEA877' }}
                       >
                         {createMutation.isPending || updateMutation.isPending ? "Processing..." : editingCoach ? "Update" : "Create Account"}
                       </Button>
@@ -349,26 +355,26 @@ export function CoachesManager() {
               </Dialog>
             </div>
           </CardHeader>
-          <CardContent className="responsive-padding">
+          <CardContent className="p-8">
             <div className="mb-6">
               <div className="flex items-center mb-4">
                 <Filter className="h-5 w-5 text-accent mr-2" style={{ color: '#BEA877' }} />
-                <h3 className="responsive-body font-semibold text-foreground">Filter Coaches</h3>
+                <h3 className="text-lg font-semibold text-gray-900">Filter Coaches</h3>
               </div>
-              <div className="flex flex-col space-y-4 lg:flex-row lg:items-end lg:gap-4 lg:space-y-0">
-                <div className="relative flex-1">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
                   <input
                     type="text"
                     placeholder="Search coaches..."
-                    className="pl-10 pr-4 py-3 w-full border-2 border-accent/40 rounded-xl responsive-small focus:border-accent focus:ring-accent/20 bg-background"
+                    className="pl-10 pr-4 py-3 w-full border-2 border-accent rounded-lg text-sm focus:border-accent focus:ring-accent/20 bg-white"
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
                     style={{ borderColor: '#BEA877' }}
                   />
                 </div>
-                <div className="flex-1">
-                  <Label htmlFor="filter-branch" className="flex items-center text-sm font-medium text-gray-700 mb-2">
+                <div className="space-y-2">
+                  <Label htmlFor="filter-branch" className="flex items-center text-sm font-medium text-gray-700">
                     <MapPin className="w-4 h-4 mr-2 text-accent" style={{ color: '#BEA877' }} />
                     Branch
                   </Label>
@@ -376,7 +382,7 @@ export function CoachesManager() {
                     value={branchFilter}
                     onValueChange={(value) => setBranchFilter(value)}
                   >
-                    <SelectTrigger className="border-2 focus:border-accent rounded-xl" style={{ borderColor: '#BEA877' }}>
+                    <SelectTrigger className="border-2 focus:border-accent rounded-lg" style={{ borderColor: '#BEA877' }}>
                       <SelectValue placeholder="Select Branch" />
                     </SelectTrigger>
                     <SelectContent>
@@ -389,8 +395,8 @@ export function CoachesManager() {
                     </SelectContent>
                   </Select>
                 </div>
-                <div className="flex-1">
-                  <Label htmlFor="filter-package-type" className="flex items-center text-sm font-medium text-gray-700 mb-2">
+                <div className="space-y-2">
+                  <Label htmlFor="filter-package-type" className="flex items-center text-sm font-medium text-gray-700">
                     <Users className="w-4 h-4 mr-2 text-accent" style={{ color: '#BEA877' }} />
                     Package Type
                   </Label>
@@ -398,7 +404,7 @@ export function CoachesManager() {
                     value={coachPackageTypeFilter}
                     onValueChange={(value) => setCoachPackageTypeFilter(value)}
                   >
-                    <SelectTrigger className="border-2 focus:border-accent rounded-xl" style={{ borderColor: '#BEA877' }}>
+                    <SelectTrigger className="border-2 focus:border-accent rounded-lg" style={{ borderColor: '#BEA877' }}>
                       <SelectValue placeholder="Select Package Type" />
                     </SelectTrigger>
                     <SelectContent>
@@ -412,141 +418,143 @@ export function CoachesManager() {
                   </Select>
                 </div>
               </div>
-              <p className="text-sm text-muted-foreground mt-3">
+              <p className="text-sm text-gray-600 mt-3">
                 Showing {filteredCoaches.length} coach{filteredCoaches.length === 1 ? '' : 'es'}
               </p>
             </div>
 
-            <div className="rounded-2xl bg-gradient-to-br from-accent/5  overflow-hidden">
-              <div className="overflow-x-auto">
-                <table className="w-full responsive-table">
-                  <thead className="bg-[#181818] text-primary-foreground">
-                    <tr>
-                      <th className="py-4 px-6 text-left font-semibold">Coach Name</th>
-                      <th className="py-4 px-6 text-left font-semibold">Email</th>
-                      <th className="py-4 px-6 text-left font-semibold">Phone</th>
-                      <th className="py-4 px-6 text-left font-semibold">Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {paginatedCoaches.map((coach, index) => (
-                      <tr
-                        key={coach.id}
-                        onClick={() => handleShowRecords(coach)}
-                        className={`transition-all duration-300 hover:bg-accent/5 cursor-pointer ${
-                          index % 2 === 0 ? "bg-background" : "bg-accent/5"
-                        }`}
-                      >
-                        <td className="py-4 px-6">
-                          <div className="flex items-center space-x-3">
-                            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-accent to-secondary flex items-center justify-center text-accent-foreground font-semibold">
-                              {coach.name.split(" ").map((n) => n[0]).join("").toUpperCase()}
-                            </div>
-                            <span className="font-semibold text-foreground">{coach.name}</span>
-                          </div>
-                        </td>
-                        <td className="py-4 px-6 text-muted-foreground font-medium">{coach.email}</td>
-                        <td className="py-4 px-6 text-muted-foreground font-medium">{coach.phone || "N/A"}</td>
-                        <td className="py-4 px-6" onClick={(e) => e.stopPropagation()}>
-                          <div className="flex items-center space-x-2">
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              onClick={() => handleEdit(coach)}
-                              className=" text-accent hover:bg-accent hover:text-white transition-all duration-300 hover:scale-105"
-                            >
-                              <Edit className="w-4 h-4 mr-1" />
-                              <span className="hidden sm:inline">Edit</span>
-                            </Button>
-                            <Button
-                              size="sm"
-                              variant="destructive"
-                              onClick={() => deleteMutation.mutate(coach.id)}
-                              className="bg-destructive hover:bg-destructive/90 text-destructive-foreground transition-all duration-300 hover:scale-105"
-                            >
-                              <Trash2 className="w-4 h-4 mr-1" />
-                              <span className="hidden sm:inline">Delete</span>
-                            </Button>
-                          </div>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-              {filteredCoaches.length === 0 ? (
-                <div className="py-12 text-center">
-                  <Users className="w-16 h-16 text-muted mx-auto mb-4" />
-                  <h3 className="responsive-body font-semibold text-foreground mb-2">
-                    {searchTerm || branchFilter !== "All" || coachPackageTypeFilter !== "All" ? "No coaches found" : "No coaches"}
-                  </h3>
-                  <p className="text-muted-foreground responsive-small">
-                    {searchTerm || branchFilter !== "All" || coachPackageTypeFilter !== "All" ? "Try adjusting your search or filters." : "Add a new coach to get started."}
-                  </p>
-                </div>
-              ) : totalPages > 1 && (
-                <div className="flex justify-center items-center mt-6 space-x-2">
-                  <Button
-                    variant="outline"
-                    onClick={() => handlePageChange(currentPage - 1)}
-                    disabled={currentPage === 1}
-                    className="border-2 border-accent text-accent hover:bg-accent hover:text-white"
-                    style={{ borderColor: '#BEA877', color: '#BEA877' }}
-                  >
-                    <ChevronLeft className="w-4 h-4" />
-                  </Button>
-                  {Array.from({ length: totalPages }, (_, index) => index + 1).map((page) => (
-                    <Button
-                      key={page}
-                      variant={currentPage === page ? "default" : "outline"}
-                      onClick={() => handlePageChange(page)}
-                      className={`border-2 ${
-                        currentPage === page
-                          ? 'bg-accent text-white'
-                          : 'border-accent text-accent hover:bg-accent hover:text-white'
-                      }`}
-                      style={{ 
-                        backgroundColor: currentPage === page ? '#BEA877' : 'transparent',
-                        borderColor: '#BEA877',
-                        color: currentPage === page ? 'white' : '#BEA877'
-                      }}
-                    >
-                      {page}
-                    </Button>
-                  ))}
-                  <Button
-                    variant="outline"
-                    onClick={() => handlePageChange(currentPage + 1)}
-                    disabled={currentPage === totalPages}
-                    className="border-2 border-accent text-accent hover:bg-accent hover:text-white"
-                    style={{ borderColor: '#BEA877', color: '#BEA877' }}
-                  >
-                    <ChevronRight className="w-4 h-4" />
-                  </Button>
-                </div>
-              )}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {paginatedCoaches.map((coach) => (
+                <Card
+                  key={coach.id}
+                  className="border-2 transition-all duration-300 hover:shadow-lg rounded-xl border-accent"
+                  style={{ borderColor: '#BEA877' }}
+                >
+                  <CardHeader className="pb-3">
+                    <div className="flex items-center space-x-2">
+                      <div className="w-10 h-10 rounded-full bg-accent flex items-center justify-center text-white font-semibold text-sm" style={{ backgroundColor: '#BEA877' }}>
+                        {coach.name.split(" ").map((n) => n[0]).join("").toUpperCase()}
+                      </div>
+                      <h3 className="font-bold text-lg text-gray-900">{coach.name}</h3>
+                    </div>
+                  </CardHeader>
+                  <CardContent className="space-y-3">
+                    <div className="flex items-center space-x-2">
+                      <Mail className="w-4 h-4 text-gray-500" />
+                      <span className="text-sm"><span className="font-medium">Email:</span> {coach.email}</span>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <Phone className="w-4 h-4 text-gray-500" />
+                      <span className="text-sm"><span className="font-medium">Phone:</span> {coach.phone || "N/A"}</span>
+                    </div>
+                    <div className="flex items-center justify-end pt-2">
+                      <div className="flex space-x-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => deleteMutation.mutate(coach.id)}
+                          className="bg-red-500 text-white hover:bg-accent"
+                        >
+                          <Trash2 className="w-4 h-4 " />
+                          <span className="hidden sm:inline">Delete</span>
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleEdit(coach)}
+                          className="bg-yellow-600 text-white hover:bg-accent"
+                        >
+                          <Edit className="w-4 h-4 " />
+                          <span className="hidden sm:inline">Edit</span>
+                        </Button>
+                        
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleShowRecords(coach)}
+                          className="bg-blue-600 text-white hover:bg-accent"
+                        >
+                          <Eye className="w-4 h-4" />
+                          <span className="hidden sm:inline">View</span>
+                        </Button>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
             </div>
+            {filteredCoaches.length === 0 ? (
+              <div className="text-center py-16">
+                <Users className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+                <h3 className="text-xl font-semibold text-gray-900 mb-2">
+                  {searchTerm || branchFilter !== "All" || coachPackageTypeFilter !== "All" ? "No coaches found" : "No coaches"}
+                </h3>
+                <p className="text-gray-600 mb-6">
+                  {searchTerm || branchFilter !== "All" || coachPackageTypeFilter !== "All" ? "Try adjusting your search or filters." : "Add a new coach to get started."}
+                </p>
+              </div>
+            ) : totalPages > 1 && (
+              <div className="flex justify-center items-center mt-6 space-x-2">
+                <Button
+                  variant="outline"
+                  onClick={() => handlePageChange(currentPage - 1)}
+                  disabled={currentPage === 1}
+                  className="border-2 border-accent text-accent hover:bg-accent hover:text-white"
+                  style={{ borderColor: '#BEA877', color: '#BEA877' }}
+                >
+                  <ChevronLeft className="w-4 h-4" />
+                </Button>
+                {Array.from({ length: totalPages }, (_, index) => index + 1).map((page) => (
+                  <Button
+                    key={page}
+                    variant={currentPage === page ? "default" : "outline"}
+                    onClick={() => handlePageChange(page)}
+                    className={`border-2 ${
+                      currentPage === page
+                        ? 'bg-accent text-white'
+                        : 'border-accent text-accent hover:bg-accent hover:text-white'
+                    }`}
+                    style={{
+                      backgroundColor: currentPage === page ? '#BEA877' : 'transparent',
+                      borderColor: '#BEA877',
+                      color: currentPage === page ? 'white' : '#BEA877'
+                    }}
+                  >
+                    {page}
+                  </Button>
+                ))}
+                <Button
+                  variant="outline"
+                  onClick={() => handlePageChange(currentPage + 1)}
+                  disabled={currentPage === totalPages}
+                  className="border-2 border-accent text-accent hover:bg-accent hover:text-white"
+                  style={{ borderColor: '#BEA877', color: '#BEA877' }}
+                >
+                  <ChevronRight className="w-4 h-4" />
+                </Button>
+              </div>
+            )}
           </CardContent>
         </Card>
 
         <Dialog open={isRecordsDialogOpen} onOpenChange={setIsRecordsDialogOpen}>
-          <DialogContent className="max-w-[95vw] sm:max-w-4xl border-2 border-accent/20 bg-gradient-to-br from-accent/5 to-card shadow-lg">
+          <DialogContent className="max-w-[95vw] sm:max-w-4xl bg-white border-2 border-black">
             <DialogHeader>
-              <DialogTitle className="responsive-subheading font-bold text-foreground">
+              <DialogTitle className="text-2xl font-bold text-gray-900">
                 Session History for {selectedCoach?.name}
               </DialogTitle>
-              <DialogDescription className="text-muted-foreground responsive-body">
+              <DialogDescription className="text-gray-600 text-base">
                 View session details for this coach
               </DialogDescription>
             </DialogHeader>
-            <div className="responsive-spacing">
-              <div className="border-b border-[#181818] pb-4">
-                <h3 className="responsive-body font-semibold text-foreground mb-3">Coach Details</h3>
-                <div className="responsive-grid-2">
+            <div className="space-y-6">
+              <div className="p-4 rounded-lg border border-gray-200 bg-gray-50">
+                <h3 className="text-lg font-semibold text-gray-900 mb-3">Coach Details</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <p className="responsive-small text-foreground"><span className="font-medium">Name:</span> {selectedCoach?.name}</p>
-                    <p className="responsive-small text-foreground"><span className="font-medium">Email:</span> {selectedCoach?.email}</p>
-                    <p className="responsive-small text-foreground"><span className="font-medium">Phone:</span> {selectedCoach?.phone || "N/A"}</p>
+                    <p className="text-sm text-gray-700"><span className="font-medium">Name:</span> {selectedCoach?.name}</p>
+                    <p className="text-sm text-gray-700"><span className="font-medium">Email:</span> {selectedCoach?.email}</p>
+                    <p className="text-sm text-gray-700"><span className="font-medium">Phone:</span> {selectedCoach?.phone || "N/A"}</p>
                   </div>
                 </div>
               </div>
@@ -554,11 +562,11 @@ export function CoachesManager() {
               <div>
                 <div className="flex items-center mb-4">
                   <Filter className="h-5 w-5 text-accent mr-2" style={{ color: '#BEA877' }} />
-                  <h3 className="responsive-body font-semibold text-foreground">Session Records</h3>
+                  <h3 className="text-lg font-semibold text-gray-900">Session Records</h3>
                 </div>
-                <div className="flex flex-col sm:flex-row sm:items-end gap-4 mb-4">
-                  <div className="flex-1">
-                    <Label htmlFor="filter-records-branch" className="flex items-center text-sm font-medium text-gray-700 mb-2">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="filter-records-branch" className="flex items-center text-sm font-medium text-gray-700">
                       <MapPin className="w-4 h-4 mr-2 text-accent" style={{ color: '#BEA877' }} />
                       Branch
                     </Label>
@@ -566,7 +574,7 @@ export function CoachesManager() {
                       value={recordsBranchFilter}
                       onValueChange={(value) => setRecordsBranchFilter(value)}
                     >
-                      <SelectTrigger className="border-2 focus:border-accent rounded-xl" style={{ borderColor: '#BEA877' }}>
+                      <SelectTrigger className="border-2 focus:border-accent rounded-lg" style={{ borderColor: '#BEA877' }}>
                         <SelectValue placeholder="Select Branch" />
                       </SelectTrigger>
                       <SelectContent>
@@ -579,8 +587,8 @@ export function CoachesManager() {
                       </SelectContent>
                     </Select>
                   </div>
-                  <div className="flex-1">
-                    <Label htmlFor="filter-records-package-type" className="flex items-center text-sm font-medium text-gray-700 mb-2">
+                  <div className="space-y-2">
+                    <Label htmlFor="filter-records-package-type" className="flex items-center text-sm font-medium text-gray-700">
                       <Users className="w-4 h-4 mr-2 text-accent" style={{ color: '#BEA877' }} />
                       Package Type
                     </Label>
@@ -588,7 +596,7 @@ export function CoachesManager() {
                       value={recordsPackageTypeFilter}
                       onValueChange={(value) => setRecordsPackageTypeFilter(value)}
                     >
-                      <SelectTrigger className="border-2 focus:border-accent rounded-xl" style={{ borderColor: '#BEA877' }}>
+                      <SelectTrigger className="border-2 focus:border-accent rounded-lg" style={{ borderColor: '#BEA877' }}>
                         <SelectValue placeholder="Select Package Type" />
                       </SelectTrigger>
                       <SelectContent>
@@ -602,26 +610,29 @@ export function CoachesManager() {
                     </Select>
                   </div>
                 </div>
-                <p className="text-sm text-muted-foreground mb-4">
+                <p className="text-sm text-gray-600 mb-4">
                   Showing {filteredSessionRecords.length} session{filteredSessionRecords.length === 1 ? '' : 's'}
                 </p>
                 {recordsLoading ? (
-                  <div className="text-center py-4">
-                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-accent mx-auto"></div>
-                    <p className="text-muted-foreground mt-2 responsive-small">Loading session records...</p>
+                  <div className="text-center py-12">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-accent mx-auto" style={{ borderColor: '#BEA877' }}></div>
+                    <p className="text-gray-600 mt-2 text-base">Loading session records...</p>
                   </div>
                 ) : recordsError ? (
-                  <p className="text-destructive responsive-small">Error loading records: {(recordsError as Error).message}</p>
+                  <p className="text-red-600 text-base">Error loading records: {(recordsError as Error).message}</p>
                 ) : filteredSessionRecords.length === 0 ? (
-                  <p className="text-muted-foreground responsive-small">
-                    {recordsBranchFilter !== "All" || recordsPackageTypeFilter !== "All" ? 
-                      "No sessions found with the selected filters." : 
-                      "No session records found for this coach."}
-                  </p>
+                  <div className="text-center py-12">
+                    <Calendar className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+                    <p className="text-lg text-gray-600 mb-2">
+                      {recordsBranchFilter !== "All" || recordsPackageTypeFilter !== "All" ? 
+                        "No sessions found with the selected filters." : 
+                        "No session records found for this coach."}
+                    </p>
+                  </div>
                 ) : (
                   <div className="overflow-x-auto">
-                    <table className="w-full border-2 border-[#181818] rounded-xl responsive-table">
-                      <thead className="bg-[#181818] text-primary-foreground">
+                    <table className="w-full border-2 border-[#181A18] rounded-xl">
+                      <thead className="bg-[#181A18] text-[#efeff1]">
                         <tr>
                           <th className="py-3 px-4 text-left font-semibold"><Calendar className="w-4 h-4 inline mr-2" />Date</th>
                           <th className="py-3 px-4 text-left font-semibold"><Clock className="w-4 h-4 inline mr-2" />Time</th>
@@ -634,18 +645,18 @@ export function CoachesManager() {
                         {paginatedSessionRecords.map((record, index) => (
                           <tr
                             key={record.id}
-                            className={`transition-all duration-300 ${index % 2 === 0 ? "bg-background" : "bg-accent/5"}`}
+                            className={`transition-all duration-300 ${index % 2 === 0 ? "bg-white" : "bg-gray-50"}`}
                           >
-                            <td className="py-3 px-4 text-muted-foreground">
+                            <td className="py-3 px-4 text-gray-600">
                               {format(new Date(record.date), 'MMM dd, yyyy')}
                             </td>
-                            <td className="py-3 px-4 text-muted-foreground">
-                              {format(new Date(`1970-01-01T${record.start_time}`), 'hh:mm a')} - 
-                              {format(new Date(`1970-01-01T${record.end_time}`), 'hh:mm a')}
+                            <td className="py-3 px-4 text-gray-600">
+                              {formatTime12Hour(record.start_time)} - 
+                              {formatTime12Hour(record.end_time)}
                             </td>
-                            <td className="py-3 px-4 text-muted-foreground">{record.branches.name}</td>
-                            <td className="py-3 px-4 text-muted-foreground">{record.package_type || "N/A"}</td>
-                            <td className="py-3 px-4 text-muted-foreground">
+                            <td className="py-3 px-4 text-gray-600">{record.branches.name}</td>
+                            <td className="py-3 px-4 text-gray-600">{record.package_type || "N/A"}</td>
+                            <td className="py-3 px-4 text-gray-600">
                               {record.session_participants.map(participant => participant.students.name).join(", ") || "No students"}
                             </td>
                           </tr>
@@ -674,7 +685,7 @@ export function CoachesManager() {
                                 ? 'bg-accent text-white'
                                 : 'border-accent text-accent hover:bg-accent hover:text-white'
                             }`}
-                            style={{ 
+                            style={{
                               backgroundColor: recordsCurrentPage === page ? '#BEA877' : 'transparent',
                               borderColor: '#BEA877',
                               color: recordsCurrentPage === page ? 'white' : '#BEA877'
@@ -702,7 +713,7 @@ export function CoachesManager() {
                 <Button
                   variant="outline"
                   onClick={() => setIsRecordsDialogOpen(false)}
-                  className="border-accent/30 text-accent hover:bg-accent hover:text-white transition-all duration-300 hover:scale-105 responsive-button"
+                  className="border-2 border-gray-300 text-gray-700 hover:bg-gray-100 transition-all duration-300"
                 >
                   Close
                 </Button>
